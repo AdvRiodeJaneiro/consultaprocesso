@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { EscavadorProcesso } from '../types';
 
@@ -8,11 +7,13 @@ export const generateLegalAnalysis = async (
   isFirstInteraction: boolean
 ): Promise<string> => {
   
-  if (!process.env.API_KEY) {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+  if (!apiKey) {
     return "Erro: Chave de API do Gemini não configurada.";
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
 
   // Extract names for the persona context
   const autorRaw = processData.titulo_polo_ativo || "Autor";
