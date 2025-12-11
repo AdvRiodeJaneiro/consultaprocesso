@@ -1,0 +1,160 @@
+
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { Textarea } from "./ui/textarea";
+import { Button } from "./ui/button";
+import { cn } from "../lib/utils";
+import { parseCNJ } from "../utils/cnjParser";
+import { DottedSurface } from "./ui/dotted-surface";
+
+interface AutoResizeProps {
+  minHeight: number;
+  maxHeight?: number;
+}
+
+function useAutoResizeTextarea({ minHeight, maxHeight }: AutoResizeProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const adjustHeight = useCallback(
+    (reset?: boolean) => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+
+      if (reset) {
+        textarea.style.height = `${minHeight}px`;
+        return;
+      }
+
+      textarea.style.height = `${minHeight}px`; // reset first
+      const newHeight = Math.max(
+        minHeight,
+        Math.min(textarea.scrollHeight, maxHeight ?? Infinity)
+      );
+      textarea.style.height = `${newHeight}px`;
+    },
+    [minHeight, maxHeight]
+  );
+
+  useEffect(() => {
+    if (textareaRef.current) textareaRef.current.style.height = `${minHeight}px`;
+  }, [minHeight]);
+
+  return { textareaRef, adjustHeight };
+}
+
+interface WelcomeScreenProps {
+  onSubmit: (text: string) => void;
+}
+
+export default function WelcomeScreen({ onSubmit }: WelcomeScreenProps) {
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const { textareaRef, adjustHeight } = useAutoResizeTextarea({
+    minHeight: 48,
+    maxHeight: 150,
+  });
+
+  const handleSubmit = () => {
+    if (!message.trim()) return;
+
+    // Validation logic: Must contain a valid CNJ
+    const cnj = parseCNJ(message);
+    if (!cnj) {
+      setError("Por favor, informe um número de processo válido (Ex: 0000000-00.0000.0.00.0000) para começar.");
+      return;
+    }
+
+    setError("");
+    onSubmit(message);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  return (
+    <div className="relative w-full h-full flex flex-col items-center bg-slate-900 overflow-hidden">
+      {/* Dynamic Background */}
+      <DottedSurface className="fixed inset-0 z-0 pointer-events-none" />
+
+      {/* Centered Title */}
+      <div className="flex-1 w-full flex flex-col items-center justify-center p-4 z-10">
+        <div className="text-center backdrop-blur-sm bg-black/20 p-6 rounded-2xl border border-white/5 shadow-2xl flex flex-col items-center">
+          <img 
+            src="https://advogadoriodejaneiro.com/wp-content/uploads/2024/07/WhatsApp-Image-2022-09-24-at-14.28.30-removebg-preview-300x170.png" 
+            alt="Magalhães e Gomes Advogados" 
+            className="h-16 mb-4 object-contain"
+          />
+          <h1 className="text-4xl md:text-5xl font-semibold text-white drop-shadow-sm tracking-tight">
+            Consulta Processo IA
+          </h1>
+          <p className="mt-2 text-neutral-200 text-lg">
+            Simplificando a explicação do seu processo
+          </p>
+        </div>
+      </div>
+
+      {/* Input Box Section */}
+      <div className="w-full max-w-3xl mb-[20vh] px-4 z-10">
+        <div className={cn(
+            "relative bg-black/60 backdrop-blur-md rounded-xl border transition-colors shadow-xl",
+            error ? "border-red-500/50" : "border-neutral-700"
+        )}>
+          <Textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              setError(""); // Clear error on type
+              adjustHeight();
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="Digite o número do processo aqui..."
+            className={cn(
+              "w-full px-4 py-3 resize-none border-none",
+              "bg-transparent text-white text-sm md:text-base",
+              "focus-visible:ring-0 focus-visible:ring-offset-0",
+              "placeholder:text-neutral-400 min-h-[48px]"
+            )}
+            style={{ overflow: "hidden" }}
+          />
+
+          {/* Footer Buttons */}
+          <div className="flex items-center justify-between p-3">
+             {/* Empty div to keep layout if we add left buttons later, or for spacing */}
+            <div className="text-red-400 text-xs font-medium ml-2">
+                {error}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!message.trim()}
+                className={cn(
+                  "flex items-center gap-1 px-3 py-2 rounded-lg transition-colors",
+                  message.trim() 
+                    ? "bg-[#dfa968] text-slate-900 hover:bg-[#c99557]" 
+                    : "bg-neutral-700 text-neutral-400 cursor-not-allowed"
+                )}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                  <path d="m5 12 7-7 7 7"/>
+                  <path d="M12 19V5"/>
+                </svg>
+                <span className="sr-only">Enviar</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        <p className="text-center text-neutral-400 text-xs mt-4">
+           Apenas cole o número do processo (ex: 0000000-98.2023.5.01.0056) e nós explicaremos o restante.
+        </p>
+
+      </div>
+    </div>
+  );
+}

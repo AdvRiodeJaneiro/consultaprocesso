@@ -1,0 +1,74 @@
+
+export interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
+  isLoading?: boolean;
+  isError?: boolean;
+}
+
+export interface CNJParts {
+  number: string; 
+  digit: string; 
+  year: string; 
+  justice: string; 
+  tribunal: string; 
+  origin: string; 
+}
+
+// Escavador Types
+
+export interface EscavadorMovimentacao {
+  data: string;
+  tipo: string;
+  conteudo: string;
+  fonte?: {
+    sigla: string;
+  };
+}
+
+export interface EscavadorEnvolvido {
+  nome: string;
+  tipo_pessoa: string;
+  quantidade_processos: number;
+  polo: 'ATIVO' | 'PASSIVO' | 'ADVOGADO' | 'TERCEIRO';
+  oabs?: Array<{uf: string, numero: number, tipo: string}>;
+}
+
+export interface EscavadorFonte {
+  id: number;
+  sigla: string; // e.g. TRT-1
+  grau: number;
+  grau_formatado: string;
+  capa: {
+    classe: string;
+    assunto: string;
+    area: string; // e.g. Trabalhista
+    data_distribuicao: string;
+    valor_causa?: {
+      valor: string;
+      moeda: string;
+      valor_formatado: string;
+    };
+    orgao_julgador: string;
+  };
+  movimentacoes?: EscavadorMovimentacao[];
+  envolvidos: EscavadorEnvolvido[];
+}
+
+export interface EscavadorProcesso {
+  numero_cnj: string;
+  titulo_polo_ativo?: string;
+  titulo_polo_passivo?: string;
+  ano_inicio: number;
+  data_inicio: string;
+  data_ultima_movimentacao: string;
+  quantidade_movimentacoes: number;
+  fontes: EscavadorFonte[];
+  // Merged field from /movimentacoes endpoint
+  movimentacoes?: EscavadorMovimentacao[];
+}
+
+// The API returns the process object directly
+export type EscavadorResponse = EscavadorProcesso;
