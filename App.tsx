@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Message, EscavadorProcesso } from './types';
 import { ChatBubble } from './components/ChatBubble';
@@ -6,6 +5,7 @@ import WelcomeScreen from './components/WelcomeScreen';
 import { parseCNJ, formatCNJ } from './utils/cnjParser';
 import { fetchProcessData } from './services/escavadorService';
 import { generateLegalAnalysis } from './services/geminiService';
+import { GlowingButton } from './components/GlowingButton';
 
 const EXAMPLE_PROCESS = "0100238-98.2023.5.01.0056";
 
@@ -234,15 +234,9 @@ export default function App() {
             <p className="text-xs text-[#dfa968] font-medium">Seu tradutor jurídico pessoal</p>
           </div>
         </div>
-        <button 
-             onClick={resetSearch}
-             className="text-xs bg-slate-800 hover:bg-slate-700 text-[#dfa968] font-semibold py-2 px-3 rounded-full transition-colors flex items-center gap-1 border border-slate-700"
-           >
-             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3">
-               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-             </svg>
-             Nova Busca
-        </button>
+        <GlowingButton onClick={resetSearch}>
+             Nova Consulta
+        </GlowingButton>
       </header>
 
       {/* Chat Area */}
