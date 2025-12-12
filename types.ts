@@ -1,4 +1,3 @@
-
 export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -6,6 +5,7 @@ export interface Message {
   timestamp: Date;
   isLoading?: boolean;
   isError?: boolean;
+  isContact?: boolean;
 }
 
 export interface CNJParts {

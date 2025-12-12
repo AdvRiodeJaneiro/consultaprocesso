@@ -117,6 +117,8 @@ export default function App() {
                content: summaryPart.trim()
              } : m));
 
+             let delay = 600;
+
              // 2. Add Bubble for Latest Movement (High Priority)
              if (latestMovePart.trim().length > 5) {
                 setTimeout(() => {
@@ -126,7 +128,8 @@ export default function App() {
                     content: `### 🚨 Movimentação Mais Recente\n\n${latestMovePart.trim()}`,
                     timestamp: new Date()
                   }]);
-                }, 600); 
+                }, delay);
+                delay += 800; 
              }
 
              // 3. Add Bubble for History (Context)
@@ -138,8 +141,20 @@ export default function App() {
                     content: `### 📜 Histórico Anterior\n\n${historyPart.trim()}`,
                     timestamp: new Date()
                   }]);
-                }, 1400); 
+                }, delay);
+                delay += 800;
              }
+
+             // 4. Add Contact Bubble (NEW)
+             setTimeout(() => {
+               setMessages(prev => [...prev, {
+                  id: Date.now().toString() + '-contact',
+                  role: 'assistant',
+                  content: "Dúvidas, fale com um advogado de nossa equipe:",
+                  timestamp: new Date(),
+                  isContact: true
+               }]);
+             }, delay);
 
         } else {
             // CASE 2: Chatting about active process

@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { Message } from '../types';
 import { ShiningText } from './ui/shining-text';
+import { WhatsappButtons } from './WhatsappButtons';
 
 interface ChatBubbleProps {
   message: Message;
@@ -16,6 +16,18 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
       <div className="flex justify-center my-4">
         <div className="bg-slate-800 text-[#dfa968] text-xs px-3 py-1 rounded-full border border-slate-700">
           {message.content}
+        </div>
+      </div>
+    );
+  }
+
+  // Handle Special Contact Bubble
+  if (message.isContact) {
+    return (
+      <div className="flex w-full mb-6 justify-start">
+        <div className="max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-5 shadow-sm bg-slate-800 border border-[#dfa968]/30 rounded-bl-none">
+           <p className="mb-4 font-semibold text-slate-200">{message.content}</p>
+           <WhatsappButtons />
         </div>
       </div>
     );
