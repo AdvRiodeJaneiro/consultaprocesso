@@ -245,7 +245,7 @@ export default function App() {
             />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-100 tracking-tight">Consulta Processo IA</h1>
+            <h1 className="text-lg font-bold text-slate-100 tracking-tight">Consulta Processo IA</h1>
             <p className="text-xs text-[#dfa968] font-medium">Seu tradutor jurídico pessoal</p>
           </div>
         </div>
