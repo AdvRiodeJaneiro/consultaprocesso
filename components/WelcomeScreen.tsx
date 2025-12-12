@@ -97,7 +97,7 @@ export default function WelcomeScreen({ onSubmit }: WelcomeScreenProps) {
       </div>
 
       {/* Input Box Section */}
-      <div className="w-full max-w-3xl mb-8 px-4 z-10 flex flex-col gap-8">
+      <div className="w-full max-w-3xl mb-12 px-4 pb-8 z-10 flex flex-col gap-8">
         <div>
             <div className={cn(
                 "relative bg-black/60 backdrop-blur-md rounded-xl border transition-colors shadow-xl",
