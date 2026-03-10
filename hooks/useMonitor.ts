@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { parseCNJ, formatCNJ } from '../utils/cnjParser';
 import { supabase } from '../integrations/supabase/client';
 import { toast } from 'react-hot-toast';
+import { useProcessStore } from '../store/processStore';
 
 export function useMonitor() {
   const [query, setQuery] = useState('');
@@ -14,6 +15,7 @@ export function useMonitor() {
   const [error, setError] = useState<string | null>(null);
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const addProcessToStore = useProcessStore(state => state.addProcess);
   
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState<EscavadorProcesso | null>(null);
@@ -103,11 +105,19 @@ export function useMonitor() {
       }
 
       logDebug(`Persistência concluída com sucesso!`, 'success', data);
+      
+      // ATUALIZAÇÃO DO CACHE: Injetamos o novo processo na store global imediatamente
+      if (data && data[0]) {
+        addProcessToStore(data[0]);
+        logDebug(`Cache local (Zustand) atualizado com sucesso!`, 'success');
+      }
+
       toast.dismiss(loadingToast);
       toast.success('Monitoramento iniciado com sucesso!');
       
       setIsConfirmModalOpen(false);
       
+      // Redireciona para a lista que agora já terá o item na memória
       setTimeout(() => {
         navigate('/meus-processos');
       }, 500);
