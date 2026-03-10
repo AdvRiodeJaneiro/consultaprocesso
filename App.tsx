@@ -16,13 +16,13 @@ import { useChat } from './hooks/useChat';
 import { DebugOverlay, DebugLog } from './components/DebugOverlay';
 
 import { cn } from './lib/utils';
-import { Settings } from 'lucide-react';
+import { Settings, Loader2 } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { supabase } from './integrations/supabase/client';
 import { toast } from 'react-hot-toast';
 
 function AppContent() {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, sessionLoading } = useAuth();
   const location = useLocation();
   const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
   
@@ -52,7 +52,7 @@ function AppContent() {
     };
   }, []);
 
-  // Sync whatsapp number from profile
+  // Sync whatsapp number from profile (background update)
   useEffect(() => {
     if (profile?.whatsapp) {
       setWhatsappNumber(profile.whatsapp);
@@ -89,6 +89,18 @@ function AppContent() {
         return 'Dashboard';
     }
   };
+
+  // Bloqueio apenas durante a verificação inicial do token/sessão
+  if (sessionLoading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-background dark:bg-background-dark">
+        <div className="flex flex-col items-center gap-4">
+           <Loader2 className="w-10 h-10 text-primary animate-spin" />
+           <p className="text-slate-400 font-bold text-sm uppercase tracking-widest animate-pulse">Verificando Acesso...</p>
+        </div>
+      </div>
+    );
+  }
 
   const RenderConsulta = () => {
     if (showWelcome) {
@@ -148,20 +160,6 @@ function AppContent() {
     );
   };
 
-  const RenderEmpty = ({ title }: { title: string }) => (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-      <div className="max-w-md space-y-4">
-        <div className="bg-white dark:bg-slate-900 p-10 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xl inline-block">
-           <Settings className="w-16 h-16 text-primary mx-auto mb-6 opacity-20" />
-           <h2 className="text-2xl font-bold text-deep-indigo dark:text-white">Página em construção</h2>
-           <p className="text-slate-500 mt-2 font-medium">
-             Estamos preparando a tela de "{title}" para você.
-           </p>
-        </div>
-      </div>
-    </div>
-  );
-
   const isAuthPage = location.pathname === '/auth';
 
   return (
@@ -187,7 +185,17 @@ function AppContent() {
                 onUpdateWhatsapp={setWhatsappNumber}
               />
             } />
-            <Route path="/configuracoes" element={<RenderEmpty title="Configurações" />} />
+            <Route path="/configuracoes" element={
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                <div className="max-w-md space-y-4">
+                  <div className="bg-white dark:bg-slate-900 p-10 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xl inline-block">
+                    <Settings className="w-16 h-16 text-primary mx-auto mb-6 opacity-20" />
+                    <h2 className="text-2xl font-bold text-deep-indigo dark:text-white">Página em construção</h2>
+                    <p className="text-slate-500 mt-2 font-medium">Estamos preparando a tela de "Configurações" para você.</p>
+                  </div>
+                </div>
+              </div>
+            } />
           </Routes>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '../contexts/AuthContext';
+import { useProcessStore } from '../store/processStore';
 
 export interface MonitoredProcess {
   id: string;
@@ -15,16 +16,23 @@ export interface MonitoredProcess {
 }
 
 export function useMyProcesses() {
-  const [processes, setProcesses] = useState<MonitoredProcess[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  
+  // Zustand Store
+  const { 
+    myProcesses, 
+    hasLoadedOnce, 
+    setProcesses, 
+    removeProcess, 
+    setHasLoaded 
+  } = useProcessStore();
 
-  const fetchProcesses = useCallback(async () => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+  const fetchProcesses = useCallback(async (force = false) => {
+    // Se já carregamos uma vez e não é um force refresh, não faz nada (Cache Hit)
+    if (hasLoadedOnce && !force) return;
+    if (!user) return;
     
     setLoading(true);
 
@@ -35,20 +43,22 @@ export function useMyProcesses() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
       setProcesses(data || []);
+      setHasLoaded(true);
     } catch (err: any) {
       console.error("Erro ao buscar processos:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, hasLoadedOnce, setProcesses, setHasLoaded]);
 
   useEffect(() => {
-    if (!authLoading) {
+    if (user && !hasLoadedOnce) {
       fetchProcesses();
     }
-  }, [user, authLoading, fetchProcesses]);
+  }, [user, hasLoadedOnce, fetchProcesses]);
 
   const cancelMonitoring = async (id: string, escavadorId: number) => {
     try {
@@ -59,7 +69,8 @@ export function useMyProcesses() {
 
       if (dbError) throw dbError;
       
-      setProcesses(prev => prev.filter(p => p.id !== id));
+      // Atualiza o cache local imediatamente
+      removeProcess(id);
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message };
@@ -67,10 +78,11 @@ export function useMyProcesses() {
   };
 
   return {
-    processes,
-    loading,
+    processes: myProcesses,
+    loading: loading && !hasLoadedOnce, // Só mostra loading na primeira vez
+    isRefreshing: loading, // Para spinners de background se necessário
     error,
-    refresh: fetchProcesses,
+    refresh: () => fetchProcesses(true),
     cancelMonitoring
   };
 }
