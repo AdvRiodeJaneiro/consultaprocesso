@@ -45,7 +45,7 @@ const MyProcesses: React.FC = () => {
   if (!user) {
     return (
       <div className="flex-1 bg-background dark:bg-background-dark overflow-y-auto">
-        <div className="min-h-full flex flex-col items-center justify-center p-8">
+        <div className="min-h-full flex flex-col items-center py-12 md:py-20 px-6">
           <EmptyStateAnimation 
             title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
             description="Faça login para gerenciar seus processos monitorados e acompanhar cada movimentação em tempo real."
@@ -141,7 +141,7 @@ const MyProcesses: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="py-10">
+          <div className="py-6 md:py-10">
             <EmptyStateAnimation 
               title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
               description="Você ainda não tem processos em sua lista de monitoramento."
