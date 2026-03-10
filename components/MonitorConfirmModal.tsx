@@ -16,8 +16,8 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
   if (!isOpen || !process) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-secondary border border-border rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in duration-300">
         <div className="p-8 pb-4 flex justify-end">
            <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
             <X className="w-6 h-6" />
@@ -25,8 +25,8 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
         </div>
 
         <div className="px-8 pb-8 text-center space-y-6">
-          <div className="mx-auto w-20 h-20 bg-[#dfa968]/20 rounded-full flex items-center justify-center">
-             <Bell className="w-10 h-10 text-[#dfa968] animate-pulse" />
+          <div className="mx-auto w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center">
+             <Bell className="w-10 h-10 text-primary animate-pulse" />
           </div>
 
           <div className="space-y-2">
@@ -36,7 +36,7 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
             </p>
           </div>
 
-          <div className="bg-slate-800/50 rounded-2xl p-5 border border-slate-800 text-left space-y-4">
+          <div className="bg-card/50 rounded-2xl p-5 border border-border text-left space-y-4">
              <div className="flex items-start gap-3">
                 <Gavel className="w-5 h-5 text-slate-400 mt-1 shrink-0" />
                 <div className="space-y-1 overflow-hidden">
@@ -45,7 +45,7 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
                 </div>
              </div>
              
-             <div className="space-y-1 pl-8 border-l border-slate-700">
+             <div className="space-y-1 pl-8 border-l border-border">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-widest">Partes</p>
                 <p className="text-xs text-slate-300 line-clamp-2">
                    {process.titulo_polo_ativo || 'N/A'} vs {process.titulo_polo_passivo || 'N/A'}
@@ -56,7 +56,7 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
           <div className="flex flex-col gap-3 pt-2">
             <Button 
                 onClick={onConfirm}
-                className="w-full bg-[#dfa968] hover:bg-[#c99557] text-slate-900 font-bold py-7 text-lg rounded-2xl shadow-xl shadow-[#dfa968]/10"
+                className="w-full bg-primary hover:bg-primary/90 text-secondary font-bold py-7 text-lg rounded-2xl shadow-xl shadow-primary/10"
             >
                 Confirmar monitoramento
             </Button>

@@ -15,10 +15,10 @@ export const GlowingButton: React.FC<GlowingButtonProps> = ({ children, classNam
       {/* Actual Button */}
       <button 
         type="button"
-        className="group relative inline-flex items-center justify-center text-xs rounded-full bg-slate-900 px-3 py-2 font-semibold text-white transition-all duration-200 hover:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 hover:shadow-gray-600/30 border border-slate-700"
+        className="group relative inline-flex items-center justify-center text-xs rounded-full bg-secondary px-3 py-2 font-semibold text-white transition-all duration-200 hover:bg-card hover:shadow-lg hover:-translate-y-0.5 hover:shadow-gray-600/30 border border-border"
         {...props}
       >
-        <Search className="w-3 h-3 mr-1 text-[#dfa968]" />
+        <Search className="w-3 h-3 mr-1 text-primary" />
         {children}
       </button>
     </div>

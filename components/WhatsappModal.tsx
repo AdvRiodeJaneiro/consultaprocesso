@@ -45,9 +45,9 @@ const WhatsappModal: React.FC<WhatsappModalProps> = ({ isOpen, onClose, onSave, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-        <div className="p-6 border-b border-slate-800 flex justify-between items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-secondary border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+        <div className="p-6 border-b border-border flex justify-between items-center">
           <div className="flex items-center gap-2">
              <div className="bg-green-500/10 p-2 rounded-lg">
                 <Phone className="w-5 h-5 text-green-500" />
@@ -72,21 +72,21 @@ const WhatsappModal: React.FC<WhatsappModalProps> = ({ isOpen, onClose, onSave, 
                   value={phone}
                   onChange={handleChange}
                   placeholder="(99) 99999-9999"
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#dfa968] focus:border-transparent transition-all text-lg tracking-wide"
+                  className="w-full bg-card border border-border rounded-xl px-4 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-lg tracking-wide"
                 />
             </div>
             <p className="text-[10px] text-slate-500 italic">Exemplo: (21) 98888-7777</p>
           </div>
         </div>
 
-        <div className="p-6 bg-slate-900/50 border-t border-slate-800 flex gap-3">
-          <Button variant="outline" onClick={onClose} className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-800 py-6 rounded-xl font-semibold">
+        <div className="p-6 bg-secondary/50 border-t border-border flex gap-3">
+          <Button variant="outline" onClick={onClose} className="flex-1 border-border text-slate-300 hover:bg-card py-6 rounded-xl font-semibold">
             Cancelar
           </Button>
           <Button 
             onClick={() => onSave(phone)} 
             disabled={phone.replace(/\D/g, '').length < 10}
-            className="flex-1 bg-[#dfa968] hover:bg-[#c99557] text-slate-900 font-bold py-6 rounded-xl shadow-lg shadow-[#dfa968]/20"
+            className="flex-1 bg-primary hover:bg-primary/90 text-secondary font-bold py-6 rounded-xl shadow-lg shadow-primary/20"
           >
             Salvar
           </Button>
