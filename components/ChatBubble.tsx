@@ -47,11 +47,11 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
              <ShiningText text={message.content || "Carregando..."} />
           </div>
         ) : (
-          <div className="prose prose-sm max-w-none prose-invert">
+          <div className={`prose prose-sm max-w-none ${!isUser && 'text-foreground'}`}>
              <div className="whitespace-pre-wrap leading-relaxed">
                 {message.content.split('\n').map((line, i) => {
-                    // Simple parser for headings and bold
-                    if (line.startsWith('## ')) return <h2 key={i} className="text-lg font-bold mt-2 mb-1 text-white">{line.replace('## ', '')}</h2>;
+                    // Adaptative Heading Colors
+                    if (line.startsWith('## ')) return <h2 key={i} className="text-lg font-bold mt-2 mb-1 text-foreground">{line.replace('## ', '')}</h2>;
                     if (line.startsWith('### ')) return <h3 key={i} className="text-md font-bold mt-3 mb-2 text-primary uppercase tracking-wide">{line.replace('### ', '')}</h3>;
                     if (line.startsWith('- ')) return <li key={i} className="ml-4">{line.replace('- ', '')}</li>;
                     
@@ -69,7 +69,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
                                                 href={linkMatch[2]} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer" 
-                                                className="text-primary underline hover:text-white transition-colors"
+                                                className="text-primary underline hover:opacity-80 transition-opacity"
                                             >
                                                 {linkMatch[1]}
                                             </a>
@@ -77,7 +77,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
                                     }
                                     return part.split(/(\*\*.*?\*\*)/g).map((subPart, m) => {
                                         if (subPart.startsWith('**') && subPart.endsWith('**')) {
-                                            return <strong key={`${k}-${m}`} className={isUser ? "font-bold text-black" : "font-bold text-white"}>{subPart.slice(2, -2)}</strong>;
+                                            return <strong key={`${k}-${m}`} className="font-bold text-foreground">{subPart.slice(2, -2)}</strong>;
                                         }
                                         return subPart;
                                     });
@@ -90,7 +90,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
                         <p key={i} className="mb-2">
                             {line.split(/(\*\*.*?\*\*)/g).map((part, j) => {
                                 if (part.startsWith('**') && part.endsWith('**')) {
-                                    return <strong key={j} className={isUser ? "font-bold text-black" : "font-bold text-white"}>{part.slice(2, -2)}</strong>;
+                                    return <strong key={j} className="font-bold text-foreground">{part.slice(2, -2)}</strong>;
                                 }
                                 return part;
                             })}
