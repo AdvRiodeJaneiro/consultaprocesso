@@ -10,6 +10,7 @@ import {
   Edit2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 interface WhatsappModalProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ const WhatsappModal: React.FC<WhatsappModalProps> = ({ isOpen, onClose, onSave, 
     if (phone.trim()) {
       onSave(phone);
       setIsEditing(false);
+      toast.success('WhatsApp configurado com sucesso!');
     }
   };
 

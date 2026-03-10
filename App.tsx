@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { ChatBubble } from './components/ChatBubble';
 import WelcomeScreen from './components/WelcomeScreen';
 import Sidebar from './components/Sidebar';
@@ -8,6 +9,8 @@ import MonitorProcess from './components/MonitorProcess';
 import Header from './components/Header';
 import WhatsappModal from './components/WhatsappModal';
 import { useChat } from './hooks/useChat';
+import { cn } from './lib/utils';
+import { Settings } from 'lucide-react';
 
 export default function App() {
   const {
@@ -142,6 +145,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-background dark:bg-background-dark overflow-hidden font-sans transition-colors duration-200">
+      <Toaster position="top-right" reverseOrder={false} />
       <Sidebar activeView={activeView} onViewChange={setActiveView} />
       <div className="flex-1 h-full overflow-hidden relative flex flex-col">
         <Header 
