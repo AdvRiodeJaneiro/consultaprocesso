@@ -32,9 +32,9 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
   } = useMonitor();
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 overflow-hidden">
+    <div className="flex flex-col h-full bg-secondary overflow-hidden">
       {/* Header section */}
-      <div className="p-8 border-b border-slate-800 bg-slate-900/50">
+      <div className="p-8 border-b border-border bg-secondary/50">
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-white tracking-tight">Monitoramento de Processo</h1>
@@ -49,7 +49,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
                 className={`group relative overflow-hidden transition-all duration-300 py-6 px-8 rounded-xl ${
                   whatsappNumber 
                     ? 'bg-green-500/10 hover:bg-green-500/20 text-green-500 border border-green-500/30' 
-                    : 'bg-[#dfa968] hover:bg-[#c99557] text-slate-900 font-bold shadow-lg shadow-[#dfa968]/20'
+                    : 'bg-primary hover:bg-primary/90 text-secondary font-bold shadow-lg shadow-primary/20'
                 }`}
             >
                <div className="flex items-center gap-2">
@@ -58,7 +58,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
                </div>
             </Button>
             {whatsappNumber && (
-                <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
+                <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider bg-card px-2 py-0.5 rounded-full border border-border">
                     Notificações para: <span className="text-slate-300">{whatsappNumber}</span>
                 </p>
             )}
@@ -78,7 +78,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
           <div className="space-y-4">
             <div className="relative group">
                <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-                  <Search className="w-5 h-5 text-slate-500 group-focus-within:text-[#dfa968] transition-colors" />
+                  <Search className="w-5 h-5 text-slate-500 group-focus-within:text-primary transition-colors" />
                </div>
                <input 
                   type="text"
@@ -86,13 +86,13 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   placeholder="Busque por CPF, CNPJ ou Nome da parte..."
-                  className="w-full bg-slate-800/50 border border-slate-700/50 rounded-2xl py-6 pl-14 pr-36 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#dfa968]/50 focus:border-[#dfa968]/50 transition-all text-lg shadow-inner"
+                  className="w-full bg-card/50 border border-border/50 rounded-2xl py-6 pl-14 pr-36 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all text-lg shadow-inner"
                />
                <div className="absolute inset-y-2.5 right-2.5 flex items-center">
                   <Button 
                     onClick={handleSearch}
                     disabled={isLoading || !query.trim()}
-                    className="bg-[#dfa968] hover:bg-[#c99557] text-slate-900 rounded-xl px-8 h-full font-bold shadow-md"
+                    className="bg-primary hover:bg-primary/90 text-secondary rounded-xl px-8 h-full font-bold shadow-md"
                   >
                      {isLoading ? 'Buscando...' : 'Buscar'}
                   </Button>
@@ -121,8 +121,8 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
             {isLoading && (
                <div className="flex flex-col items-center justify-center py-24 space-y-6">
                   <div className="relative">
-                    <div className="w-16 h-16 border-4 border-[#dfa968]/10 border-t-[#dfa968] rounded-full animate-spin"></div>
-                    <Search className="w-6 h-6 text-[#dfa968] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                    <div className="w-16 h-16 border-4 border-primary/10 border-t-primary rounded-full animate-spin"></div>
+                    <Search className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
                   </div>
                   <div className="text-center space-y-1">
                     <p className="text-white font-bold tracking-tight">Consultando base de dados</p>
@@ -138,7 +138,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
                     <p className="text-red-400 font-bold text-lg">{error}</p>
                     <p className="text-slate-500 text-sm max-w-xs mx-auto">Verifique os dados digitados ou tente buscar por um termo diferente.</p>
                   </div>
-                  <button onClick={() => setQuery('')} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-xs font-bold transition-colors">Limpar busca</button>
+                  <button onClick={() => setQuery('')} className="bg-card hover:bg-card/80 text-slate-300 px-4 py-2 rounded-lg text-xs font-bold transition-colors">Limpar busca</button>
                </div>
             )}
 
@@ -151,12 +151,12 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
                   </div>
                   <div className="grid grid-cols-1 gap-4">
                     {results.map((proc) => (
-                      <div key={proc.numero_cnj} className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 hover:bg-slate-800/60 hover:border-[#dfa968]/30 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl hover:shadow-black/20">
+                      <div key={proc.numero_cnj} className="bg-card/40 border border-border/50 rounded-2xl p-6 hover:bg-card/60 hover:border-primary/30 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl hover:shadow-black/20">
                          <div className="flex flex-col md:flex-row justify-between gap-8">
                             <div className="space-y-6 flex-1">
                                <div className="flex items-center gap-3">
-                                  <div className="bg-slate-700/50 p-2 rounded-xl group-hover:bg-[#dfa968]/20 transition-colors">
-                                     <Gavel className="w-5 h-5 text-[#dfa968]" />
+                                  <div className="bg-slate-700/50 p-2 rounded-xl group-hover:bg-primary/20 transition-colors">
+                                     <Gavel className="w-5 h-5 text-primary" />
                                   </div>
                                   <div className="space-y-0.5">
                                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Número do Processo</p>
@@ -164,7 +164,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
                                   </div>
                                </div>
 
-                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-900/30 p-4 rounded-xl border border-slate-800/50">
+                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-secondary/30 p-4 rounded-xl border border-border/50">
                                   <div className="space-y-1.5">
                                      <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
@@ -172,7 +172,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
                                      </div>
                                      <p className="text-sm text-slate-100 font-bold line-clamp-2 leading-relaxed">{proc.titulo_polo_ativo || 'Não identificado'}</p>
                                   </div>
-                                  <div className="space-y-1.5 border-t md:border-t-0 md:border-l border-slate-700/50 pt-4 md:pt-0 md:pl-6">
+                                  <div className="space-y-1.5 border-t md:border-t-0 md:border-l border-border/50 pt-4 md:pt-0 md:pl-6">
                                      <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                                         <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
                                         Polo Passivo
@@ -182,13 +182,13 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
                                </div>
 
                                <div className="flex items-center gap-6 pt-1">
-                                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                                  <div className="flex items-center gap-2 px-3 py-1.5 bg-card/50 rounded-lg border border-border/50">
                                      <Calendar className="w-3.5 h-3.5 text-slate-500" />
                                      <span className="text-xs font-medium text-slate-400">Distribuído em: <span className="text-slate-200">{proc.data_inicio}</span></span>
                                   </div>
-                                  <div className="flex items-center gap-2 px-3 py-1.5 bg-[#dfa968]/5 rounded-lg border border-[#dfa968]/20">
-                                     <Bell className="w-3.5 h-3.5 text-[#dfa968]" />
-                                     <span className="text-xs font-medium text-[#dfa968]">Última mov: <span className="font-bold">{proc.data_ultima_movimentacao}</span></span>
+                                  <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/5 rounded-lg border border-primary/20">
+                                     <Bell className="w-3.5 h-3.5 text-primary" />
+                                     <span className="text-xs font-medium text-primary">Última mov: <span className="font-bold">{proc.data_ultima_movimentacao}</span></span>
                                   </div>
                                </div>
                             </div>
@@ -196,13 +196,13 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
                             <div className="flex items-center justify-end">
                                <Button 
                                   onClick={() => handleMonitorClick(proc)}
-                                  className="w-full md:w-auto bg-slate-800 hover:bg-[#dfa968] hover:text-slate-900 text-slate-200 font-bold rounded-2xl px-8 py-8 transition-all group-hover:shadow-2xl group-hover:shadow-[#dfa968]/10 border border-slate-700/50 hover:border-[#dfa968]/50"
+                                  className="w-full md:w-auto bg-card hover:bg-primary hover:text-secondary text-slate-200 font-bold rounded-2xl px-8 py-8 transition-all group-hover:shadow-2xl group-hover:shadow-primary/10 border border-border/50 hover:border-primary/50"
                                 >
                                   <div className="flex items-center gap-3">
                                      <span className="text-lg">Quero monitorar</span>
                                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                   </div>
-                               </Button>
+                                </Button>
                             </div>
                          </div>
                       </div>
@@ -212,13 +212,13 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
             )}
 
             {!isLoading && results.length === 0 && !error && (
-               <div className="flex flex-col items-center justify-center py-24 text-center space-y-8 bg-slate-800/20 rounded-3xl border-2 border-dashed border-slate-800/50">
+               <div className="flex flex-col items-center justify-center py-24 text-center space-y-8 bg-card/20 rounded-3xl border-2 border-dashed border-border/50">
                   <div className="relative">
-                    <div className="w-32 h-32 bg-slate-800/50 rounded-full flex items-center justify-center border border-slate-700/50 overflow-hidden shadow-inner">
+                    <div className="w-32 h-32 bg-card/50 rounded-full flex items-center justify-center border border-border/50 overflow-hidden shadow-inner">
                         <Search className="w-12 h-12 text-slate-600 animate-pulse" />
                     </div>
-                    <div className="absolute -bottom-2 -right-2 bg-[#dfa968] p-2 rounded-xl shadow-lg">
-                        <Bell className="w-5 h-5 text-slate-900" />
+                    <div className="absolute -bottom-2 -right-2 bg-primary p-2 rounded-xl shadow-lg">
+                        <Bell className="w-5 h-5 text-secondary" />
                     </div>
                   </div>
                   <div className="space-y-3 max-w-sm px-4">

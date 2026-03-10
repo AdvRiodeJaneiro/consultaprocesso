@@ -75,7 +75,7 @@ export default function WelcomeScreen({ onSubmit }: WelcomeScreenProps) {
   };
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center bg-slate-900 overflow-hidden">
+    <div className="relative w-full h-full flex flex-col items-center bg-secondary overflow-hidden">
       {/* Dynamic Background */}
       <DottedSurface className="fixed inset-0 z-0 pointer-events-none" />
 
@@ -137,7 +137,7 @@ export default function WelcomeScreen({ onSubmit }: WelcomeScreenProps) {
                     className={cn(
                       "flex items-center gap-1 px-3 py-2 rounded-lg transition-colors",
                       message.trim() 
-                        ? "bg-[#dfa968] text-slate-900 hover:bg-[#c99557]" 
+                        ? "bg-primary text-secondary hover:bg-primary/90" 
                         : "bg-neutral-700 text-neutral-400 cursor-not-allowed"
                     )}
                   >
@@ -157,7 +157,7 @@ export default function WelcomeScreen({ onSubmit }: WelcomeScreenProps) {
         </div>
 
         {/* New Contact Section */}
-        <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm">
+        <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
              <p className="text-slate-300 text-sm mb-3 font-medium">Não sabe o número do seu processo? Fale com nossa equipe:</p>
              <WhatsappButtons variant="outline" />
         </div>
