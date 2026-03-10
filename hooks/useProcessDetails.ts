@@ -3,12 +3,14 @@ import { EscavadorProcesso, Message } from '../types';
 import { fetchProcessData } from '../services/escavadorService';
 import { generateLegalAnalysis } from '../services/geminiService';
 import { supabase } from '../integrations/supabase/client';
+import { useProcessStore } from '../store/processStore';
 
 export function useProcessDetails(cnj: string | undefined) {
   const [processData, setProcessData] = useState<EscavadorProcesso | null>(null);
   const [aiMessages, setAiMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const updateProcessInStore = useProcessStore(state => state.updateProcess);
 
   const loadData = useCallback(async () => {
     if (!cnj) return;
@@ -25,16 +27,15 @@ export function useProcessDetails(cnj: string | undefined) {
       }
       setProcessData(liveData);
 
-      // 2. Verificar no Supabase se já temos análise em cache para este processo
+      // 2. Verificar no Supabase se já temos análise em cache
       const { data: dbProc, error: dbError } = await supabase
         .from('monitored_processes')
-        .select('ai_analysis_cache, last_known_movement_id')
+        .select('id, ai_analysis_cache, last_known_movement_id')
         .eq('process_number', cnj)
         .maybeSingle();
 
       const latestMoveId = liveData.movimentacoes?.[0]?.data || liveData.data_ultima_movimentacao;
       
-      // Lógica de Inteligência: Re-gerar se houver nova movimentação ou se não houver cache
       const needsNewAnalysis = !dbProc?.ai_analysis_cache || dbProc?.last_known_movement_id !== latestMoveId;
 
       if (needsNewAnalysis) {
@@ -48,15 +49,27 @@ export function useProcessDetails(cnj: string | undefined) {
           history: parts[2] || ""
         };
 
-        // Salvar no banco para a próxima vez
+        const summaryForList = parts[1]?.substring(0, 200) || parts[0]?.substring(0, 200);
+
+        // Salvar no banco
         await supabase
           .from('monitored_processes')
           .update({
             ai_analysis_cache: cacheObj,
             last_known_movement_id: latestMoveId,
-            last_movement_summary: parts[1]?.substring(0, 200) || parts[0]?.substring(0, 200)
+            last_movement_summary: summaryForList,
+            last_movement_date: liveData.data_ultima_movimentacao || liveData.movimentacoes?.[0]?.data
           })
           .eq('process_number', cnj);
+
+        // ATUALIZAÇÃO CRUCIAL: Atualiza a store global (cache) para que a tela anterior mude
+        if (dbProc?.id) {
+          updateProcessInStore(dbProc.id, {
+            last_movement_summary: summaryForList,
+            last_movement_date: liveData.data_ultima_movimentacao || liveData.movimentacoes?.[0]?.data,
+            status: 'ATUALIZADO'
+          });
+        }
 
         formatMessagesFromCache(cacheObj);
       } else {
@@ -70,7 +83,7 @@ export function useProcessDetails(cnj: string | undefined) {
     } finally {
       setIsLoading(false);
     }
-  }, [cnj]);
+  }, [cnj, updateProcessInStore]);
 
   const formatMessagesFromCache = (cache: any) => {
     const newMsgs: Message[] = [];
