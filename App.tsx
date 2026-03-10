@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useRef, useEffect } from 'react';
@@ -9,11 +10,16 @@ import Sidebar from './components/Sidebar';
 import MonitorProcess from './components/MonitorProcess';
 import Header from './components/Header';
 import WhatsappModal from './components/WhatsappModal';
+import Auth from './pages/Auth';
 import { useChat } from './hooks/useChat';
 import { cn } from './lib/utils';
 import { Settings } from 'lucide-react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { supabase } from './integrations/supabase/client';
+import { toast } from 'react-hot-toast';
 
-export default function App() {
+function AppContent() {
+  const { user, profile, refreshProfile } = useAuth();
   const location = useLocation();
   const {
     showWelcome,
@@ -30,6 +36,13 @@ export default function App() {
     handleWelcomeSubmit,
     handleSend
   } = useChat();
+
+  // Sync whatsapp number from profile
+  useEffect(() => {
+    if (profile?.whatsapp) {
+      setWhatsappNumber(profile.whatsapp);
+    }
+  }, [profile, setWhatsappNumber]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -54,6 +67,7 @@ export default function App() {
       case '/busca-nome': return 'Busca por Nome/CPF';
       case '/': return 'Consulta Processo';
       case '/configuracoes': return 'Configurações';
+      case '/auth': return 'Autenticação';
       default: return 'Dashboard';
     }
   };
@@ -130,18 +144,23 @@ export default function App() {
     </div>
   );
 
+  const isAuthPage = location.pathname === '/auth';
+
   return (
     <div className="flex h-screen bg-background dark:bg-background-dark overflow-hidden font-sans transition-colors duration-200">
       <Toaster position="top-right" reverseOrder={false} />
-      <Sidebar />
+      {!isAuthPage && <Sidebar />}
       <div className="flex-1 h-full overflow-hidden relative flex flex-col">
-        <Header 
-          viewTitle={getActiveTitle()} 
-          onWhatsappClick={() => setIsWhatsappModalOpen(true)}
-        />
+        {!isAuthPage && (
+          <Header 
+            viewTitle={getActiveTitle()} 
+            onWhatsappClick={() => setIsWhatsappModalOpen(true)}
+          />
+        )}
         <div className="flex-1 overflow-hidden">
           <Routes>
             <Route path="/" element={<RenderConsulta />} />
+            <Route path="/auth" element={<Auth />} />
             <Route path="/monitoramento" element={
               <MonitorProcess
                 whatsappNumber={whatsappNumber}
@@ -153,15 +172,37 @@ export default function App() {
         </div>
       </div>
 
-      <WhatsappModal 
+      <WhatsappModal
          isOpen={isWhatsappModalOpen}
          onClose={() => setIsWhatsappModalOpen(false)}
-         onSave={(phone) => {
+         onSave={async (phone) => {
+            if (user) {
+              const { error } = await supabase
+                .from('profiles')
+                .update({ whatsapp: phone })
+                .eq('id', user.id);
+              
+              if (error) {
+                toast.error('Erro ao salvar WhatsApp no perfil');
+              } else {
+                toast.success('WhatsApp atualizado!');
+                refreshProfile();
+              }
+            }
             setWhatsappNumber(phone);
             setIsWhatsappModalOpen(false);
          }}
          initialValue={whatsappNumber}
       />
+
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

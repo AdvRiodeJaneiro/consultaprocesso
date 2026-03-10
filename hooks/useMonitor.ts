@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { EscavadorProcesso } from '../types';
 import { fetchProcessesByInvolved } from '../services/escavadorService';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export function useMonitor() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<EscavadorProcesso[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
   
   const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -38,6 +42,10 @@ export function useMonitor() {
   };
 
   const handleMonitorClick = (process: EscavadorProcesso) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
     setSelectedProcess(process);
     setIsConfirmModalOpen(true);
   };

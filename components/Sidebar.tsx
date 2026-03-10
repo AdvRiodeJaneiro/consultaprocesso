@@ -1,14 +1,16 @@
 "use client";
 
 import React from 'react';
-import { 
-  Search, 
-  LayoutDashboard, 
+import {
+  Search,
+  LayoutDashboard,
   Settings,
-  Gavel
+  Gavel,
+  LogOut
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
+import { useAuth } from '../contexts/AuthContext';
 
 interface SidebarProps {
   className?: string;
@@ -17,6 +19,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, profile, signOut } = useAuth();
 
   const menuItems = [
     { id: 'search-number', label: 'Consulta Processo', icon: Search, path: '/' },
@@ -58,19 +61,40 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
       </nav>
 
       <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-        <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-          <div className="size-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden shrink-0">
-            <img 
-              className="w-full h-full object-cover" 
-              alt="Dr. Ricardo Silva" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSoxmRQwHLt4PneqWjzvwTOR-eo1bBYTs9fkB0WlvHUj03hnQjlbEF9Dw8S-bib91YxoEljPY-dZUk0KQYbXpLjVKZD8X6gLf_MwbGzsA8A8sU7_yJfBNzG-jGJwVdyGCa0dKxxCH9sSGsqSJk1yKSkwhkQS_Hhvw9YrWiigkMpZDqNX21mapBaq8u2yL6RzFeEuz7RwUqU_Lqj8d8YOq1ns9FoP8BG5B2lM0-wnWqHQ52JSuy2nEo5NXC-NRcvAYmGbaqYbLj-XHU"
-            />
+        {user ? (
+          <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl group relative">
+            <div className="size-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden shrink-0 border border-primary/20">
+              {profile?.avatar_url ? (
+                <img className="w-full h-full object-cover" src={profile.avatar_url} alt={profile.first_name} />
+              ) : (
+                <span className="text-primary font-bold">{profile?.first_name?.[0] || user.email?.[0].toUpperCase()}</span>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-deep-indigo dark:text-white truncate">
+                {profile ? `${profile.first_name} ${profile.last_name || ''}` : 'Usuário'}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-medium">
+                {profile?.whatsapp || user.email}
+              </p>
+            </div>
+            <button
+              onClick={() => signOut()}
+              className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+              title="Sair"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-deep-indigo dark:text-white truncate">Dr. Ricardo Silva</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-medium">OAB/SP 123.456</p>
-          </div>
-        </div>
+        ) : (
+          <button
+            onClick={() => navigate('/auth')}
+            className="w-full py-3 px-4 bg-primary text-deep-indigo font-bold rounded-xl shadow-lg hover:scale-[1.02] transition-all"
+          >
+            Entrar / Cadastrar
+          </button>
+        )}
       </div>
     </aside>
   );
