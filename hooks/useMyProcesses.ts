@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -12,6 +11,7 @@ export interface MonitoredProcess {
   last_movement_summary?: string;
   last_movement_date?: string;
   created_at: string;
+  debug_logs?: string;
 }
 
 export function useMyProcesses() {
@@ -20,9 +20,7 @@ export function useMyProcesses() {
   const [error, setError] = useState<string | null>(null);
   const { user, loading: authLoading } = useAuth();
 
-  const fetchProcesses = async () => {
-    if (authLoading) return;
-
+  const fetchProcesses = useCallback(async () => {
     if (!user) {
       setLoading(false);
       return;
@@ -39,21 +37,21 @@ export function useMyProcesses() {
       if (error) throw error;
       setProcesses(data || []);
     } catch (err: any) {
+      console.error("Erro ao buscar processos:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
-    fetchProcesses();
-  }, [user, authLoading]);
+    if (!authLoading) {
+      fetchProcesses();
+    }
+  }, [user, authLoading, fetchProcesses]);
 
   const cancelMonitoring = async (id: string, escavadorId: number) => {
     try {
-      // Aqui no futuro chamaremos a Edge Function que fala com o Escavador
-      // const { error: apiError } = await supabase.functions.invoke('cancel-monitoring', { body: { escavadorId } });
-      
       const { error: dbError } = await supabase
         .from('monitored_processes')
         .delete()
