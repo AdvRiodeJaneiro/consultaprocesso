@@ -11,7 +11,10 @@ import MonitorProcess from './components/MonitorProcess';
 import Header from './components/Header';
 import WhatsappModal from './components/WhatsappModal';
 import Auth from './pages/Auth';
+import MyProcesses from './pages/MyProcesses';
+import ProcessTimeline from './pages/ProcessTimeline';
 import { useChat } from './hooks/useChat';
+
 import { cn } from './lib/utils';
 import { Settings } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -64,12 +67,16 @@ function AppContent() {
   const getActiveTitle = () => {
     switch(location.pathname) {
       case '/monitoramento': return 'Monitoramento';
+      case '/meus-processos': return 'Meus Processos';
       case '/busca-nome': return 'Busca por Nome/CPF';
       case '/': return 'Consulta Processo';
       case '/configuracoes': return 'Configurações';
       case '/auth': return 'Autenticação';
-      default: return 'Dashboard';
+      default:
+        if (location.pathname.startsWith('/processo/')) return 'Andamento do Processo';
+        return 'Dashboard';
     }
+
   };
 
   const RenderConsulta = () => {
@@ -161,7 +168,10 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<RenderConsulta />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/meus-processos" element={<MyProcesses />} />
+            <Route path="/processo/:cnj" element={<ProcessTimeline />} />
             <Route path="/monitoramento" element={
+
               <MonitorProcess
                 whatsappNumber={whatsappNumber}
                 onUpdateWhatsapp={setWhatsappNumber}
