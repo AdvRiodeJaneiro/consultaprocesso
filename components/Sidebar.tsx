@@ -45,20 +45,38 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, className }
 
   return (
     <aside className={cn("w-64 bg-slate-950 border-r border-slate-800 flex flex-col h-full z-20", className)}>
+      <style>
+        {`
+          .custom-sidebar-scrollbar::-webkit-scrollbar {
+            width: 4px;
+          }
+          .custom-sidebar-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .custom-sidebar-scrollbar::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 10px;
+          }
+          .custom-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #dfa968;
+          }
+        `}
+      </style>
+      
       <div className="p-6 border-b border-slate-800">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="bg-[#dfa968] p-1.5 rounded-lg">
+        <div className="flex items-center gap-3 mb-2 justify-start">
+          <div className="bg-[#dfa968] p-1.5 rounded-lg shrink-0">
             <Gavel className="w-5 h-5 text-slate-900" />
           </div>
           <span className="font-bold text-lg text-white tracking-tight">JurisClaro</span>
         </div>
-        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Busca de processo com IA</p>
+        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest text-left">Busca de processo com IA</p>
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-4 space-y-8">
+      <nav className="flex-1 overflow-y-auto p-4 space-y-8 custom-sidebar-scrollbar">
         {menuSections.map((section) => (
           <div key={section.title} className="space-y-2">
-            <h3 className="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            <h3 className="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-left">
               {section.title}
             </h3>
             <div className="space-y-1">
@@ -67,14 +85,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, className }
                   key={item.id}
                   onClick={() => onViewChange(item.id)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200",
+                    "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 justify-start text-left",
                     activeView === item.id
                       ? "bg-[#dfa968]/10 text-[#dfa968] font-medium"
                       : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
                   )}
                 >
-                  <item.icon className={cn("w-4 h-4", activeView === item.id ? "text-[#dfa968]" : "text-slate-500")} />
-                  {item.label}
+                  <item.icon className={cn("w-4 h-4 shrink-0", activeView === item.id ? "text-[#dfa968]" : "text-slate-500")} />
+                  <span className="truncate">{item.label}</span>
                 </button>
               ))}
             </div>
@@ -83,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, className }
       </nav>
 
       <div className="p-4 border-t border-slate-800">
-        <div className="bg-slate-900/50 rounded-xl p-3 border border-slate-800">
+        <div className="bg-slate-900/50 rounded-xl p-3 border border-slate-800 text-left">
           <p className="text-[10px] text-slate-500 mb-1">Logado como</p>
           <p className="text-xs font-medium text-slate-300 truncate">usuario@exemplo.com</p>
         </div>
