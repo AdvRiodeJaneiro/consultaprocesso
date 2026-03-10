@@ -3,11 +3,8 @@
 import React from 'react';
 import { 
   Search, 
-  UserSearch, 
-  Eye, 
-  ListChecks, 
-  CreditCard, 
-  UserCircle,
+  LayoutDashboard, 
+  Settings,
   Gavel
 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -19,91 +16,58 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, className }) => {
-  const menuSections = [
-    {
-      title: "Consulta processo",
-      items: [
-        { id: 'search-number', label: 'Pelo número do processo', icon: Search },
-        { id: 'search-person', label: 'Pelo CPF ou Nome', icon: UserSearch },
-      ]
-    },
-    {
-      title: "Monitoramento",
-      items: [
-        { id: 'monitor-new', label: 'Monitoramento de processo', icon: Eye },
-        { id: 'monitor-list', label: 'Meus monitoramentos', icon: ListChecks },
-      ]
-    },
-    {
-      title: "Configurações",
-      items: [
-        { id: 'benefits', label: 'Plano de benefícios', icon: CreditCard },
-        { id: 'account', label: 'Minha conta', icon: UserCircle },
-      ]
-    }
+  const menuItems = [
+    { id: 'search-number', label: 'Consulta Processo', icon: Search },
+    { id: 'monitor-new', label: 'Monitoramento', icon: LayoutDashboard },
+    { id: 'settings', label: 'Configurações', icon: Settings },
   ];
 
   return (
-    <aside className={cn("w-64 bg-background border-r border-border flex flex-col h-full z-20", className)}>
-      <style>
-        {`
-          .custom-sidebar-scrollbar::-webkit-scrollbar {
-            width: 4px;
-          }
-          .custom-sidebar-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-          }
-          .custom-sidebar-scrollbar::-webkit-scrollbar-thumb {
-            background: hsl(var(--card));
-            border-radius: 10px;
-          }
-          .custom-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: hsl(var(--primary));
-          }
-        `}
-      </style>
-      
-      <div className="p-6 border-b border-border">
-        <div className="flex items-center gap-3 mb-2 justify-start">
-          <div className="bg-primary p-1.5 rounded-lg shrink-0">
-            <Gavel className="w-5 h-5 text-secondary" />
-          </div>
-          <span className="font-bold text-lg text-foreground tracking-tight">JurisClaro</span>
+    <aside className={cn("w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col h-full z-20", className)}>
+      <div className="p-6 flex items-center gap-3">
+        <div className="size-10 rounded-full bg-primary flex items-center justify-center text-deep-indigo shadow-sm shrink-0">
+          <Gavel className="w-6 h-6" />
         </div>
-        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest text-left">Busca de processo com IA</p>
+        <div className="flex flex-col overflow-hidden">
+          <h1 className="text-deep-indigo dark:text-white text-lg font-bold leading-none truncate">JurisClaro</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-[10px] font-medium uppercase tracking-wider mt-1">Legal Monitor</p>
+        </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-4 space-y-8 custom-sidebar-scrollbar">
-        {menuSections.map((section) => (
-          <div key={section.title} className="space-y-2">
-            <h3 className="px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider text-left">
-              {section.title}
-            </h3>
-            <div className="space-y-1">
-              {section.items.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => onViewChange(item.id)}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 justify-start text-left",
-                    activeView === item.id
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  )}
-                >
-                  <item.icon className={cn("w-4 h-4 shrink-0", activeView === item.id ? "text-primary" : "text-muted-foreground")} />
-                  <span className="truncate">{item.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
+      <nav className="flex-1 px-4 py-4 space-y-2">
+        {menuItems.map((item) => {
+          const isActive = activeView === item.id || (item.id === 'monitor-new' && activeView === 'search-person');
+          return (
+            <button
+              key={item.id}
+              onClick={() => onViewChange(item.id)}
+              className={cn(
+                "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
+                isActive
+                  ? "bg-primary/10 text-primary font-bold"
+                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold"
+              )}
+            >
+              <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "group-hover:text-primary")} />
+              <span className="text-sm">{item.label}</span>
+            </button>
+          );
+        })}
       </nav>
 
-      <div className="p-4 border-t border-border">
-        <div className="bg-secondary/50 rounded-xl p-3 border border-border text-left">
-          <p className="text-[10px] text-muted-foreground mb-1">Logado como</p>
-          <p className="text-xs font-medium text-slate-300 truncate">usuario@exemplo.com</p>
+      <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+          <div className="size-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden shrink-0">
+            <img 
+              className="w-full h-full object-cover" 
+              alt="Dr. Ricardo Silva" 
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSoxmRQwHLt4PneqWjzvwTOR-eo1bBYTs9fkB0WlvHUj03hnQjlbEF9Dw8S-bib91YxoEljPY-dZUk0KQYbXpLjVKZD8X6gLf_MwbGzsA8A8sU7_yJfBNzG-jGJwVdyGCa0dKxxCH9sSGsqSJk1yKSkwhkQS_Hhvw9YrWiigkMpZDqNX21mapBaq8u2yL6RzFeEuz7RwUqU_Lqj8d8YOq1ns9FoP8BG5B2lM0-wnWqHQ52JSuy2nEo5NXC-NRcvAYmGbaqYbLj-XHU"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-deep-indigo dark:text-white truncate">Dr. Ricardo Silva</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-medium">OAB/SP 123.456</p>
+          </div>
         </div>
       </div>
     </aside>
