@@ -35,7 +35,7 @@ const MyProcesses: React.FC = () => {
   // Se estiver carregando a autenticação, mostra um spinner centralizado simples
   if (authLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-background dark:bg-background-dark">
+      <div className="flex-1 flex items-center justify-center bg-background dark:bg-background-dark min-h-[400px]">
         <Loader2 className="w-12 h-12 text-primary animate-spin" />
       </div>
     );
@@ -44,22 +44,20 @@ const MyProcesses: React.FC = () => {
   // Se não estiver logado, mostra tela vazia com animação
   if (!user) {
     return (
-      <div className="flex-1 bg-background dark:bg-background-dark overflow-y-auto">
-        <div className="min-h-full flex flex-col items-center justify-center p-8">
-          <EmptyStateAnimation 
-            title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
-            description="Faça login para gerenciar seus processos monitorados e acompanhar cada movimentação em tempo real."
-            buttonText="Começar"
-            onButtonClick={() => navigate('/monitoramento')}
-          />
-        </div>
+      <div className="flex-1 bg-background dark:bg-background-dark p-8">
+        <EmptyStateAnimation 
+          title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
+          description="Faça login para gerenciar seus processos monitorados e acompanhar cada movimentação em tempo real."
+          buttonText="Começar"
+          onButtonClick={() => navigate('/monitoramento')}
+        />
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-background dark:bg-background-dark overflow-y-auto">
-      <div className="p-8 max-w-6xl mx-auto w-full">
+    <div className="flex-1 bg-background dark:bg-background-dark p-8">
+      <div className="max-w-6xl mx-auto w-full">
         {/* Title Section */}
         <div className="mb-10">
           <h2 className="text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Meus Processos</h2>
@@ -141,14 +139,12 @@ const MyProcesses: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="py-10">
-            <EmptyStateAnimation 
-              title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
-              description="Você ainda não tem processos em sua lista de monitoramento."
-              buttonText="Começar"
-              onButtonClick={() => navigate('/monitoramento')}
-            />
-          </div>
+          <EmptyStateAnimation 
+            title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
+            description="Você ainda não tem processos em sua lista de monitoramento."
+            buttonText="Começar"
+            onButtonClick={() => navigate('/monitoramento')}
+          />
         )}
       </div>
     </div>

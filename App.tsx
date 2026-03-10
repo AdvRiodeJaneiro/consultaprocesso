@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useRef, useEffect } from 'react';
@@ -164,7 +163,7 @@ function AppContent() {
             onWhatsappClick={() => setIsWhatsappModalOpen(true)}
           />
         )}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
           <Routes>
             <Route path="/" element={<RenderConsulta />} />
             <Route path="/auth" element={<Auth />} />
