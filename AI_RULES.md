@@ -13,8 +13,12 @@ Este documento define o stack tecnológico da aplicação "Consulta Processo IA"
 7.  **Gerenciamento de Classes:** `clsx` e `tailwind-merge` (expostos via `cn` utility) para manipulação de classes CSS.
 8.  **Visualização 3D:** Three.js para efeitos visuais de fundo (ex: `DottedSurface`).
 9.  **Ícones:** Lucide-react.
+10. **Backend/Database:** Supabase (Auth, DB, Edge Functions).
 
-## 2. Regras de Uso de Bibliotecas
+## 2. Documentação Externa
+- **API Escavador:** Consultar sempre o arquivo `docs/escavador-api.txt` para detalhes de endpoints, parâmetros de busca, monitoramento e callbacks.
+
+## 3. Regras de Uso de Bibliotecas
 
 | Biblioteca | Uso Mandatório | Regras Específicas |
 | :--- | :--- | :--- |
@@ -26,7 +30,7 @@ Este documento define o stack tecnológico da aplicação "Consulta Processo IA"
 | **`lucide-react`** | Ícones | Use esta biblioteca para todos os ícones da aplicação. |
 | **React Router** | Navegação | Será o padrão para roteamento, caso necessário. |
 
-## 3. Estrutura de Arquivos
+## 4. Estrutura de Arquivos
 
 -   **`src/pages/`**: Telas principais da aplicação.
 -   **`src/components/`**: Componentes de aplicação específicos (ex: `ChatBubble`).
