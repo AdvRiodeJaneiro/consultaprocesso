@@ -59,17 +59,6 @@ const ProcessTimeline: React.FC = () => {
               <h2 className="text-xl font-black text-deep-indigo dark:text-white leading-none">{cnj}</h2>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-             <a 
-               href={`https://www.google.com/search?q=processo+${cnj}`} 
-               target="_blank" 
-               rel="noreferrer"
-               className="flex items-center gap-2 text-slate-500 hover:text-primary text-xs font-bold px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 transition-all"
-             >
-                <ExternalLink size={14} />
-                <span>Ver no Tribunal</span>
-             </a>
-          </div>
         </div>
       </div>
 

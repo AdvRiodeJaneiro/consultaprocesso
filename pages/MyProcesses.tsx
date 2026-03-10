@@ -157,7 +157,7 @@ const MyProcesses: React.FC = () => {
                           </div>
                           <div>
                              <p className="text-[10px] font-black text-primary uppercase tracking-widest">Em Monitoramento</p>
-                             <p className="text-[9px] text-slate-400 font-medium">Sincronizando com tribunais via Escavador...</p>
+                             <p className="text-xs text-slate-400 font-medium">Fique tranquilo. Estamos monitorando esse processo e as movimentações vão ser enviadas no seu Whatsapp.</p>
                           </div>
                        </div>
                        
