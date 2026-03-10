@@ -19,7 +19,6 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Overlay */}
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -28,14 +27,12 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
             className="absolute inset-0 bg-[#1E1B4B]/40 backdrop-blur-sm"
           />
           
-          {/* Modal Content */}
           <motion.div 
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             className="bg-white rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden relative z-10"
           >
-            {/* Close Button */}
             <button 
               onClick={onClose}
               className="absolute top-6 right-6 p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-all"
@@ -43,11 +40,8 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
               <X size={20} />
             </button>
 
-            {/* ANIMATION AREA */}
             <div className="bg-gradient-to-b from-gray-50 to-white pt-12 pb-8 px-8 flex justify-center items-center overflow-hidden">
               <div className="relative w-full max-w-[280px] h-40 flex items-center justify-between">
-                
-                {/* Element 1: Document (Process) */}
                 <motion.div 
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
@@ -57,7 +51,6 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
                   <div className="w-16 h-16 bg-white border-2 border-[#FFCC33] rounded-2xl flex items-center justify-center shadow-lg shadow-yellow-100">
                     <FileText className="text-[#FFCC33]" size={32} />
                   </div>
-                  {/* Pulse effect */}
                   <motion.div 
                     animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
                     transition={{ repeat: Infinity, duration: 2 }}
@@ -65,7 +58,6 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
                   />
                 </motion.div>
 
-                {/* Path of Notification */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full px-16">
                   <div className="h-[2px] w-full border-t-2 border-dashed border-gray-200 relative">
                     <motion.div 
@@ -78,7 +70,6 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
                   </div>
                 </div>
 
-                {/* Element 2: Smartphone */}
                 <motion.div 
                   initial={{ x: 20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
@@ -86,16 +77,12 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
                   className="relative"
                 >
                   <div className="w-14 h-24 bg-[#1E1B4B] rounded-2xl border-[3px] border-[#333] relative overflow-hidden shadow-xl">
-                    {/* Notch */}
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-2 bg-[#333] rounded-b-md" />
-                    
-                    {/* Smartphone Screen Glowing */}
                     <motion.div 
                       animate={{ backgroundColor: ['#1E1B4B', '#2d2a5d', '#1E1B4B'] }}
                       transition={{ repeat: Infinity, duration: 3 }}
                       className="absolute inset-0 flex flex-col items-center justify-center gap-1 p-2"
                     >
-                       {/* WhatsApp Notification Bubble */}
                        <motion.div
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: [0, 1.1, 1], opacity: 1 }}
@@ -116,8 +103,6 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
                        />
                     </motion.div>
                   </div>
-
-                  {/* Floating WhatsApp Icon */}
                   <motion.div 
                     animate={{ y: [0, -5, 0] }}
                     transition={{ repeat: Infinity, duration: 2 }}
@@ -126,11 +111,9 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
                     <MessageCircle size={20} className="text-[#25D366]" fill="#25D366" />
                   </motion.div>
                 </motion.div>
-
               </div>
             </div>
 
-            {/* Text Content */}
             <div className="px-10 pb-10 text-center">
               <h3 className="text-2xl font-bold text-[#1E1B4B] mb-4">
                 Monitore esse processo
@@ -150,7 +133,7 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
                   className="w-full py-4 bg-[#1E1B4B] text-white font-bold rounded-2xl hover:bg-[#2d2a5d] transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 group"
                 >
                   <CheckCircle2 size={20} />
-                  Monitorar Agora
+                  Confirmar e Monitorar Agora
                 </button>
                 <button 
                   onClick={onClose}
