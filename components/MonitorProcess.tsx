@@ -1,10 +1,13 @@
 "use client";
 
-import React from 'react';
-import { AlertCircle, Gavel, Eye, Bell, Search } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { AlertCircle, Gavel, Eye, Bell, Search, History, X } from 'lucide-react';
 import MonitorConfirmModal from './MonitorConfirmModal';
+import LimitModal from './LimitModal';
 import SearchBar from './SearchBar';
 import { useMonitor } from '../hooks/useMonitor';
+import { useSearchLimit } from '../hooks/useSearchLimit';
+import { useSearchHistory } from '../hooks/useSearchHistory';
 
 interface MonitorProcessProps {
   whatsappNumber: string;
@@ -16,8 +19,10 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     query,
     setQuery,
     results,
+    setResults,
     isLoading,
     error,
+    setError,
     isConfirmModalOpen,
     setIsConfirmModalOpen,
     selectedProcess,
@@ -26,6 +31,34 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     handleMonitorClick,
     confirmMonitoring
   } = useMonitor();
+
+  const { isLimitReached, incrementSearch, checkLimitBeforeSearch } = useSearchLimit();
+  const { history, addToHistory, clearHistory } = useSearchHistory();
+  const [showLimitModal, setShowLimitModal] = React.useState(false);
+
+  const onSearchSubmit = async () => {
+    if (!checkLimitBeforeSearch()) {
+      setShowLimitModal(true);
+      return;
+    }
+
+    const success = await handleSearch();
+    // A lógica de sucesso da busca está dentro do handleSearch que altera o state 'results'
+  };
+
+  // Efeito para adicionar ao histórico quando temos resultados novos
+  useEffect(() => {
+    if (results.length > 0 && query.trim()) {
+      addToHistory(query, results);
+      incrementSearch();
+    }
+  }, [results]);
+
+  const handleTagClick = (entry: any) => {
+    setQuery(entry.query);
+    setResults(entry.results);
+    setError(null);
+  };
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background dark:bg-background-dark overflow-y-auto">
@@ -37,14 +70,43 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
         </div>
 
         {/* Search Section */}
-        <SearchBar 
-          value={query}
-          onChange={setQuery}
-          onSearch={handleSearch}
-          isLoading={isLoading}
-          className="mb-10"
-          placeholder="Busque por CPF, CNPJ, Nome ou Número do Processo"
-        />
+        <div className="space-y-4 mb-10">
+            <SearchBar 
+              value={query}
+              onChange={setQuery}
+              onSearch={onSearchSubmit}
+              isLoading={isLoading}
+              placeholder="Busque por CPF, CNPJ, Nome ou Número do Processo"
+            />
+
+            {/* TAGS DE HISTÓRICO */}
+            {history.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 px-2">
+                    <History size={14} className="text-slate-400 mr-1" />
+                    {history.map((entry, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => handleTagClick(entry)}
+                            className={`
+                                flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all
+                                ${query === entry.query 
+                                    ? 'bg-primary text-deep-indigo' 
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}
+                            `}
+                        >
+                            {entry.query}
+                        </button>
+                    ))}
+                    <button 
+                        onClick={clearHistory}
+                        className="text-slate-400 hover:text-red-500 p-1 transition-colors"
+                        title="Limpar Histórico"
+                    >
+                        <X size={14} />
+                    </button>
+                </div>
+            )}
+        </div>
 
         {/* Status Messages */}
         {monitoringSuccess && (
@@ -136,6 +198,11 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
          onClose={() => setIsConfirmModalOpen(false)}
          onConfirm={confirmMonitoring}
          process={selectedProcess}
+      />
+
+      <LimitModal 
+        isOpen={showLimitModal} 
+        onClose={() => setShowLimitModal(false)} 
       />
     </div>
   );

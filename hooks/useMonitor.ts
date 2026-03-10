@@ -19,41 +19,44 @@ export function useMonitor() {
   const [monitoringSuccess, setMonitoringSuccess] = useState(false);
 
   const handleSearch = async () => {
-    if (!query.trim()) return;
+    if (!query.trim()) return false;
     
     setIsLoading(true);
     setError(null);
     setResults([]);
     
     try {
-      // 1. Verificar se a entrada é um número de processo (CNJ)
       const cnjParts = parseCNJ(query);
       
       if (cnjParts) {
-        // Se for um CNJ, buscar diretamente pelo número usando o endpoint de processos
         const formattedCNJ = formatCNJ(cnjParts);
         const data = await fetchProcessData(formattedCNJ);
         
         if (data) {
           setResults([data]);
+          return true;
         } else {
           setError("Processo não encontrado na base de dados do Escavador.");
+          return false;
         }
       } else {
-        // 2. Se não for CNJ, buscar por envolvido (Nome ou CPF/CNPJ)
         const data = await fetchProcessesByInvolved(query);
         if (data && data.items) {
           setResults(data.items);
           if (data.items.length === 0) {
             setError("Nenhum processo encontrado para esta busca.");
+            return false;
           }
+          return true;
         } else {
           setError("Nenhum processo encontrado.");
+          return false;
         }
       }
     } catch (err: any) {
       console.error("Search error:", err);
       setError("Ocorreu um erro ao buscar os processos. Tente novamente.");
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -79,6 +82,7 @@ export function useMonitor() {
     query,
     setQuery,
     results,
+    setResults,
     isLoading,
     error,
     setError,
