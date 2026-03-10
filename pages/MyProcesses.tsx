@@ -44,13 +44,15 @@ const MyProcesses: React.FC = () => {
   // Se não estiver logado, mostra tela vazia com animação
   if (!user) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-background dark:bg-background-dark">
-        <EmptyStateAnimation 
-          title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
-          description="Faça login para gerenciar seus processos monitorados e acompanhar cada movimentação em tempo real."
-          buttonText="Começar"
-          onButtonClick={() => navigate('/monitoramento')}
-        />
+      <div className="flex-1 bg-background dark:bg-background-dark overflow-y-auto">
+        <div className="min-h-full flex flex-col items-center justify-center p-8">
+          <EmptyStateAnimation 
+            title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
+            description="Faça login para gerenciar seus processos monitorados e acompanhar cada movimentação em tempo real."
+            buttonText="Começar"
+            onButtonClick={() => navigate('/monitoramento')}
+          />
+        </div>
       </div>
     );
   }
@@ -139,12 +141,14 @@ const MyProcesses: React.FC = () => {
             ))}
           </div>
         ) : (
-          <EmptyStateAnimation 
-            title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
-            description="Você ainda não tem processos em sua lista de monitoramento."
-            buttonText="Começar"
-            onButtonClick={() => navigate('/monitoramento')}
-          />
+          <div className="py-10">
+            <EmptyStateAnimation 
+              title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
+              description="Você ainda não tem processos em sua lista de monitoramento."
+              buttonText="Começar"
+              onButtonClick={() => navigate('/monitoramento')}
+            />
+          </div>
         )}
       </div>
     </div>
