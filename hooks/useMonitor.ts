@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { EscavadorProcesso } from '../types';
-import { fetchProcessesByInvolved } from '../services/escavadorService';
+import { fetchProcessesByInvolved, fetchProcessData } from '../services/escavadorService';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { parseCNJ, formatCNJ } from '../utils/cnjParser';
 
 export function useMonitor() {
   const [query, setQuery] = useState('');
@@ -25,16 +26,33 @@ export function useMonitor() {
     setResults([]);
     
     try {
-      const data = await fetchProcessesByInvolved(query);
-      if (data && data.items) {
-        setResults(data.items);
-        if (data.items.length === 0) {
-          setError("Nenhum processo encontrado para esta busca.");
+      // 1. Verificar se a entrada é um número de processo (CNJ)
+      const cnjParts = parseCNJ(query);
+      
+      if (cnjParts) {
+        // Se for um CNJ, buscar diretamente pelo número usando o endpoint de processos
+        const formattedCNJ = formatCNJ(cnjParts);
+        const data = await fetchProcessData(formattedCNJ);
+        
+        if (data) {
+          setResults([data]);
+        } else {
+          setError("Processo não encontrado na base de dados do Escavador.");
         }
       } else {
-        setError("Nenhum processo encontrado.");
+        // 2. Se não for CNJ, buscar por envolvido (Nome ou CPF/CNPJ)
+        const data = await fetchProcessesByInvolved(query);
+        if (data && data.items) {
+          setResults(data.items);
+          if (data.items.length === 0) {
+            setError("Nenhum processo encontrado para esta busca.");
+          }
+        } else {
+          setError("Nenhum processo encontrado.");
+        }
       }
     } catch (err: any) {
+      console.error("Search error:", err);
       setError("Ocorreu um erro ao buscar os processos. Tente novamente.");
     } finally {
       setIsLoading(false);

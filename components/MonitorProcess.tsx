@@ -1,9 +1,9 @@
 "use client";
 
 import React from 'react';
-import { Search, Info, AlertCircle, Gavel, Eye, Bell } from 'lucide-react';
-import { Button } from './ui/button';
+import { AlertCircle, Gavel, Eye, Bell, Search } from 'lucide-react';
 import MonitorConfirmModal from './MonitorConfirmModal';
+import SearchBar from './SearchBar';
 import { useMonitor } from '../hooks/useMonitor';
 
 interface MonitorProcessProps {
@@ -37,26 +37,14 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
         </div>
 
         {/* Search Section */}
-        <div className="bg-white dark:bg-slate-900 p-2 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 mb-10 flex flex-col md:flex-row gap-2">
-          <div className="flex-1 flex items-center px-4 gap-3 bg-slate-50 dark:bg-slate-800 rounded-xl h-14 border border-transparent focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 transition-all">
-            <Search className="text-slate-300" size={20} />
-            <input 
-              className="w-full bg-transparent border-none focus:ring-0 text-deep-indigo dark:text-white placeholder:text-slate-400 font-medium outline-none" 
-              placeholder="Digite o número do processo (ex: 0000000-00.0000.0.00.0000)" 
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            />
-          </div>
-          <button 
-            onClick={handleSearch}
-            disabled={isLoading}
-            className="bg-primary hover:bg-primary/90 text-deep-indigo px-8 py-3 rounded-xl font-bold transition-all h-14 whitespace-nowrap shadow-md shadow-primary/20 disabled:opacity-50"
-          >
-            {isLoading ? 'Buscando...' : 'Buscar Processo'}
-          </button>
-        </div>
+        <SearchBar 
+          value={query}
+          onChange={setQuery}
+          onSearch={handleSearch}
+          isLoading={isLoading}
+          className="mb-10"
+          placeholder="Busque por CPF, CNPJ, Nome ou Número do Processo"
+        />
 
         {/* Status Messages */}
         {monitoringSuccess && (
@@ -75,7 +63,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
         {(results.length > 0 || isLoading) && (
           <div className="mb-6 flex items-center justify-between">
             <h3 className="text-xl font-bold text-deep-indigo dark:text-white">
-              {isLoading ? 'Buscando...' : 'Resultados Recentes'}
+              {isLoading ? 'Buscando...' : 'Resultados Encontrados'}
             </h3>
             {!isLoading && results.length > 0 && (
               <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-xs font-bold text-slate-500 uppercase tracking-tighter">
