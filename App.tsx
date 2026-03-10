@@ -5,10 +5,12 @@ import { Message, EscavadorProcesso } from './types';
 import { ChatBubble } from './components/ChatBubble';
 import WelcomeScreen from './components/WelcomeScreen';
 import Sidebar from './components/Sidebar';
+import MonitorProcess from './components/MonitorProcess';
 import { parseCNJ, formatCNJ } from './utils/cnjParser';
 import { fetchProcessData } from './services/escavadorService';
 import { generateLegalAnalysis } from './services/geminiService';
 import { GlowingButton } from './components/GlowingButton';
+import { Search, Eye } from 'lucide-react';
 
 export default function App() {
   const [activeView, setActiveView] = useState('search-number');
@@ -20,6 +22,7 @@ export default function App() {
   
   const [activeProcess, setActiveProcess] = useState<EscavadorProcesso | null>(null);
   const [debugInfo, setDebugInfo] = useState<{type: 'error' | 'info', content: string} | null>(null);
+  const [whatsappNumber, setWhatsappNumber] = useState('');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -216,7 +219,17 @@ export default function App() {
   };
 
   const renderContent = () => {
+    if (activeView === 'monitor-new' || activeView === 'search-person') {
+      return (
+        <MonitorProcess
+          whatsappNumber={whatsappNumber}
+          onUpdateWhatsapp={setWhatsappNumber}
+        />
+      );
+    }
+
     if (activeView === 'search-number') {
+
       if (showWelcome) {
         return <WelcomeScreen onSubmit={handleWelcomeSubmit} />;
       }

@@ -72,3 +72,8 @@ export interface EscavadorProcesso {
 
 // The API returns the process object directly
 export type EscavadorResponse = EscavadorProcesso;
+
+export interface EscavadorInvolvedSearchResponse {
+  total_encontrados: number;
+  items: EscavadorProcesso[];
+}
