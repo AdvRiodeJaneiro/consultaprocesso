@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { AlertCircle, Gavel, Eye, Bell, Search, History, X } from 'lucide-react';
+import { AlertCircle, Gavel, Eye, Bell, Search, RefreshCcw, X } from 'lucide-react';
 import MonitorConfirmModal from './MonitorConfirmModal';
 import LimitModal from './LimitModal';
 import SearchBar from './SearchBar';
@@ -32,7 +32,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     confirmMonitoring
   } = useMonitor();
 
-  const { isLimitReached, incrementSearch, checkLimitBeforeSearch } = useSearchLimit();
+  const { isLimitReached, incrementSearch, checkLimitBeforeSearch, resetLimit } = useSearchLimit();
   const { history, addToHistory, clearHistory } = useSearchHistory();
   const [showLimitModal, setShowLimitModal] = React.useState(false);
 
@@ -43,10 +43,8 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     }
 
     const success = await handleSearch();
-    // A lógica de sucesso da busca está dentro do handleSearch que altera o state 'results'
   };
 
-  // Efeito para adicionar ao histórico quando temos resultados novos
   useEffect(() => {
     if (results.length > 0 && query.trim()) {
       addToHistory(query, results);
@@ -64,9 +62,24 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     <div className="flex-1 flex flex-col h-full bg-background dark:bg-background-dark overflow-y-auto">
       <div className="p-8 max-w-6xl mx-auto w-full">
         {/* Title Section */}
-        <div className="mb-10">
-          <h2 className="text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Monitoramento de Processo</h2>
-          <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">Acompanhe seus processos em tempo real com notificações automáticas.</p>
+        <div className="mb-10 flex justify-between items-start">
+          <div>
+            <h2 className="text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Monitoramento de Processo</h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">Acompanhe seus processos em tempo real com notificações automáticas.</p>
+          </div>
+          
+          {/* Botão Temporário de Reset */}
+          <button 
+            onClick={() => {
+              resetLimit();
+              window.location.reload();
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-[10px] font-bold uppercase hover:bg-red-200 transition-colors"
+            title="Botão temporário para testes"
+          >
+            <RefreshCcw size={12} />
+            Resetar Limite
+          </button>
         </div>
 
         {/* Search Section */}
@@ -82,7 +95,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
             {/* TAGS DE HISTÓRICO */}
             {history.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 px-2">
-                    <History size={14} className="text-slate-400 mr-1" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-1">Histórico de Buscas:</span>
                     {history.map((entry, idx) => (
                         <button
                             key={idx}
