@@ -15,21 +15,7 @@ const MyProcesses: React.FC = () => {
   const [search, setSearch] = useState('');
   const [isCancelling, setIsCancelling] = useState<string | null>(null);
   const [showDebug, setShowDebug] = useState<string | null>(null);
-  const [newProcessIds, setNewProcessIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
-
-  // Detectar processos recém-adicionados (últimos 5 minutos)
-  useEffect(() => {
-    const now = new Date().getTime();
-    const newIds = new Set<string>();
-    processes.forEach(p => {
-      const createdAt = new Date(p.created_at).getTime();
-      if (now - createdAt < 300000) { // 5 minutos
-        newIds.add(p.id);
-      }
-    });
-    setNewProcessIds(newIds);
-  }, [processes]);
 
   const filteredProcesses = processes.filter(p =>
     p.process_number.includes(search)
@@ -108,26 +94,19 @@ const MyProcesses: React.FC = () => {
         ) : filteredProcesses.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
             {filteredProcesses.map((proc) => {
-              const isNew = newProcessIds.has(proc.id);
+              const isPendente = proc.status === 'PENDENTE';
               return (
                 <motion.div 
                   layout
                   key={proc.id} 
-                  className={`bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:scale-[1.01] transition-all p-6 flex flex-col justify-between group overflow-hidden relative ${isNew ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-slate-950' : ''}`}
+                  className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:scale-[1.01] transition-all p-6 flex flex-col justify-between group overflow-hidden relative"
                 >
                   
                   {/* Status Badge */}
-                  <div className="absolute top-0 right-0 px-4 py-1.5 bg-primary/10 text-primary text-[10px] font-black rounded-bl-2xl uppercase flex items-center gap-1.5">
-                    <Activity size={10} className="animate-pulse" />
-                    {proc.status}
+                  <div className={`absolute top-0 right-0 px-4 py-1.5 text-[10px] font-black rounded-bl-2xl uppercase flex items-center gap-1.5 ${isPendente ? 'bg-green-500/10 text-green-500' : 'bg-primary/10 text-primary'}`}>
+                    <Activity size={10} className={isPendente ? 'animate-pulse' : ''} />
+                    {isPendente ? 'NOVO' : proc.status}
                   </div>
-
-                  {/* NOVO Label */}
-                  {isNew && (
-                    <div className="absolute top-12 -right-12 rotate-45 bg-green-500 text-white text-[10px] font-black px-12 py-1 shadow-lg z-10">
-                      NOVO
-                    </div>
-                  )}
 
                   <div className="mb-6">
                     <div className="flex justify-between items-start mb-4">
