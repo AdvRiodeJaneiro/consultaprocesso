@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Search, Info, CheckCircle2, AlertCircle, Phone, Bell, ArrowRight, Gavel, Users, Calendar } from 'lucide-react';
+import React from 'react';
+import { Search, Info, CheckCircle2, AlertCircle, Phone, Bell, ArrowRight, Gavel, Calendar } from 'lucide-react';
 import { Button } from './ui/button';
-import { fetchProcessesByInvolved } from '../services/escavadorService';
-import { EscavadorProcesso } from '../types';
 import WhatsappModal from './WhatsappModal';
 import MonitorConfirmModal from './MonitorConfirmModal';
+import { useMonitor } from '../hooks/useMonitor';
 
 interface MonitorProcessProps {
   whatsappNumber: string;
@@ -14,51 +13,23 @@ interface MonitorProcessProps {
 }
 
 const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdateWhatsapp }) => {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<EscavadorProcesso[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [selectedProcess, setSelectedProcess] = useState<EscavadorProcesso | null>(null);
-  const [monitoringSuccess, setMonitoringSuccess] = useState(false);
-
-  const handleSearch = async () => {
-    if (!query.trim()) return;
-    
-    setIsLoading(true);
-    setError(null);
-    setResults([]);
-    
-    try {
-      const data = await fetchProcessesByInvolved(query);
-      if (data && data.items) {
-        setResults(data.items);
-        if (data.items.length === 0) {
-          setError("Nenhum processo encontrado para esta busca.");
-        }
-      } else {
-        setError("Nenhum processo encontrado.");
-      }
-    } catch (err: any) {
-      setError("Ocorreu um erro ao buscar os processos. Tente novamente.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleMonitorClick = (process: EscavadorProcesso) => {
-    setSelectedProcess(process);
-    setIsConfirmModalOpen(true);
-  };
-
-  const confirmMonitoring = () => {
-    setIsConfirmModalOpen(false);
-    // Em uma aplicação real, aqui chamaríamos uma API para salvar o monitoramento
-    setMonitoringSuccess(true);
-    setTimeout(() => setMonitoringSuccess(false), 5000);
-  };
+  const {
+    query,
+    setQuery,
+    results,
+    isLoading,
+    error,
+    setError,
+    isWhatsappModalOpen,
+    setIsWhatsappModalOpen,
+    isConfirmModalOpen,
+    setIsConfirmModalOpen,
+    selectedProcess,
+    monitoringSuccess,
+    handleSearch,
+    handleMonitorClick,
+    confirmMonitoring
+  } = useMonitor();
 
   return (
     <div className="flex flex-col h-full bg-slate-900 overflow-hidden">
@@ -226,7 +197,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
                                <Button 
                                   onClick={() => handleMonitorClick(proc)}
                                   className="w-full md:w-auto bg-slate-800 hover:bg-[#dfa968] hover:text-slate-900 text-slate-200 font-bold rounded-2xl px-8 py-8 transition-all group-hover:shadow-2xl group-hover:shadow-[#dfa968]/10 border border-slate-700/50 hover:border-[#dfa968]/50"
-                               >
+                                >
                                   <div className="flex items-center gap-3">
                                      <span className="text-lg">Quero monitorar</span>
                                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
