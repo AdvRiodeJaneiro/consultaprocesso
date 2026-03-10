@@ -7,19 +7,21 @@ import {
   Settings,
   Gavel
 } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
 
 interface SidebarProps {
-  activeView: string;
-  onViewChange: (view: string) => void;
   className?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, className }) => {
+const Sidebar: React.FC<SidebarProps> = ({ className }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const menuItems = [
-    { id: 'search-number', label: 'Consulta Processo', icon: Search },
-    { id: 'monitor-new', label: 'Monitoramento', icon: LayoutDashboard },
-    { id: 'settings', label: 'Configurações', icon: Settings },
+    { id: 'search-number', label: 'Consulta Processo', icon: Search, path: '/' },
+    { id: 'monitor-new', label: 'Monitoramento', icon: LayoutDashboard, path: '/monitoramento' },
+    { id: 'settings', label: 'Configurações', icon: Settings, path: '/configuracoes' },
   ];
 
   return (
@@ -36,11 +38,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, className }
 
       <nav className="flex-1 px-4 py-4 space-y-2">
         {menuItems.map((item) => {
-          const isActive = activeView === item.id || (item.id === 'monitor-new' && activeView === 'search-person');
+          const isActive = location.pathname === item.path;
           return (
             <button
               key={item.id}
-              onClick={() => onViewChange(item.id)}
+              onClick={() => navigate(item.path)}
               className={cn(
                 "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
                 isActive
