@@ -1,3 +1,4 @@
+"use client";
 
 import React from 'react';
 import { Search, Gavel, Calendar, Trash2, ChevronRight, BellOff, Loader2 } from 'lucide-react';
@@ -5,6 +6,7 @@ import { useMyProcesses, MonitoredProcess } from '../hooks/useMyProcesses';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { EmptyStateAnimation } from '../components/EmptyStateAnimation';
 
 const MyProcesses: React.FC = () => {
   const { processes, loading, cancelMonitoring } = useMyProcesses();
@@ -39,25 +41,16 @@ const MyProcesses: React.FC = () => {
     );
   }
 
-  // Se não estiver logado, mostra tela vazia com mensagem específica
+  // Se não estiver logado, mostra tela vazia com animação
   if (!user) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-background dark:bg-background-dark">
-        <div className="max-w-md space-y-6">
-          <div className="size-20 bg-primary/10 rounded-full flex items-center justify-center text-primary mx-auto shadow-xl shadow-primary/5">
-            <Gavel size={40} />
-          </div>
-          <h3 className="text-2xl font-black text-deep-indigo dark:text-white">Monitore o andamento do seu processo e receba a atualização no seu Whatsapp.</h3>
-          <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-            Faça login para gerenciar seus processos monitorados e acompanhar cada movimentação em tempo real.
-          </p>
-          <button
-            onClick={() => navigate('/monitoramento')}
-            className="bg-primary text-deep-indigo px-10 py-4 rounded-2xl font-black text-lg shadow-lg shadow-primary/20 hover:scale-105 transition-all"
-          >
-            Começar
-          </button>
-        </div>
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-background dark:bg-background-dark">
+        <EmptyStateAnimation 
+          title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
+          description="Faça login para gerenciar seus processos monitorados e acompanhar cada movimentação em tempo real."
+          buttonText="Começar"
+          onButtonClick={() => navigate('/monitoramento')}
+        />
       </div>
     );
   }
@@ -86,7 +79,6 @@ const MyProcesses: React.FC = () => {
         </div>
 
         {loading ? (
-
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="w-12 h-12 text-primary animate-spin" />
             <p className="mt-4 text-slate-500 font-medium">Carregando seus processos...</p>
@@ -147,21 +139,13 @@ const MyProcesses: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="size-20 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6 shadow-inner">
-              <Gavel size={40} className="opacity-20" />
-            </div>
-            <h3 className="text-2xl font-black text-deep-indigo dark:text-white">Monitore o andamento do seu processo e receba a atualização no seu Whatsapp.</h3>
-            <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-sm font-medium leading-relaxed">Você ainda não tem processos em sua lista de monitoramento.</p>
-            <button
-              onClick={() => navigate('/monitoramento')}
-              className="mt-8 bg-primary text-deep-indigo px-10 py-4 rounded-2xl font-black text-lg shadow-lg shadow-primary/20 hover:scale-105 transition-all"
-            >
-              Começar
-            </button>
-          </div>
+          <EmptyStateAnimation 
+            title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
+            description="Você ainda não tem processos em sua lista de monitoramento."
+            buttonText="Começar"
+            onButtonClick={() => navigate('/monitoramento')}
+          />
         )}
-
       </div>
     </div>
   );
