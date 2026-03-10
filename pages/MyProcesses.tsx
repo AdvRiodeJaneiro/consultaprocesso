@@ -1,19 +1,35 @@
 "use client";
 
-import React from 'react';
-import { Search, Gavel, Calendar, Trash2, ChevronRight, BellOff, Loader2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Search, Gavel, Calendar, Trash2, ChevronRight, BellOff, Loader2, Bug, Scan, Activity } from 'lucide-react';
 import { useMyProcesses, MonitoredProcess } from '../hooks/useMyProcesses';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { EmptyStateAnimation } from '../components/EmptyStateAnimation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const MyProcesses: React.FC = () => {
   const { processes, loading, cancelMonitoring } = useMyProcesses();
   const { user, loading: authLoading } = useAuth();
-  const [search, setSearch] = React.useState('');
-  const [isCancelling, setIsCancelling] = React.useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [isCancelling, setIsCancelling] = useState<string | null>(null);
+  const [showDebug, setShowDebug] = useState<string | null>(null);
+  const [newProcessIds, setNewProcessIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
+
+  // Detectar processos recém-adicionados (últimos 5 minutos)
+  useEffect(() => {
+    const now = new Date().getTime();
+    const newIds = new Set<string>();
+    processes.forEach(p => {
+      const createdAt = new Date(p.created_at).getTime();
+      if (now - createdAt < 300000) { // 5 minutos
+        newIds.add(p.id);
+      }
+    });
+    setNewProcessIds(newIds);
+  }, [processes]);
 
   const filteredProcesses = processes.filter(p =>
     p.process_number.includes(search)
@@ -32,16 +48,8 @@ const MyProcesses: React.FC = () => {
     }
   };
 
-  // Se estiver carregando a autenticação, mostra um spinner centralizado simples
-  if (authLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-background dark:bg-background-dark min-h-[400px]">
-        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-      </div>
-    );
-  }
+  if (authLoading) return <div className="flex-1 flex items-center justify-center h-full"><Loader2 className="animate-spin text-primary" /></div>;
 
-  // Se não estiver logado, mostra tela vazia com animação
   if (!user) {
     return (
       <div className="flex-1 bg-background dark:bg-background-dark p-8">
@@ -56,7 +64,7 @@ const MyProcesses: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 bg-background dark:bg-background-dark p-8">
+    <div className="flex-1 bg-background dark:bg-background-dark p-8 overflow-y-auto scrollbar-hide">
       <div className="max-w-6xl mx-auto w-full">
         {/* Title Section */}
         <div className="mb-10">
@@ -64,7 +72,7 @@ const MyProcesses: React.FC = () => {
           <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">Gerencie os processos que você está monitorando no momento.</p>
         </div>
 
-        {/* Search Bar - Match MonitorProcess UI */}
+        {/* Search Bar */}
         <div className="bg-white dark:bg-slate-900 p-2 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 mb-10 flex flex-col md:flex-row gap-2">
           <div className="flex-1 flex items-center px-4 gap-3 bg-slate-50 dark:bg-slate-800 rounded-xl h-14 border border-transparent focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 transition-all">
             <Search className="text-slate-300" size={20} />
@@ -85,58 +93,121 @@ const MyProcesses: React.FC = () => {
           </div>
         ) : filteredProcesses.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
-            {filteredProcesses.map((proc) => (
-              <div key={proc.id} className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:scale-[1.01] transition-all p-6 flex flex-col justify-between group overflow-hidden relative">
-                
-                {/* Status Badge */}
-                <div className="absolute top-0 right-0 px-4 py-1.5 bg-primary/10 text-primary text-[10px] font-black rounded-bl-2xl uppercase">
-                  {proc.status}
-                </div>
-
-                <div className="mb-6">
-                  <div className="flex gap-4 mb-4">
-                    <div className="size-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-primary shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
-                      <Gavel size={24} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Número CNJ</p>
-                      <h4 className="text-lg font-bold text-deep-indigo dark:text-white truncate">{proc.process_number}</h4>
-                    </div>
+            {filteredProcesses.map((proc) => {
+              const isNew = newProcessIds.has(proc.id);
+              return (
+                <motion.div 
+                  layout
+                  key={proc.id} 
+                  className={`bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:scale-[1.01] transition-all p-6 flex flex-col justify-between group overflow-hidden relative ${isNew ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-slate-950' : ''}`}
+                >
+                  
+                  {/* Status Badge */}
+                  <div className="absolute top-0 right-0 px-4 py-1.5 bg-primary/10 text-primary text-[10px] font-black rounded-bl-2xl uppercase flex items-center gap-1.5">
+                    <Activity size={10} className="animate-pulse" />
+                    {proc.status}
                   </div>
 
-                  {/* Highlight Section: Last Movement */}
-                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-700/50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Calendar size={14} className="text-primary" />
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Última Movimentação</span>
-                      <span className="text-[10px] font-bold text-primary ml-auto">{proc.last_movement_date || 'Aguardando atualização'}</span>
+                  {/* NOVO Label */}
+                  {isNew && (
+                    <div className="absolute top-12 -right-12 rotate-45 bg-green-500 text-white text-[10px] font-black px-12 py-1 shadow-lg z-10">
+                      NOVO
                     </div>
-                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed">
-                      {proc.last_movement_summary || 'O robô está verificando o tribunal. Você será avisado assim que surgir uma novidade.'}
-                    </p>
+                  )}
+
+                  <div className="mb-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex gap-4">
+                        <div className="size-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-primary shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                          <Gavel size={24} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Número CNJ</p>
+                          <h4 className="text-lg font-bold text-deep-indigo dark:text-white truncate">{proc.process_number}</h4>
+                        </div>
+                      </div>
+                      
+                      <button 
+                        onClick={() => setShowDebug(showDebug === proc.id ? null : proc.id)}
+                        className="p-2 text-slate-300 hover:text-primary transition-colors"
+                      >
+                        <Bug size={16} />
+                      </button>
+                    </div>
+
+                    {/* Scanner Animation Section */}
+                    <div className="mb-4 bg-slate-900 rounded-2xl p-4 border border-slate-800 relative overflow-hidden group/scanner">
+                       <div className="flex items-center gap-3 relative z-10">
+                          <div className="size-8 bg-primary/20 rounded-lg flex items-center justify-center text-primary">
+                             <Scan size={18} className="animate-pulse" />
+                          </div>
+                          <div>
+                             <p className="text-[10px] font-black text-primary uppercase tracking-widest">Em Monitoramento</p>
+                             <p className="text-[9px] text-slate-400 font-medium">Sincronizando com tribunais via Escavador...</p>
+                          </div>
+                       </div>
+                       
+                       {/* Scanner Line Effect */}
+                       <motion.div 
+                         animate={{ left: ['-10%', '110%'] }}
+                         transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                         className="absolute top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-primary/50 to-transparent shadow-[0_0_15px_rgba(223,184,42,0.5)] z-0"
+                       />
+                    </div>
+
+                    {/* Highlight Section: Last Movement */}
+                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-700/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Calendar size={14} className="text-primary" />
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Última Movimentação</span>
+                        <span className="text-[10px] font-bold text-primary ml-auto">{proc.last_movement_date || 'Aguardando atualização'}</span>
+                      </div>
+                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                        {proc.last_movement_summary || 'O robô está verificando o tribunal. Você será avisado assim que surgir uma novidade.'}
+                      </p>
+                    </div>
+
+                    {/* Debug UI Area */}
+                    <AnimatePresence>
+                      {showDebug === proc.id && (
+                        <motion.div 
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="mt-4 overflow-hidden"
+                        >
+                          <div className="bg-slate-950 rounded-xl p-4 font-mono text-[10px] text-green-400 border border-slate-800">
+                             <p>[{new Date(proc.created_at).toLocaleTimeString()}] MONITORING_STARTED</p>
+                             <p>[ESC_ID] {proc.escavador_monitoring_id}</p>
+                             <p>[WA_TARGET] {proc.whatsapp_number}</p>
+                             <p className="text-yellow-400 mt-2">DICA: Verifique o console global de debug (ícone inferior direito) para ver os logs de persistência.</p>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                </div>
 
-                <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-50 dark:border-slate-800">
-                  <button 
-                    onClick={() => handleCancel(proc)}
-                    disabled={isCancelling === proc.id}
-                    className="flex items-center gap-2 text-slate-400 hover:text-red-500 transition-colors px-3 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 text-xs font-bold"
-                  >
-                    {isCancelling === proc.id ? <Loader2 size={16} className="animate-spin" /> : <BellOff size={16} />}
-                    <span>Cancelar Monitoramento</span>
-                  </button>
+                  <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-50 dark:border-slate-800">
+                    <button 
+                      onClick={() => handleCancel(proc)}
+                      disabled={isCancelling === proc.id}
+                      className="flex items-center gap-2 text-slate-400 hover:text-red-500 transition-colors px-3 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 text-xs font-bold"
+                    >
+                      {isCancelling === proc.id ? <Loader2 size={16} className="animate-spin" /> : <BellOff size={16} />}
+                      <span>Cancelar</span>
+                    </button>
 
-                  <button 
-                    onClick={() => navigate(`/processo/${proc.process_number}`)}
-                    className="flex items-center gap-2 bg-primary text-deep-indigo px-5 py-2.5 rounded-xl text-sm font-black shadow-lg shadow-primary/20 hover:scale-105 transition-all"
-                  >
-                    <span>Veja o andamento</span>
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
+                    <button 
+                      onClick={() => navigate(`/processo/${proc.process_number}`)}
+                      className="flex items-center gap-2 bg-primary text-deep-indigo px-5 py-2.5 rounded-xl text-sm font-black shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+                    >
+                      <span>Detalhes</span>
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         ) : (
           <EmptyStateAnimation 

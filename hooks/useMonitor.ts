@@ -19,34 +19,47 @@ export function useMonitor() {
   const [selectedProcess, setSelectedProcess] = useState<EscavadorProcesso | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  const logDebug = (message: string, type: 'info' | 'error' | 'success' = 'info', data?: any) => {
+    if ((window as any).addDebugLog) {
+      (window as any).addDebugLog({ message, type, data });
+    }
+  };
+
   const handleSearch = async () => {
     if (!query.trim()) return false;
     setIsLoading(true);
     setError(null);
     setResults([]);
+    logDebug(`Iniciando busca para: ${query}`);
     
     try {
       const cnjParts = parseCNJ(query);
       if (cnjParts) {
         const formattedCNJ = formatCNJ(cnjParts);
+        logDebug(`CNJ Detectado: ${formattedCNJ}`);
         const data = await fetchProcessData(formattedCNJ);
         if (data) {
+          logDebug(`Processo encontrado!`, 'success', data);
           setResults([data]);
           return true;
         } else {
+          logDebug(`Processo não encontrado no Escavador`, 'error');
           setError("Processo não encontrado no Escavador.");
           return false;
         }
       } else {
+        logDebug(`Busca por Envolvido iniciada...`);
         const data = await fetchProcessesByInvolved(query);
         if (data && data.items) {
+          logDebug(`Busca finalizada: ${data.items.length} resultados`, 'success');
           setResults(data.items);
           if (data.items.length === 0) setError("Nenhum processo encontrado.");
           return data.items.length > 0;
         }
         return false;
       }
-    } catch (err) {
+    } catch (err: any) {
+      logDebug(`Erro na busca: ${err.message}`, 'error', err);
       setError("Erro na busca técnica.");
       return false;
     } finally {
@@ -62,43 +75,46 @@ export function useMonitor() {
 
     setIsSaving(true);
     const loadingToast = toast.loading('Iniciando monitoramento...');
+    logDebug(`Iniciando fluxo de persistência no Supabase...`);
 
     try {
       const mockEscavadorId = Math.floor(Math.random() * 1000000);
-      
-      // WhatsApp é obrigatório na tabela, se não tiver no perfil, usamos um placeholder
       const waNumber = profile?.whatsapp || "Não Informado";
+
+      const payload = {
+        user_id: user.id,
+        escavador_monitoring_id: mockEscavadorId,
+        process_number: selectedProcess.numero_cnj,
+        whatsapp_number: waNumber,
+        status: 'PENDENTE',
+        last_movement_summary: 'Aguardando sincronização com o tribunal...'
+      };
+
+      logDebug(`Payload de inserção preparado`, 'info', payload);
 
       const { data, error: dbError } = await supabase
         .from('monitored_processes')
-        .insert([{
-          user_id: user.id,
-          escavador_monitoring_id: mockEscavadorId,
-          process_number: selectedProcess.numero_cnj,
-          whatsapp_number: waNumber,
-          status: 'PENDENTE',
-          last_movement_summary: 'Aguardando sincronização com o tribunal...'
-        }])
+        .insert([payload])
         .select();
 
       if (dbError) {
-        console.error("Erro Supabase:", dbError);
+        logDebug(`ERRO SUPABASE: ${dbError.message}`, 'error', dbError);
         throw new Error(dbError.message);
       }
 
+      logDebug(`Persistência concluída com sucesso!`, 'success', data);
       toast.dismiss(loadingToast);
       toast.success('Monitoramento iniciado com sucesso!');
       
       setIsConfirmModalOpen(false);
       
-      // Pequeno delay para garantir que o toast apareça antes de mudar de página
       setTimeout(() => {
         navigate('/meus-processos');
       }, 500);
 
     } catch (err: any) {
       toast.dismiss(loadingToast);
-      console.error("Erro ao salvar:", err);
+      logDebug(`Falha crítica ao salvar: ${err.message}`, 'error', err);
       toast.error('Erro ao salvar: ' + (err.message || 'Erro desconhecido'));
     } finally {
       setIsSaving(false);

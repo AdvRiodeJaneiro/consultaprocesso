@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { ChatBubble } from './components/ChatBubble';
@@ -13,6 +13,7 @@ import Auth from './pages/Auth';
 import MyProcesses from './pages/MyProcesses';
 import ProcessTimeline from './pages/ProcessTimeline';
 import { useChat } from './hooks/useChat';
+import { DebugOverlay, DebugLog } from './components/DebugOverlay';
 
 import { cn } from './lib/utils';
 import { Settings } from 'lucide-react';
@@ -23,6 +24,8 @@ import { toast } from 'react-hot-toast';
 function AppContent() {
   const { user, profile, refreshProfile } = useAuth();
   const location = useLocation();
+  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
+  
   const {
     showWelcome,
     input,
@@ -38,6 +41,16 @@ function AppContent() {
     handleWelcomeSubmit,
     handleSend
   } = useChat();
+
+  // Função global para adicionar logs de debug
+  useEffect(() => {
+    (window as any).addDebugLog = (log: Omit<DebugLog, 'timestamp'>) => {
+      setDebugLogs(prev => [...prev, {
+        ...log,
+        timestamp: new Date().toLocaleTimeString()
+      }]);
+    };
+  }, []);
 
   // Sync whatsapp number from profile
   useEffect(() => {
@@ -75,7 +88,6 @@ function AppContent() {
         if (location.pathname.startsWith('/processo/')) return 'Andamento do Processo';
         return 'Dashboard';
     }
-
   };
 
   const RenderConsulta = () => {
@@ -153,7 +165,7 @@ function AppContent() {
   const isAuthPage = location.pathname === '/auth';
 
   return (
-    <div className="flex h-screen bg-background dark:bg-background-dark overflow-hidden font-sans transition-colors duration-200">
+    <div className="flex h-screen bg-background dark:bg-background-dark overflow-hidden font-sans transition-colors duration-200 relative">
       <Toaster position="top-right" reverseOrder={false} />
       {!isAuthPage && <Sidebar />}
       <div className="flex-1 h-full overflow-hidden relative flex flex-col">
@@ -170,7 +182,6 @@ function AppContent() {
             <Route path="/meus-processos" element={<MyProcesses />} />
             <Route path="/processo/:cnj" element={<ProcessTimeline />} />
             <Route path="/monitoramento" element={
-
               <MonitorProcess
                 whatsappNumber={whatsappNumber}
                 onUpdateWhatsapp={setWhatsappNumber}
@@ -204,6 +215,7 @@ function AppContent() {
          initialValue={whatsappNumber}
       />
 
+      <DebugOverlay logs={debugLogs} onClear={() => setDebugLogs([])} />
     </div>
   );
 }
