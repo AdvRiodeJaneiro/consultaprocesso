@@ -3,7 +3,6 @@
 import React from 'react';
 import { Search, Info, AlertCircle, Gavel, Eye, Bell } from 'lucide-react';
 import { Button } from './ui/button';
-import WhatsappModal from './WhatsappModal';
 import MonitorConfirmModal from './MonitorConfirmModal';
 import { useMonitor } from '../hooks/useMonitor';
 
@@ -19,8 +18,6 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     results,
     isLoading,
     error,
-    isWhatsappModalOpen,
-    setIsWhatsappModalOpen,
     isConfirmModalOpen,
     setIsConfirmModalOpen,
     selectedProcess,
@@ -145,16 +142,6 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
           </div>
         )}
       </div>
-
-      <WhatsappModal 
-         isOpen={isWhatsappModalOpen}
-         onClose={() => setIsWhatsappModalOpen(false)}
-         onSave={(phone) => {
-            onUpdateWhatsapp(phone);
-            setIsWhatsappModalOpen(false);
-         }}
-         initialValue={whatsappNumber}
-      />
 
       <MonitorConfirmModal 
          isOpen={isConfirmModalOpen}

@@ -6,6 +6,7 @@ import WelcomeScreen from './components/WelcomeScreen';
 import Sidebar from './components/Sidebar';
 import MonitorProcess from './components/MonitorProcess';
 import Header from './components/Header';
+import WhatsappModal from './components/WhatsappModal';
 import { useChat } from './hooks/useChat';
 
 export default function App() {
@@ -22,6 +23,8 @@ export default function App() {
     setDebugInfo,
     whatsappNumber,
     setWhatsappNumber,
+    isWhatsappModalOpen,
+    setIsWhatsappModalOpen,
     resetSearch,
     handleWelcomeSubmit,
     handleSend
@@ -141,11 +144,24 @@ export default function App() {
     <div className="flex h-screen bg-background dark:bg-background-dark overflow-hidden font-sans transition-colors duration-200">
       <Sidebar activeView={activeView} onViewChange={setActiveView} />
       <div className="flex-1 h-full overflow-hidden relative flex flex-col">
-        <Header viewTitle={getActiveTitle()} />
+        <Header 
+          viewTitle={getActiveTitle()} 
+          onWhatsappClick={() => setIsWhatsappModalOpen(true)}
+        />
         <div className="flex-1 overflow-hidden">
           {renderContent()}
         </div>
       </div>
+
+      <WhatsappModal 
+         isOpen={isWhatsappModalOpen}
+         onClose={() => setIsWhatsappModalOpen(false)}
+         onSave={(phone) => {
+            setWhatsappNumber(phone);
+            setIsWhatsappModalOpen(false);
+         }}
+         initialValue={whatsappNumber}
+      />
     </div>
   );
 }

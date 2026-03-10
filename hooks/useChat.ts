@@ -13,6 +13,7 @@ export function useChat() {
   const [activeProcess, setActiveProcess] = useState<EscavadorProcesso | null>(null);
   const [debugInfo, setDebugInfo] = useState<{type: 'error' | 'info', content: string} | null>(null);
   const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
 
   const resetSearch = useCallback(() => {
     setActiveProcess(null);
@@ -205,6 +206,8 @@ export function useChat() {
     setDebugInfo,
     whatsappNumber,
     setWhatsappNumber,
+    isWhatsappModalOpen,
+    setIsWhatsappModalOpen,
     resetSearch,
     handleWelcomeSubmit,
     handleSend
