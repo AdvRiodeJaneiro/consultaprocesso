@@ -62,10 +62,10 @@ export default function App() {
       }
 
       return (
-        <div className="flex flex-col h-full bg-slate-900 overflow-hidden relative">
-          <header className="bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between z-10 shadow-sm">
+        <div className="flex flex-col h-full bg-secondary overflow-hidden relative">
+          <header className="bg-secondary border-b border-border p-4 flex items-center justify-between z-10 shadow-sm">
             <div className="flex items-center space-x-3">
-              <div className="bg-slate-800 p-1.5 rounded-lg shadow-md border border-slate-700">
+              <div className="bg-card p-1.5 rounded-lg shadow-md border border-border">
                 <img 
                   src="http://advogadoriodejaneiro.com/wp-content/uploads/2025/12/Icon.png" 
                   alt="Logo" 
@@ -73,8 +73,8 @@ export default function App() {
                 />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-slate-100 tracking-tight">Consulta Processo IA</h1>
-                <p className="text-xs text-[#dfa968] font-medium">Seu tradutor jurídico pessoal</p>
+                <h1 className="text-lg font-bold text-foreground tracking-tight">Consulta Processo IA</h1>
+                <p className="text-xs text-primary font-medium">Seu tradutor jurídico pessoal</p>
               </div>
             </div>
             <GlowingButton onClick={resetSearch}>
@@ -82,13 +82,13 @@ export default function App() {
             </GlowingButton>
           </header>
 
-          <main className="flex-1 overflow-y-auto p-4 bg-slate-900 scrollbar-hide">
+          <main className="flex-1 overflow-y-auto p-4 bg-secondary scrollbar-hide">
             <div className="flex flex-col space-y-2 max-w-3xl mx-auto w-full">
                {debugInfo && (
                  <div className={`w-full rounded-md p-3 mb-4 text-xs font-mono overflow-x-auto border whitespace-pre-wrap ${
                    debugInfo.type === 'error' 
                      ? 'bg-red-900/20 border-red-800 text-red-200' 
-                     : 'bg-slate-800 border-slate-700 text-slate-300'
+                     : 'bg-card border-border text-muted-foreground'
                  }`}>
                     <div className="flex justify-between items-center mb-1 pb-1 border-b border-white/10">
                         <span className="font-bold uppercase tracking-wider">{debugInfo.type === 'error' ? '❌ Erro da API' : 'ℹ️ Info da API'}</span>
@@ -105,7 +105,7 @@ export default function App() {
             </div>
           </main>
 
-          <footer className="bg-slate-900 p-4 border-t border-slate-800 z-10">
+          <footer className="bg-secondary p-4 border-t border-border z-10">
             <div className="max-w-3xl mx-auto w-full">
               {activeProcess && messages.length > 2 && (
                    <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide">
@@ -113,7 +113,7 @@ export default function App() {
                        <button 
                           key={q}
                           onClick={() => { setInput(q); }} 
-                          className="whitespace-nowrap text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors"
+                          className="whitespace-nowrap text-xs bg-card hover:bg-card/80 text-muted-foreground px-3 py-1.5 rounded-lg border border-border transition-colors"
                        >
                          {q}
                        </button>
@@ -121,13 +121,13 @@ export default function App() {
                    </div>
               )}
 
-              <div className="relative flex items-end gap-2 bg-slate-800 p-2 rounded-xl border border-slate-700 focus-within:border-[#dfa968] focus-within:ring-1 focus-within:ring-[#dfa968]/20 transition-all duration-200">
+              <div className="relative flex items-end gap-2 bg-card p-2 rounded-xl border border-border focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all duration-200">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Pergunte algo sobre o processo..."
-                  className="w-full bg-transparent border-none text-slate-100 placeholder-slate-500 focus:ring-0 resize-none max-h-32 py-3 px-2 text-sm md:text-base scrollbar-hide leading-relaxed"
+                  className="w-full bg-transparent border-none text-foreground placeholder-muted-foreground focus:ring-0 resize-none max-h-32 py-3 px-2 text-sm md:text-base scrollbar-hide leading-relaxed"
                   rows={1}
                   style={{ minHeight: '44px' }}
                 />
@@ -136,8 +136,8 @@ export default function App() {
                   disabled={!input.trim() || isProcessing}
                   className={`p-3 rounded-lg flex-shrink-0 mb-0.5 transition-all duration-200 ${
                     input.trim() && !isProcessing
-                      ? 'bg-[#dfa968] text-slate-900 shadow-lg hover:bg-[#c99557] hover:scale-105 active:scale-95'
-                      : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                      ? 'bg-primary text-secondary shadow-lg hover:bg-primary/90 hover:scale-105 active:scale-95'
+                      : 'bg-muted text-muted-foreground cursor-not-allowed'
                   }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -152,18 +152,18 @@ export default function App() {
     }
 
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-900">
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-secondary">
         <div className="max-w-md space-y-4">
-          <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-800 backdrop-blur-sm inline-block mb-4">
-             <Search className="w-12 h-12 text-[#dfa968] mx-auto mb-4" />
-             <h2 className="text-2xl font-bold text-white">Funcionalidade em breve</h2>
-             <p className="text-slate-400 mt-2">
+          <div className="bg-card/50 p-6 rounded-2xl border border-border backdrop-blur-sm inline-block mb-4">
+             <Search className="w-12 h-12 text-primary mx-auto mb-4" />
+             <h2 className="text-2xl font-bold text-foreground">Funcionalidade em breve</h2>
+             <p className="text-muted-foreground mt-2">
                Estamos trabalhando para trazer a consulta "{activeView}" o mais rápido possível.
              </p>
           </div>
           <button 
             onClick={() => setActiveView('search-number')}
-            className="text-[#dfa968] hover:underline text-sm font-medium"
+            className="text-primary hover:underline text-sm font-medium"
           >
             Voltar para consulta por número
           </button>
@@ -173,9 +173,9 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-950 overflow-hidden font-sans">
+    <div className="flex h-screen bg-background overflow-hidden font-sans">
       <Sidebar activeView={activeView} onViewChange={setActiveView} />
-      <div className="flex-1 h-full overflow-hidden relative border-l border-slate-800 shadow-2xl">
+      <div className="flex-1 h-full overflow-hidden relative border-l border-border shadow-2xl">
         {renderContent()}
       </div>
     </div>
