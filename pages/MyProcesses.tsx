@@ -4,14 +4,16 @@ import { Search, Gavel, Calendar, Trash2, ChevronRight, BellOff, Loader2 } from 
 import { useMyProcesses, MonitoredProcess } from '../hooks/useMyProcesses';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 const MyProcesses: React.FC = () => {
   const { processes, loading, cancelMonitoring } = useMyProcesses();
+  const { user, loading: authLoading } = useAuth();
   const [search, setSearch] = React.useState('');
   const [isCancelling, setIsCancelling] = React.useState<string | null>(null);
   const navigate = useNavigate();
 
-  const filteredProcesses = processes.filter(p => 
+  const filteredProcesses = processes.filter(p =>
     p.process_number.includes(search)
   );
 
@@ -28,6 +30,38 @@ const MyProcesses: React.FC = () => {
     }
   };
 
+  // Se estiver carregando a autenticação, mostra um spinner centralizado simples
+  if (authLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-background dark:bg-background-dark">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  // Se não estiver logado, mostra tela vazia com mensagem específica
+  if (!user) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-background dark:bg-background-dark">
+        <div className="max-w-md space-y-6">
+          <div className="size-20 bg-primary/10 rounded-full flex items-center justify-center text-primary mx-auto shadow-xl shadow-primary/5">
+            <Gavel size={40} />
+          </div>
+          <h3 className="text-2xl font-black text-deep-indigo dark:text-white">Monitore o andamento do seu processo e receba a atualização no seu Whatsapp.</h3>
+          <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+            Faça login para gerenciar seus processos monitorados e acompanhar cada movimentação em tempo real.
+          </p>
+          <button
+            onClick={() => navigate('/monitoramento')}
+            className="bg-primary text-deep-indigo px-10 py-4 rounded-2xl font-black text-lg shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+          >
+            Começar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col h-full bg-background dark:bg-background-dark overflow-y-auto">
       <div className="p-8 max-w-6xl mx-auto w-full">
@@ -37,19 +71,22 @@ const MyProcesses: React.FC = () => {
           <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">Gerencie os processos que você está monitorando no momento.</p>
         </div>
 
-        {/* Search Bar */}
-        <div className="bg-white dark:bg-slate-900 p-2 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 mb-10 flex items-center px-4 gap-3 bg-slate-50 dark:bg-slate-800 h-14 border border-transparent focus-within:ring-2 focus-within:ring-primary transition-all">
-          <Search className="text-slate-300" size={20} />
-          <input 
-            className="w-full bg-transparent border-none focus:ring-0 text-deep-indigo dark:text-white placeholder:text-slate-400 font-medium outline-none" 
-            placeholder="Filtrar meus processos..." 
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        {/* Search Bar - Match MonitorProcess UI */}
+        <div className="bg-white dark:bg-slate-900 p-2 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 mb-10 flex flex-col md:flex-row gap-2">
+          <div className="flex-1 flex items-center px-4 gap-3 bg-slate-50 dark:bg-slate-800 rounded-xl h-14 border border-transparent focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 transition-all">
+            <Search className="text-slate-300" size={20} />
+            <input
+              className="w-full bg-transparent border-none focus:ring-0 text-deep-indigo dark:text-white placeholder:text-slate-400 font-medium outline-none"
+              placeholder="Filtrar meus processos por número..."
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
         </div>
 
         {loading ? (
+
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="w-12 h-12 text-primary animate-spin" />
             <p className="mt-4 text-slate-500 font-medium">Carregando seus processos...</p>
@@ -111,19 +148,20 @@ const MyProcesses: React.FC = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="size-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 mb-6 shadow-inner">
+            <div className="size-20 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6 shadow-inner">
               <Gavel size={40} className="opacity-20" />
             </div>
-            <h3 className="text-xl font-bold text-deep-indigo dark:text-white">Nenhum processo monitorado</h3>
-            <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-sm">Você ainda não tem processos em sua lista de monitoramento. Vá até a aba "Monitoramento" para começar.</p>
-            <button 
+            <h3 className="text-2xl font-black text-deep-indigo dark:text-white">Monitore o andamento do seu processo e receba a atualização no seu Whatsapp.</h3>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-sm font-medium leading-relaxed">Você ainda não tem processos em sua lista de monitoramento.</p>
+            <button
               onClick={() => navigate('/monitoramento')}
-              className="mt-6 bg-primary text-deep-indigo px-8 py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg shadow-primary/20"
+              className="mt-8 bg-primary text-deep-indigo px-10 py-4 rounded-2xl font-black text-lg shadow-lg shadow-primary/20 hover:scale-105 transition-all"
             >
-              Começar agora
+              Começar
             </button>
           </div>
         )}
+
       </div>
     </div>
   );

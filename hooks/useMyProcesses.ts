@@ -18,12 +18,18 @@ export function useMyProcesses() {
   const [processes, setProcesses] = useState<MonitoredProcess[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const fetchProcesses = async () => {
-    if (!user) return;
+    if (authLoading) return;
+
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
+
     try {
       const { data, error } = await supabase
         .from('monitored_processes')
@@ -41,7 +47,7 @@ export function useMyProcesses() {
 
   useEffect(() => {
     fetchProcesses();
-  }, [user]);
+  }, [user, authLoading]);
 
   const cancelMonitoring = async (id: string, escavadorId: number) => {
     try {
