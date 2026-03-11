@@ -1,52 +1,104 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../integrations/supabase/client';
+import { useAuth } from '../contexts/AuthContext';
 import { EscavadorProcesso } from '../types';
 
 export interface SearchEntry {
+  id?: string;
   query: string;
-  results: EscavadorProcesso[];
+  type: 'cnj' | 'involved';
+  results_count: number;
   timestamp: number;
 }
 
 export function useSearchHistory() {
+  const { user } = useAuth();
   const [history, setHistory] = useState<SearchEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const stored = localStorage.getItem('search_history_v1');
-    if (stored) {
-      try {
-        setHistory(JSON.parse(stored));
-      } catch (e) {
-        console.error("Failed to parse history", e);
+  // Carrega histórico inicial
+  const loadHistory = useCallback(async () => {
+    if (user) {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('search_history')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (!error && data) {
+        setHistory(data.map(item => ({
+          id: item.id,
+          query: item.query,
+          type: item.search_type as any,
+          results_count: item.results_count,
+          timestamp: new Date(item.created_at).getTime()
+        })));
+      }
+      setIsLoading(false);
+    } else {
+      const stored = localStorage.getItem('search_history_v2');
+      if (stored) {
+        try {
+          setHistory(JSON.parse(stored));
+        } catch (e) {
+          console.error("Failed to parse history", e);
+        }
       }
     }
-  }, []);
+  }, [user]);
 
-  const addToHistory = (query: string, results: EscavadorProcesso[]) => {
-    // Evitar duplicados na lista de tags
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
+  const addToHistory = async (query: string, type: 'cnj' | 'involved', resultsCount: number) => {
     const cleanQuery = query.trim();
-    if (history.find(h => h.query.toLowerCase() === cleanQuery.toLowerCase())) {
-        return;
+    
+    // Evitar duplicados imediatos
+    if (history.length > 0 && history[0].query.toLowerCase() === cleanQuery.toLowerCase()) {
+      return;
     }
 
-    const newEntry: SearchEntry = {
-      query: cleanQuery,
-      results,
-      timestamp: Date.now()
-    };
-
-    const newHistory = [newEntry, ...history].slice(0, 10); // Manter as 10 últimas
-    setHistory(newHistory);
-    localStorage.setItem('search_history_v1', JSON.stringify(newHistory));
+    if (user) {
+      const { error } = await supabase
+        .from('search_history')
+        .insert([{
+          user_id: user.id,
+          query: cleanQuery,
+          search_type: type,
+          results_count: resultsCount
+        }]);
+      
+      if (!error) loadHistory();
+    } else {
+      const newEntry: SearchEntry = {
+        query: cleanQuery,
+        type,
+        results_count: resultsCount,
+        timestamp: Date.now()
+      };
+      const newHistory = [newEntry, ...history.filter(h => h.query !== cleanQuery)].slice(0, 10);
+      setHistory(newHistory);
+      localStorage.setItem('search_history_v2', JSON.stringify(newHistory));
+    }
   };
 
-  const clearHistory = () => {
-    setHistory([]);
-    localStorage.removeItem('search_history_v1');
+  const clearHistory = async () => {
+    if (user) {
+      await supabase.from('search_history').delete().eq('user_id', user.id);
+      setHistory([]);
+    } else {
+      setHistory([]);
+      localStorage.removeItem('search_history_v2');
+    }
   };
 
   return {
     history,
+    isLoading,
     addToHistory,
-    clearHistory
+    clearHistory,
+    refreshHistory: loadHistory
   };
 }
