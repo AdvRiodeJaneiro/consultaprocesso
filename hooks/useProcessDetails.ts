@@ -10,15 +10,59 @@ export function useProcessDetails(cnj: string | undefined) {
   const [aiMessages, setAiMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
   const updateProcessInStore = useProcessStore(state => state.updateProcess);
+  const analysisCache = useProcessStore(state => state.analysisCache);
+  const setAnalysisCache = useProcessStore(state => state.setAnalysisCache);
+
+  const formatMessagesFromCache = useCallback((cache: any) => {
+    const newMsgs: Message[] = [];
+    
+    if (cache.summary) {
+      newMsgs.push({
+        id: 'summary',
+        role: 'assistant',
+        content: cache.summary,
+        timestamp: new Date()
+      });
+    }
+
+    if (cache.latest && cache.latest.length > 10) {
+      newMsgs.push({
+        id: 'latest',
+        role: 'assistant',
+        content: `### 🚨 Movimentação Mais Recente\n\n${cache.latest}`,
+        timestamp: new Date()
+      });
+    }
+
+    if (cache.history && cache.history.length > 10) {
+      newMsgs.push({
+        id: 'history',
+        role: 'assistant',
+        content: `### 📜 Histórico Anterior\n\n${cache.history}`,
+        timestamp: new Date()
+      });
+    }
+
+    setAiMessages(newMsgs);
+  }, []);
 
   const loadData = useCallback(async () => {
     if (!cnj) return;
-    setIsLoading(true);
+
+    // 1. TENTATIVA INSTANTÂNEA: Verificar se já temos no Zustand
+    if (analysisCache[cnj]) {
+      formatMessagesFromCache(analysisCache[cnj]);
+      setIsLoading(false); // Já mostra a UI
+    } else {
+      setIsLoading(true);
+    }
+
     setError(null);
 
     try {
-      // 1. Buscar dados reais do Escavador
+      // 2. Buscar dados reais do Escavador
       const liveData = await fetchProcessData(cnj);
       if (!liveData) {
         setError("Processo não encontrado na base de dados.");
@@ -27,7 +71,7 @@ export function useProcessDetails(cnj: string | undefined) {
       }
       setProcessData(liveData);
 
-      // 2. Verificar no Supabase se já temos análise em cache
+      // 3. Verificar no Supabase se já temos análise em cache
       const { data: dbProc, error: dbError } = await supabase
         .from('monitored_processes')
         .select('id, ai_analysis_cache, last_known_movement_id')
@@ -62,7 +106,9 @@ export function useProcessDetails(cnj: string | undefined) {
           })
           .eq('process_number', cnj);
 
-        // ATUALIZAÇÃO CRUCIAL: Atualiza a store global (cache) para que a tela anterior mude
+        // Atualizar store global (Zustand)
+        setAnalysisCache(cnj, cacheObj);
+        
         if (dbProc?.id) {
           updateProcessInStore(dbProc.id, {
             last_movement_summary: summaryForList,
@@ -73,50 +119,18 @@ export function useProcessDetails(cnj: string | undefined) {
 
         formatMessagesFromCache(cacheObj);
       } else {
-        // Usar cache existente
+        // Se a análise do banco for válida, garantir que ela esteja no Zustand para a próxima vez
+        setAnalysisCache(cnj, dbProc.ai_analysis_cache);
         formatMessagesFromCache(dbProc.ai_analysis_cache);
       }
 
     } catch (err: any) {
       console.error("Erro nos detalhes:", err);
-      setError(err.message);
+      if (!analysisCache[cnj]) setError(err.message); // Só mostra erro se não tiver cache
     } finally {
       setIsLoading(false);
     }
-  }, [cnj, updateProcessInStore]);
-
-  const formatMessagesFromCache = (cache: any) => {
-    const newMsgs: Message[] = [];
-    
-    if (cache.summary) {
-      newMsgs.push({
-        id: 'summary',
-        role: 'assistant',
-        content: cache.summary,
-        timestamp: new Date()
-      });
-    }
-
-    if (cache.latest && cache.latest.length > 10) {
-      newMsgs.push({
-        id: 'latest',
-        role: 'assistant',
-        content: `### 🚨 Movimentação Mais Recente\n\n${cache.latest}`,
-        timestamp: new Date()
-      });
-    }
-
-    if (cache.history && cache.history.length > 10) {
-      newMsgs.push({
-        id: 'history',
-        role: 'assistant',
-        content: `### 📜 Histórico Anterior\n\n${cache.history}`,
-        timestamp: new Date()
-      });
-    }
-
-    setAiMessages(newMsgs);
-  };
+  }, [cnj, analysisCache, formatMessagesFromCache, setAnalysisCache, updateProcessInStore]);
 
   useEffect(() => {
     loadData();
