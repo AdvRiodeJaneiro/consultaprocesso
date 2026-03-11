@@ -16,7 +16,6 @@ export function useSearchHistory() {
   const [history, setHistory] = useState<SearchEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Carrega histórico inicial
   const loadHistory = useCallback(async () => {
     if (user) {
       setIsLoading(true);
@@ -54,8 +53,6 @@ export function useSearchHistory() {
 
   const addToHistory = async (query: string, type: 'cnj' | 'involved', resultsCount: number) => {
     const cleanQuery = query.trim();
-    
-    // Evitar duplicados imediatos
     if (history.length > 0 && history[0].query.toLowerCase() === cleanQuery.toLowerCase()) {
       return;
     }
@@ -84,6 +81,20 @@ export function useSearchHistory() {
     }
   };
 
+  const deleteEntry = async (id?: string, queryStr?: string) => {
+    if (user && id) {
+      const { error } = await supabase
+        .from('search_history')
+        .delete()
+        .eq('id', id);
+      if (!error) loadHistory();
+    } else if (queryStr) {
+      const newHistory = history.filter(h => h.query !== queryStr);
+      setHistory(newHistory);
+      localStorage.setItem('search_history_v2', JSON.stringify(newHistory));
+    }
+  };
+
   const clearHistory = async () => {
     if (user) {
       await supabase.from('search_history').delete().eq('user_id', user.id);
@@ -98,6 +109,7 @@ export function useSearchHistory() {
     history,
     isLoading,
     addToHistory,
+    deleteEntry,
     clearHistory,
     refreshHistory: loadHistory
   };

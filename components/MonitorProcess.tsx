@@ -38,7 +38,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
   } = useMonitor();
 
   const { isLimitReached, incrementSearch, checkLimitBeforeSearch } = useSearchLimit();
-  const { history, addToHistory, clearHistory } = useSearchHistory();
+  const { history, addToHistory, deleteEntry, clearHistory } = useSearchHistory();
   const { processes } = useMyProcesses();
   
   const [showLimitModal, setShowLimitModal] = useState(false);
@@ -53,14 +53,10 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
       setShowLimitModal(true);
       return;
     }
-    const success = await handleSearch();
-    // Apenas salva no histórico se houver resultados ou for busca específica de CNJ
-    if (success) {
-       // O hook useMonitor já preenche o query e results no store
-    }
+    setActiveFilter('todos'); // Reseta o filtro visual ao fazer nova busca
+    await handleSearch();
   };
 
-  // Efeito para salvar no histórico apenas após a busca terminar com sucesso
   useEffect(() => {
     if (results.length > 0 && query.trim() && !isLoading) {
       const type = query.replace(/[^\d]/g, '').length >= 11 ? 'cnj' : 'involved';
@@ -71,10 +67,17 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
 
   const handleEntrySelect = (entry: SearchEntry) => {
     setQuery(entry.query);
+    setActiveFilter(entry.query); // Marca a tag como ativa
     handleSearch(entry.query);
   };
 
-  // Pegar as 3 mais recentes + "Todos"
+  const resetAll = () => {
+    setActiveFilter('todos');
+    setQuery('');
+    setResults([]);
+    setError(null);
+  };
+
   const recentTags = history.slice(0, 3);
 
   return (
@@ -103,10 +106,9 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
               placeholder="Busque por CPF, CNPJ, Nome ou Número do Processo"
             />
 
-            {/* Tags de Filtro/Histórico Recente */}
             <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
                 <button
-                    onClick={() => setActiveFilter('todos')}
+                    onClick={resetAll}
                     className={cn(
                         "whitespace-nowrap flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold transition-all border shadow-sm",
                         activeFilter === 'todos' 
@@ -123,7 +125,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
                         onClick={() => handleEntrySelect(entry)}
                         className={cn(
                             "whitespace-nowrap flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold transition-all border shadow-sm",
-                            query === entry.query 
+                            activeFilter === entry.query 
                                 ? 'bg-deep-indigo text-white border-deep-indigo dark:bg-white dark:text-deep-indigo dark:border-white shadow-lg' 
                                 : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
                         )}
@@ -212,7 +214,6 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
           })}
         </div>
 
-        {/* Placeholder para Paginação */}
         {results.length >= 10 && !isLoading && (
           <div className="flex justify-center pb-20">
              <button className="flex items-center gap-2 px-8 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-black text-deep-indigo dark:text-white hover:bg-slate-50 transition-all shadow-sm">
@@ -238,6 +239,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
         onClose={() => setIsHistoryOpen(false)}
         history={history}
         onSelect={handleEntrySelect}
+        onDeleteEntry={deleteEntry}
         onClear={clearHistory}
       />
 
