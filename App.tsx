@@ -98,7 +98,7 @@ function AppContent() {
     }
 
     return (
-      <div className="flex flex-col h-full bg-slate-950 dark:bg-slate-950 overflow-hidden relative">
+      <div className="flex flex-col h-full bg-slate-950 dark overflow-hidden relative">
         <main className="flex-1 overflow-y-auto p-4 scrollbar-hide">
           <div className="flex flex-col space-y-2 max-w-3xl mx-auto w-full pb-24">
              {debugInfo && (
