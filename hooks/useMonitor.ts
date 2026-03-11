@@ -7,16 +7,24 @@ import { parseCNJ, formatCNJ } from '../utils/cnjParser';
 import { supabase } from '../integrations/supabase/client';
 import { toast } from 'react-hot-toast';
 import { useProcessStore } from '../store/processStore';
+import { useSearchStore } from '../store/searchStore';
 
 export function useMonitor() {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<EscavadorProcesso[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const addProcessToStore = useProcessStore(state => state.addProcess);
   
+  // Zustand Search Store
+  const { query, results, setSearchData, setResults } = useSearchStore(state => ({
+    query: state.query,
+    results: state.results,
+    setSearchData: state.setSearchData,
+    setResults: (res: EscavadorProcesso[]) => state.setSearchData(state.query, res, state.lastSearchType || 'involved')
+  }));
+
+  const [localQuery, setLocalQuery] = useState(query);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState<EscavadorProcesso | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -27,34 +35,32 @@ export function useMonitor() {
     }
   };
 
-  const handleSearch = async () => {
-    if (!query.trim()) return false;
+  const handleSearch = async (searchQuery: string = localQuery) => {
+    if (!searchQuery.trim()) return false;
     setIsLoading(true);
     setError(null);
-    setResults([]);
-    logDebug(`Iniciando busca para: ${query}`);
+    logDebug(`Iniciando busca para: ${searchQuery}`);
     
     try {
-      const cnjParts = parseCNJ(query);
+      const cnjParts = parseCNJ(searchQuery);
       if (cnjParts) {
         const formattedCNJ = formatCNJ(cnjParts);
         logDebug(`CNJ Detectado: ${formattedCNJ}`);
         const data = await fetchProcessData(formattedCNJ);
         if (data) {
           logDebug(`Processo encontrado!`, 'success', data);
-          setResults([data]);
+          setSearchData(searchQuery, [data], 'cnj');
           return true;
         } else {
-          logDebug(`Processo não encontrado no Escavador`, 'error');
           setError("Processo não encontrado no Escavador.");
           return false;
         }
       } else {
         logDebug(`Busca por Envolvido iniciada...`);
-        const data = await fetchProcessesByInvolved(query);
+        const data = await fetchProcessesByInvolved(searchQuery);
         if (data && data.items) {
           logDebug(`Busca finalizada: ${data.items.length} resultados`, 'success');
-          setResults(data.items);
+          setSearchData(searchQuery, data.items, 'involved');
           if (data.items.length === 0) setError("Nenhum processo encontrado.");
           return data.items.length > 0;
         }
@@ -77,7 +83,6 @@ export function useMonitor() {
 
     setIsSaving(true);
     const loadingToast = toast.loading('Iniciando monitoramento...');
-    logDebug(`Iniciando fluxo de persistência no Supabase...`);
 
     try {
       const mockEscavadorId = Math.floor(Math.random() * 1000000);
@@ -92,39 +97,27 @@ export function useMonitor() {
         last_movement_summary: 'Aguardando sincronização com o tribunal...'
       };
 
-      logDebug(`Payload de inserção preparado`, 'info', payload);
-
       const { data, error: dbError } = await supabase
         .from('monitored_processes')
         .insert([payload])
         .select();
 
-      if (dbError) {
-        logDebug(`ERRO SUPABASE: ${dbError.message}`, 'error', dbError);
-        throw new Error(dbError.message);
-      }
+      if (dbError) throw new Error(dbError.message);
 
-      logDebug(`Persistência concluída com sucesso!`, 'success', data);
-      
-      // ATUALIZAÇÃO DO CACHE: Injetamos o novo processo na store global imediatamente
       if (data && data[0]) {
         addProcessToStore(data[0]);
-        logDebug(`Cache local (Zustand) atualizado com sucesso!`, 'success');
       }
 
       toast.dismiss(loadingToast);
       toast.success('Monitoramento iniciado com sucesso!');
-      
       setIsConfirmModalOpen(false);
       
-      // Redireciona para a lista que agora já terá o item na memória
       setTimeout(() => {
         navigate('/meus-processos');
       }, 500);
 
     } catch (err: any) {
       toast.dismiss(loadingToast);
-      logDebug(`Falha crítica ao salvar: ${err.message}`, 'error', err);
       toast.error('Erro ao salvar: ' + (err.message || 'Erro desconhecido'));
     } finally {
       setIsSaving(false);
@@ -132,9 +125,18 @@ export function useMonitor() {
   };
 
   return {
-    query, setQuery, results, setResults, isLoading, error,
-    isConfirmModalOpen, setIsConfirmModalOpen,
-    selectedProcess, setSelectedProcess, isSaving,
+    query: localQuery, 
+    setQuery: setLocalQuery, 
+    results, 
+    isLoading, 
+    error,
+    setError,
+    setResults,
+    isConfirmModalOpen, 
+    setIsConfirmModalOpen,
+    selectedProcess, 
+    setSelectedProcess, 
+    isSaving,
     handleSearch,
     handleMonitorClick: (p: EscavadorProcesso) => {
       if (!user) { navigate('/auth'); return; }
