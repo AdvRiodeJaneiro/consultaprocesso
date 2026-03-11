@@ -31,7 +31,6 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     setQuery,
     results,
     totalCount,
-    resultsCache,
     setResults,
     isLoading,
     error,
@@ -49,7 +48,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
   const { processes } = useMyProcesses();
   
   // Hook de Layout customizado
-  const { showSteps, hideSteps, scrollToSearch, searchBarRef } = useMonitorLayout();
+  const { showSteps, hideSteps, searchBarRef } = useMonitorLayout();
   
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [showAlreadyMonitoredAlert, setShowAlreadyMonitoredAlert] = useState(false);
@@ -68,9 +67,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     hideSteps();
     setActiveFilter(query); 
     await handleSearch();
-    
-    // Rola para o topo para o usuário ver o feedback
-    setTimeout(scrollToSearch, 100);
+    // Rolagem automática removida para melhorar a experiência mobile
   };
 
   useEffect(() => {
@@ -86,7 +83,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     setQuery(entry.query);
     setActiveFilter(entry.query); 
     handleSearch(entry.query);
-    setTimeout(scrollToSearch, 100);
+    // Rolagem automática removida para melhorar a experiência mobile
   };
 
   const recentTags = history.slice(0, 6);
@@ -122,7 +119,6 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
           )}
         </AnimatePresence>
 
-        {/* Referência para a barra de busca ser o ponto de ancoragem do topo */}
         <div ref={searchBarRef} className="space-y-6 mb-10 transition-all">
             <SearchBar 
               value={query}
