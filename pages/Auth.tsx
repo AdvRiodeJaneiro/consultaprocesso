@@ -7,7 +7,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Verifica se deve iniciar no modo cadastro (ex: vindo do modal de whatsapp)
+  // Verifica se deve iniciar no modo cadastro (ex: vindo do modal de monitoramento ou whatsapp)
   const isSignupMode = location.state?.mode === 'signup';
   const initialWhatsapp = location.state?.whatsapp || '';
 

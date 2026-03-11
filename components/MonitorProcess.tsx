@@ -215,7 +215,8 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
                     <button 
                       onClick={() => {
                         if (!user) {
-                          navigate('/auth', { state: { from: location.pathname } });
+                          // Forçamos o modo 'signup' ao vir do fluxo de monitoramento
+                          navigate('/auth', { state: { from: location.pathname, mode: 'signup' } });
                         } else {
                           handleMonitorClick(proc);
                         }
