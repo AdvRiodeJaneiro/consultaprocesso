@@ -1,10 +1,15 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Gavel, ArrowLeft } from 'lucide-react';
 import { AuthForm } from '../components/AuthForm';
 
 export default function Auth() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Verifica se deve iniciar no modo cadastro (ex: vindo do modal de whatsapp)
+  const isSignupMode = location.state?.mode === 'signup';
+  const initialWhatsapp = location.state?.whatsapp || '';
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
@@ -27,14 +32,17 @@ export default function Auth() {
           <div className="size-16 rounded-2xl bg-primary mx-auto flex items-center justify-center text-deep-indigo shadow-lg mb-4">
             <Gavel className="w-8 h-8" />
           </div>
-          <h1 className="text-3xl font-bold text-deep-indigo dark:text-white">JurisClaro</h1>
+          <h1 className="text-3xl font-bold text-deep-indigo dark:text-white">Consulta Processo</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2">
             Acesse sua conta para monitorar processos sem limites
           </p>
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-xl border border-slate-100 dark:border-slate-800">
-          <AuthForm />
+          <AuthForm 
+            defaultIsLogin={!isSignupMode} 
+            initialWhatsapp={initialWhatsapp}
+          />
         </div>
       </div>
     </div>

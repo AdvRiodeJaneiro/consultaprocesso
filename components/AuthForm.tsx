@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Phone, Loader2 } from 'lucide-react';
@@ -8,9 +8,14 @@ import { GlowingButton } from './GlowingButton';
 interface AuthFormProps {
   onSuccess?: () => void;
   defaultIsLogin?: boolean;
+  initialWhatsapp?: string;
 }
 
-export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess, defaultIsLogin = true }) => {
+export const AuthForm: React.FC<AuthFormProps> = ({ 
+  onSuccess, 
+  defaultIsLogin = true,
+  initialWhatsapp = ''
+}) => {
   const [isLogin, setIsLogin] = useState(defaultIsLogin);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -20,8 +25,16 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess, defaultIsLogin = 
     password: '',
     firstName: '',
     lastName: '',
-    whatsapp: ''
+    whatsapp: initialWhatsapp
   });
+
+  // Sincroniza se o whatsapp inicial mudar via props
+  useEffect(() => {
+    if (initialWhatsapp) {
+      setFormData(prev => ({ ...prev, whatsapp: initialWhatsapp }));
+      setIsLogin(false); // Garante que abra no cadastro se houver um número vindo do modal
+    }
+  }, [initialWhatsapp]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

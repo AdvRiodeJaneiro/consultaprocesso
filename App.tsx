@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { ChatBubble } from './components/ChatBubble';
 import WelcomeScreen from './components/WelcomeScreen';
 import Sidebar from './components/Sidebar';
@@ -26,6 +26,7 @@ import { toast } from 'react-hot-toast';
 function AppContent() {
   const { user, profile, refreshProfile, sessionLoading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const addLog = useLogStore(state => state.addLog);
   
   const {
@@ -214,9 +215,12 @@ function AppContent() {
                 toast.success('WhatsApp atualizado!');
                 refreshProfile();
               }
+              setIsWhatsappModalOpen(false);
+            } else {
+              // Redireciona para cadastro se não estiver logado
+              setIsWhatsappModalOpen(false);
+              navigate('/auth', { state: { mode: 'signup', whatsapp: phone } });
             }
-            setWhatsappNumber(phone);
-            setIsWhatsappModalOpen(false);
          }}
          initialValue={whatsappNumber}
       />

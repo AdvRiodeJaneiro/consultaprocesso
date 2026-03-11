@@ -52,7 +52,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
               <Gavel className="w-6 h-6" />
             </div>
             <div className="flex flex-col overflow-hidden">
-              <h1 className="text-deep-indigo dark:text-white text-lg font-bold leading-none truncate">JurisClaro</h1>
+              <h1 className="text-deep-indigo dark:text-white text-lg font-bold leading-none truncate">Consulta Processo</h1>
               <p className="text-slate-500 dark:text-slate-400 text-[10px] font-medium uppercase tracking-wider mt-1 whitespace-nowrap">Busque e Monitore seus processos com IA</p>
             </div>
           </div>
