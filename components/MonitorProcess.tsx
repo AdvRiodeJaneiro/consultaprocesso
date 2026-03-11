@@ -43,7 +43,6 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [showAlreadyMonitoredAlert, setShowAlreadyMonitoredAlert] = useState(false);
 
-  // Lista de números CNJ já monitorados para verificação rápida
   const monitoredNumbers = processes.map(p => p.process_number);
 
   const onSearchSubmit = async () => {
@@ -73,7 +72,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
         <div className="mb-10 flex justify-between items-start">
           <div>
             <h2 className="text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Monitoramento de Processo</h2>
-            <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">Acompanhe seus processos em tempo real com notificações automáticas.</p>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">Busque e escolha o processo que você deseja receber as atualizações direto no seu Whatsapp</p>
           </div>
         </div>
 

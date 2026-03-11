@@ -54,7 +54,7 @@ const MyProcesses: React.FC = () => {
         {/* Title Section */}
         <div className="mb-10">
           <h2 className="text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Meus Processos</h2>
-          <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">Gerencie os processos que você está monitorando no momento.</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">Todos os processos listados aqui estão sendo monitorados e você será avisado via Whatsapp quando houver atualizações</p>
         </div>
 
         {/* Search Bar */}
@@ -160,7 +160,7 @@ const MyProcesses: React.FC = () => {
                       className="flex items-center gap-2 text-slate-400 hover:text-red-500 transition-colors px-3 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 text-xs font-bold"
                     >
                       {isCancelling === proc.id ? <Loader2 size={16} className="animate-spin" /> : <BellOff size={16} />}
-                      <span>Cancelar</span>
+                      <span>Cancelar esse monitoramento</span>
                     </button>
 
                     <button 

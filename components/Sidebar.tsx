@@ -6,11 +6,13 @@ import {
   LayoutDashboard,
   Settings,
   Gavel,
-  LogOut
+  LogOut,
+  X
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
+import { useUIStore } from '../store/uiStore';
 
 interface SidebarProps {
   className?: string;
@@ -20,6 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, signOut } = useAuth();
+  const { isSidebarOpen, toggleSidebar } = useUIStore();
 
   const menuItems = [
     { id: 'search-number', label: 'Consulta Processo', icon: Search, path: '/' },
@@ -29,74 +32,102 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   ];
 
   return (
-    <aside className={cn("w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col h-full z-20", className)}>
-      <div className="p-6 flex items-center gap-3">
-        <div className="size-10 rounded-full bg-primary flex items-center justify-center text-deep-indigo shadow-sm shrink-0">
-          <Gavel className="w-6 h-6" />
-        </div>
-        <div className="flex flex-col overflow-hidden">
-          <h1 className="text-deep-indigo dark:text-white text-lg font-bold leading-none truncate">JurisClaro</h1>
-          <p className="text-slate-500 dark:text-slate-400 text-[10px] font-medium uppercase tracking-wider mt-1">Legal Monitor</p>
-        </div>
-      </div>
+    <>
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm transition-opacity"
+          onClick={toggleSidebar}
+        />
+      )}
 
-      <nav className="flex-1 px-4 py-4 space-y-2">
-        {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <button
-              key={item.id}
-              onClick={() => navigate(item.path)}
-              className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
-                isActive
-                  ? "bg-primary/10 text-primary font-bold"
-                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold"
-              )}
-            >
-              <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "group-hover:text-primary")} />
-              <span className="text-sm">{item.label}</span>
-            </button>
-          );
-        })}
-      </nav>
-
-      <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-        {user ? (
-          <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl group relative">
-            <div className="size-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden shrink-0 border border-primary/20">
-              {profile?.avatar_url ? (
-                <img className="w-full h-full object-cover" src={profile.avatar_url} alt={profile.first_name} />
-              ) : (
-                <span className="text-primary font-bold">{profile?.first_name?.[0] || user.email?.[0].toUpperCase()}</span>
-              )}
+      <aside className={cn(
+        "fixed md:static inset-y-0 left-0 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col h-full z-50 transition-transform duration-300 ease-in-out md:translate-x-0",
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full",
+        className
+      )}>
+        <div className="p-6 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="size-10 rounded-full bg-primary flex items-center justify-center text-deep-indigo shadow-sm shrink-0">
+              <Gavel className="w-6 h-6" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-deep-indigo dark:text-white truncate">
-                {profile ? `${profile.first_name} ${profile.last_name || ''}` : 'Usuário'}
-              </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-medium">
-                {profile?.whatsapp || user.email}
-              </p>
+            <div className="flex flex-col overflow-hidden">
+              <h1 className="text-deep-indigo dark:text-white text-lg font-bold leading-none truncate">JurisClaro</h1>
+              <p className="text-slate-500 dark:text-slate-400 text-[10px] font-medium uppercase tracking-wider mt-1 whitespace-nowrap">Busque e Monitore seus processos com IA</p>
             </div>
-            <button
-              onClick={() => signOut()}
-              className="p-2 text-slate-400 hover:text-red-500 transition-colors"
-              title="Sair"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
           </div>
-        ) : (
-          <button
-            onClick={() => navigate('/auth')}
-            className="w-full py-3 px-4 bg-primary text-deep-indigo font-bold rounded-xl shadow-lg hover:scale-[1.02] transition-all"
+          <button 
+            onClick={toggleSidebar}
+            className="md:hidden p-2 text-slate-400 hover:text-primary transition-colors"
           >
-            Entrar / Cadastrar
+            <X size={20} />
           </button>
-        )}
-      </div>
-    </aside>
+        </div>
+
+        <nav className="flex-1 px-4 py-4 space-y-2">
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  navigate(item.path);
+                  if (window.innerWidth < 768) toggleSidebar();
+                }}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
+                  isActive
+                    ? "bg-primary/10 text-primary font-bold"
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold"
+                )}
+              >
+                <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "group-hover:text-primary")} />
+                <span className="text-sm">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+          {user ? (
+            <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl group relative">
+              <div className="size-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden shrink-0 border border-primary/20">
+                {profile?.avatar_url ? (
+                  <img className="w-full h-full object-cover" src={profile.avatar_url} alt={profile.first_name} />
+                ) : (
+                  <span className="text-primary font-bold">{profile?.first_name?.[0] || user.email?.[0].toUpperCase()}</span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-deep-indigo dark:text-white truncate">
+                  {profile ? `${profile.first_name} ${profile.last_name || ''}` : 'Usuário'}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-medium">
+                  {profile?.whatsapp || user.email}
+                </p>
+              </div>
+              <button
+                onClick={() => signOut()}
+                className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                title="Sair"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                navigate('/auth');
+                if (window.innerWidth < 768) toggleSidebar();
+              }}
+              className="w-full py-3 px-4 bg-primary text-deep-indigo font-bold rounded-xl shadow-lg hover:scale-[1.02] transition-all"
+            >
+              Entrar / Cadastrar
+            </button>
+          )}
+        </div>
+      </aside>
+    </>
   );
 };
 

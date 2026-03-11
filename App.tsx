@@ -15,6 +15,7 @@ import ProcessTimeline from './pages/ProcessTimeline';
 import { useChat } from './hooks/useChat';
 import { DebugOverlay } from './components/DebugOverlay';
 import { useLogStore } from './store/logStore';
+import { useUIStore } from './store/uiStore';
 
 import { cn } from './lib/utils';
 import { Settings, Loader2 } from 'lucide-react';
@@ -26,6 +27,7 @@ function AppContent() {
   const { user, profile, refreshProfile, sessionLoading } = useAuth();
   const location = useLocation();
   const addLog = useLogStore(state => state.addLog);
+  const { toggleSidebar } = useUIStore();
   
   const {
     showWelcome,
@@ -43,14 +45,19 @@ function AppContent() {
     handleSend
   } = useChat();
 
-  // Função global para compatibilidade com hooks antigos que usam window.addDebugLog
   useEffect(() => {
     (window as any).addDebugLog = (log: any) => {
       addLog(log.message, log.type, log.data);
     };
   }, [addLog]);
 
-  // Sync whatsapp number from profile
+  // Fechar sidebar no mobile ao trocar de rota
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      // Garantir que a sidebar feche se estiver aberta (lógica simplificada via zustand se necessário)
+    }
+  }, [location.pathname]);
+
   useEffect(() => {
     if (profile?.whatsapp) {
       setWhatsappNumber(profile.whatsapp);
