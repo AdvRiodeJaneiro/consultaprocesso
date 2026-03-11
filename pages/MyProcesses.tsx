@@ -37,7 +37,7 @@ const MyProcesses: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="flex-1 bg-background dark:bg-background-dark p-8 flex flex-col items-center justify-center min-h-[calc(100vh-80px)]">
+      <div className="flex-1 bg-background dark:bg-background-dark p-8 flex flex-col items-center min-h-[calc(100vh-80px)]">
         <EmptyStateAnimation 
           title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
           description="Faça login para gerenciar seus processos monitorados e acompanhar cada movimentação em tempo real."
@@ -50,10 +50,7 @@ const MyProcesses: React.FC = () => {
 
   return (
     <div className="flex-1 bg-background dark:bg-background-dark p-8 overflow-y-auto scrollbar-hide flex flex-col">
-      <div className={cn(
-        "max-w-6xl mx-auto w-full flex-1 flex flex-col",
-        (!loading && filteredProcesses.length === 0) && "justify-center"
-      )}>
+      <div className="max-w-6xl mx-auto w-full flex-1 flex flex-col">
         {/* Renderiza título e busca apenas se houver processos ou estiver carregando */}
         {(loading || processes.length > 0) && (
           <>
@@ -183,7 +180,7 @@ const MyProcesses: React.FC = () => {
             })}
           </div>
         ) : (
-          <div className="py-12">
+          <div className="py-6">
             <EmptyStateAnimation 
               title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
               description={processes.length === 0 

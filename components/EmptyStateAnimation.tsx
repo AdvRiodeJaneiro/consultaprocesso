@@ -26,7 +26,7 @@ export const EmptyStateAnimation: React.FC<EmptyStateAnimationProps> = ({
   onButtonClick 
 }) => {
   return (
-    <div className="flex flex-col items-center max-w-2xl w-full mx-auto py-10">
+    <div className="flex flex-col items-center max-w-2xl w-full mx-auto pt-0 pb-10">
       
       {/* AREA DA ANIMAÇÃO */}
       <div className="relative w-full h-64 flex items-center justify-center mb-10">
