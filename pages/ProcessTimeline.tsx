@@ -99,7 +99,7 @@ const ProcessTimeline: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-slate-950 overflow-hidden relative">
       {/* Top Header */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 md:p-6 sticky top-0 z-20">
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 md:p-6 sticky top-0 z-20 shrink-0">
         <div className="max-w-7xl mx-auto w-full flex items-center gap-4">
           <button 
             onClick={() => navigate(-1)}
@@ -121,9 +121,9 @@ const ProcessTimeline: React.FC = () => {
 
       <div className="flex-1 overflow-hidden flex flex-col lg:flex-row relative">
         
-        {/* MAIN: AI Analysis */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide lg:border-r border-slate-200 dark:border-slate-800">
-           <div className="max-w-3xl mx-auto space-y-2 pb-24 md:pb-12">
+        {/* MAIN: AI Analysis - Scrolável */}
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide lg:border-r border-slate-200 dark:border-slate-800 h-full">
+           <div className="max-w-3xl mx-auto space-y-2 pb-32 md:pb-12">
               <div className="flex items-center gap-3 mb-6">
                 <div className="size-10 rounded-2xl bg-primary flex items-center justify-center text-deep-indigo">
                   <MessageSquare size={20} />
@@ -150,7 +150,7 @@ const ProcessTimeline: React.FC = () => {
         </div>
 
         {/* BOTTOM SHEET: Mobile Only */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[30]">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[40]">
           <AnimatePresence>
             {isSheetOpen && (
               <motion.div 
@@ -164,15 +164,15 @@ const ProcessTimeline: React.FC = () => {
           </AnimatePresence>
 
           <motion.div
-            initial={{ y: "calc(100% - 70px)" }}
+            initial={false}
             animate={{ y: isSheetOpen ? 0 : "calc(100% - 70px)" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className="bg-white dark:bg-slate-900 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] border-t border-slate-200 dark:border-slate-800 z-40 relative flex flex-col max-h-[85vh]"
           >
-            {/* Handle / Header */}
+            {/* Handle / Header Interativo */}
             <div 
               onClick={() => setIsSheetOpen(!isSheetOpen)}
-              className="p-4 flex flex-col items-center gap-2 cursor-pointer"
+              className="p-4 flex flex-col items-center gap-2 cursor-pointer bg-white dark:bg-slate-900 rounded-t-[32px] shrink-0"
             >
               <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full" />
               <div className="flex items-center justify-between w-full px-4">
@@ -184,7 +184,7 @@ const ProcessTimeline: React.FC = () => {
               </div>
             </div>
 
-            {/* Content Area */}
+            {/* Content Area Scrolável dentro do Sheet */}
             <div className="flex-1 overflow-y-auto p-6 pt-2 scrollbar-hide">
               <InfoContent />
             </div>
