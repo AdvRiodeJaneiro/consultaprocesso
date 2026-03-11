@@ -53,7 +53,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
       setShowLimitModal(true);
       return;
     }
-    setActiveFilter('todos'); // Reseta o filtro visual ao fazer nova busca
+    setActiveFilter('todos'); 
     await handleSearch();
   };
 
@@ -67,10 +67,11 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
 
   const handleEntrySelect = (entry: SearchEntry) => {
     setQuery(entry.query);
-    setActiveFilter(entry.query); // Marca a tag como ativa
+    setActiveFilter(entry.query); 
     handleSearch(entry.query);
   };
 
+  // Função que realmente limpa tudo
   const resetAll = () => {
     setActiveFilter('todos');
     setQuery('');

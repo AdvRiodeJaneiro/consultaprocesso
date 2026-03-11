@@ -87,7 +87,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         </div>
                       </button>
                       
-                      {/* Delete Individual Item Button */}
+                      {/* Botão de excluir individual - visível no hover */}
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
@@ -116,13 +116,17 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
             </motion.div>
           </>
         )}
-      </AnPresence>
+      </AnimatePresence>
 
-      {/* Confirmation Modals */}
       <ConfirmModal 
         isOpen={!!entryToDelete}
         onClose={() => setEntryToDelete(null)}
-        onConfirm={() => entryToDelete && onDeleteEntry(entryToDelete.id, entryToDelete.query)}
+        onConfirm={() => {
+          if (entryToDelete) {
+            onDeleteEntry(entryToDelete.id, entryToDelete.query);
+            setEntryToDelete(null);
+          }
+        }}
         title="Excluir busca?"
         description={`Deseja remover "${entryToDelete?.query}" do seu histórico?`}
         confirmLabel="Sim, excluir"
@@ -132,7 +136,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       <ConfirmModal 
         isOpen={showClearConfirm}
         onClose={() => setShowClearConfirm(false)}
-        onConfirm={onClear}
+        onConfirm={() => {
+          onClear();
+          setShowClearConfirm(false);
+        }}
         title="Limpar histórico?"
         description="Esta ação removerá todas as suas buscas recentes permanentemente. Deseja continuar?"
         confirmLabel="Limpar tudo"

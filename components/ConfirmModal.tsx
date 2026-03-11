@@ -3,6 +3,7 @@
 import React from 'react';
 import { X, AlertTriangle, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '../lib/utils';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -93,5 +94,4 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   );
 };
 
-import { cn } from '../lib/utils';
 export default ConfirmModal;
