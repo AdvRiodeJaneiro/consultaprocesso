@@ -4,6 +4,7 @@ import React from 'react';
 import { ChevronRight, MessageSquare, Bell, Menu } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useUIStore } from '../store/uiStore';
+import { cn } from '../lib/utils';
 
 interface HeaderProps {
   viewTitle: string;
@@ -25,8 +26,8 @@ const Header: React.FC<HeaderProps> = ({ viewTitle, onWhatsappClick }) => {
           <Menu size={20} />
         </button>
         <div className={cn(
-          "flex items-center gap-2 text-slate-400 overflow-hidden",
-          isHome && "hidden xs:flex" // Esconde o título no mobile se estiver na home
+          "items-center gap-2 text-slate-400 overflow-hidden",
+          isHome ? "hidden sm:flex" : "flex" // Oculto no mobile (abaixo de sm), flex no PC e outros
         )}>
           <span className="text-xs md:text-sm font-medium hidden sm:inline">Dashboard</span>
           <ChevronRight size={14} className="mt-0.5 hidden sm:inline" />
@@ -54,8 +55,5 @@ const Header: React.FC<HeaderProps> = ({ viewTitle, onWhatsappClick }) => {
     </header>
   );
 };
-
-// Importando cn para garantir consistência nas classes
-import { cn } from '../lib/utils';
 
 export default Header;
