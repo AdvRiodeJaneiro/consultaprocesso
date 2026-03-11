@@ -137,7 +137,7 @@ const ProcessTimeline: React.FC = () => {
                 <div className="size-10 rounded-2xl bg-primary flex items-center justify-center text-deep-indigo">
                   <MessageSquare size={20} />
                 </div>
-                <h3 className="text-lg md:text-xl font-black text-deep-indigo dark:text-white">Explicação da JurisClaro</h3>
+                <h3 className="text-lg md:text-xl font-black text-deep-indigo dark:text-white">Explicação por IA</h3>
               </div>
 
               {isLoading ? (
