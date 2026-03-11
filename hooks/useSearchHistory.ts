@@ -53,29 +53,36 @@ export function useSearchHistory() {
 
   const addToHistory = async (query: string, type: 'cnj' | 'involved', resultsCount: number) => {
     const cleanQuery = query.trim();
-    if (history.length > 0 && history[0].query.toLowerCase() === cleanQuery.toLowerCase()) {
-      return;
-    }
+    if (!cleanQuery) return;
 
     if (user) {
+      // Usa UPSERT com a regra do banco: Se a query já existe para o usuário, atualiza o created_at
       const { error } = await supabase
         .from('search_history')
-        .insert([{
-          user_id: user.id,
-          query: cleanQuery,
-          search_type: type,
-          results_count: resultsCount
-        }]);
+        .upsert(
+          {
+            user_id: user.id,
+            query: cleanQuery,
+            search_type: type,
+            results_count: resultsCount,
+            created_at: new Date().toISOString() // Força a atualização da data para subir no topo
+          },
+          { onConflict: 'user_id,query' }
+        );
       
       if (!error) loadHistory();
     } else {
+      // Lógica LocalStorage: Remove duplicata antiga e coloca a nova no topo
       const newEntry: SearchEntry = {
         query: cleanQuery,
         type,
         results_count: resultsCount,
         timestamp: Date.now()
       };
-      const newHistory = [newEntry, ...history.filter(h => h.query !== cleanQuery)].slice(0, 10);
+      
+      const filteredHistory = history.filter(h => h.query.toLowerCase() !== cleanQuery.toLowerCase());
+      const newHistory = [newEntry, ...filteredHistory].slice(0, 10);
+      
       setHistory(newHistory);
       localStorage.setItem('search_history_v2', JSON.stringify(newHistory));
     }
