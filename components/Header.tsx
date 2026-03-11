@@ -45,7 +45,7 @@ const Header: React.FC<HeaderProps> = ({ viewTitle, onWhatsappClick, onNewSearch
         >
           <MessageSquare size={16} className="md:w-[18px] md:h-[18px]" />
           <span>
-            {isHome ? 'Monitorar processo Whatsapp:' : 'Configurar WhatsApp'}
+            {isHome ? 'Monitorar processo Whatsapp' : 'Configurar WhatsApp'}
           </span>
         </button>
         

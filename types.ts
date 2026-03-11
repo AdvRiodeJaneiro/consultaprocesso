@@ -6,6 +6,7 @@ export interface Message {
   isLoading?: boolean;
   isError?: boolean;
   isContact?: boolean;
+  isMonitorSuggestion?: boolean;
 }
 
 export interface CNJParts {

@@ -122,6 +122,18 @@ export function useChat() {
           delay += 800;
         }
 
+        // NOVO: Sugestão de Monitoramento
+        setTimeout(() => {
+          setMessages(prev => [...prev, {
+            id: Date.now().toString() + '-monitor-suggest',
+            role: 'assistant',
+            content: "Deseja monitorar esse processo e receber os andamentos sobre ele direto no seu Whatsapp?",
+            timestamp: new Date(),
+            isMonitorSuggestion: true
+          }]);
+        }, delay);
+        delay += 600;
+
         setTimeout(() => {
           setMessages(prev => [...prev, {
             id: Date.now().toString() + '-contact',

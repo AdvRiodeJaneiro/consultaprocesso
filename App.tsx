@@ -15,6 +15,7 @@ import MyProcesses from './pages/MyProcesses';
 import ProcessTimeline from './pages/ProcessTimeline';
 import { useChat } from './hooks/useChat';
 import { useUIStore } from './store/uiStore';
+import { useSearchStore } from './store/searchStore';
 
 import { cn } from './lib/utils';
 import { Settings, Loader2 } from 'lucide-react';
@@ -26,6 +27,7 @@ function AppContent() {
   const { user, profile, refreshProfile, sessionLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const setSearchData = useSearchStore(state => state.setSearchData);
   
   const {
     showWelcome,
@@ -92,6 +94,14 @@ function AppContent() {
     }
   };
 
+  // NOVO: Função para levar o processo consultado para a tela de monitoramento
+  const handleTransitionToMonitor = () => {
+    if (activeProcess) {
+      setSearchData(activeProcess.numero_cnj, [activeProcess], 'cnj', 1);
+      navigate('/monitoramento');
+    }
+  };
+
   if (sessionLoading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-background dark:bg-background-dark">
@@ -123,7 +133,11 @@ function AppContent() {
              )}
 
             {messages.map((msg) => (
-              <ChatBubble key={msg.id} message={msg} />
+              <ChatBubble 
+                key={msg.id} 
+                message={msg} 
+                onMonitorClick={handleTransitionToMonitor}
+              />
             ))}
             <div ref={messagesEndRef} />
           </div>
