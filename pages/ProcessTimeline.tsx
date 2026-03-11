@@ -22,20 +22,29 @@ const ProcessTimeline: React.FC = () => {
   const { processData, aiMessages, isLoading, error } = useProcessDetails(cnj);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
+  // Função para voltar explicitamente para a home ou lista se o histórico falhar
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/meus-processos');
+    }
+  };
+
   if (error && !isLoading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50 dark:bg-slate-950">
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-xl border border-red-100 max-w-md">
            <h2 className="text-xl font-bold text-red-500 mb-2">Ops! Algo deu errado</h2>
            <p className="text-slate-500 mb-6">{error || "Não conseguimos carregar os dados deste processo."}</p>
-           <button onClick={() => navigate(-1)} className="bg-primary text-deep-indigo px-6 py-2 rounded-xl font-bold">Voltar</button>
+           <button onClick={handleBack} className="bg-primary text-deep-indigo px-6 py-2 rounded-xl font-bold">Voltar</button>
         </div>
       </div>
     );
   }
 
   const InfoContent = () => (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-10">
         <div>
             <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
             <Info size={16} className="text-primary" />
@@ -67,7 +76,7 @@ const ProcessTimeline: React.FC = () => {
         <div className="pt-8 border-t border-slate-100 dark:border-slate-800">
             <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
             <History size={16} className="text-primary" />
-            Histórico
+            Histórico de Movimentações
             </h3>
             
             <div className="space-y-4">
@@ -80,13 +89,13 @@ const ProcessTimeline: React.FC = () => {
                     </div>
                 ))
             ) : (
-                processData?.movimentacoes?.slice(0, 10).map((move, idx) => (
+                processData?.movimentacoes?.slice(0, 15).map((move, idx) => (
                 <div key={idx} className="relative pl-6 pb-6 border-l-2 border-slate-100 dark:border-slate-800 last:border-0">
                     <div className="absolute left-[-9px] top-0 size-4 rounded-full bg-white dark:bg-slate-900 border-2 border-primary" />
                     <div className="flex flex-col">
                     <time className="text-[10px] font-black text-primary uppercase mb-1">{move.data}</time>
                     <p className="text-xs font-bold text-deep-indigo dark:text-white mb-1 leading-tight">{move.tipo}</p>
-                    <p className="text-[10px] text-slate-500 line-clamp-2">{move.conteudo}</p>
+                    <p className="text-[10px] text-slate-500 leading-relaxed">{move.conteudo}</p>
                     </div>
                 </div>
                 ))
@@ -97,13 +106,13 @@ const ProcessTimeline: React.FC = () => {
   );
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-slate-950 overflow-hidden relative">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950 overflow-hidden relative">
       {/* Top Header */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 md:p-6 sticky top-0 z-20 shrink-0">
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 md:p-6 z-[60] shrink-0">
         <div className="max-w-7xl mx-auto w-full flex items-center gap-4">
           <button 
-            onClick={() => navigate(-1)}
-            className="size-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-primary transition-all shrink-0"
+            onClick={handleBack}
+            className="size-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-primary transition-all shrink-0 active:scale-95"
           >
             <ArrowLeft size={20} />
           </button>
@@ -119,11 +128,11 @@ const ProcessTimeline: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row relative">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
         
         {/* MAIN: AI Analysis - Scrolável */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide lg:border-r border-slate-200 dark:border-slate-800 h-full">
-           <div className="max-w-3xl mx-auto space-y-2 pb-32 md:pb-12">
+        <div className="flex-1 overflow-y-auto scrollbar-hide lg:border-r border-slate-200 dark:border-slate-800 h-full">
+           <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-2 pb-32 md:pb-12">
               <div className="flex items-center gap-3 mb-6">
                 <div className="size-10 rounded-2xl bg-primary flex items-center justify-center text-deep-indigo">
                   <MessageSquare size={20} />
@@ -150,7 +159,7 @@ const ProcessTimeline: React.FC = () => {
         </div>
 
         {/* BOTTOM SHEET: Mobile Only */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[40]">
+        <div className="lg:hidden">
           <AnimatePresence>
             {isSheetOpen && (
               <motion.div 
@@ -158,34 +167,33 @@ const ProcessTimeline: React.FC = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setIsSheetOpen(false)}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70]"
               />
             )}
           </AnimatePresence>
 
           <motion.div
-            initial={false}
             animate={{ y: isSheetOpen ? 0 : "calc(100% - 70px)" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="bg-white dark:bg-slate-900 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] border-t border-slate-200 dark:border-slate-800 z-40 relative flex flex-col max-h-[85vh]"
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.3)] border-t border-slate-200 dark:border-slate-800 z-[80] flex flex-col max-h-[90vh]"
           >
-            {/* Handle / Header Interativo */}
+            {/* Handle / Header Interativo - Área de clique expandida */}
             <div 
               onClick={() => setIsSheetOpen(!isSheetOpen)}
-              className="p-4 flex flex-col items-center gap-2 cursor-pointer bg-white dark:bg-slate-900 rounded-t-[32px] shrink-0"
+              className="pt-3 pb-5 flex flex-col items-center gap-3 cursor-pointer bg-white dark:bg-slate-900 rounded-t-[32px] shrink-0 active:bg-slate-50 transition-colors"
             >
               <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full" />
-              <div className="flex items-center justify-between w-full px-4">
+              <div className="flex items-center justify-between w-full px-8">
                 <div className="flex items-center gap-2 text-primary">
                   <Info size={18} />
-                  <span className="text-sm font-black uppercase tracking-widest">Ver Dados & Histórico</span>
+                  <span className="text-xs font-black uppercase tracking-widest">Dados & Histórico</span>
                 </div>
                 {isSheetOpen ? <X size={20} className="text-slate-400" /> : <ChevronUp size={20} className="text-primary animate-bounce" />}
               </div>
             </div>
 
             {/* Content Area Scrolável dentro do Sheet */}
-            <div className="flex-1 overflow-y-auto p-6 pt-2 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto px-6 pb-10 scrollbar-hide">
               <InfoContent />
             </div>
           </motion.div>
