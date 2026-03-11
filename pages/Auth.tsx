@@ -11,6 +11,15 @@ export default function Auth() {
   const isSignupMode = location.state?.mode === 'signup';
   const initialWhatsapp = location.state?.whatsapp || '';
 
+  const handleBack = () => {
+    // Se houver histórico de navegação, volta. Senão vai para a home.
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Background decoration */}
@@ -20,8 +29,8 @@ export default function Auth() {
       </div>
 
       <button 
-        onClick={() => navigate(-1)}
-        className="absolute top-8 left-8 flex items-center gap-2 text-slate-500 hover:text-primary transition-colors z-10"
+        onClick={handleBack}
+        className="absolute top-8 left-8 flex items-center gap-2 text-slate-500 hover:text-primary transition-colors z-20 p-2"
       >
         <ArrowLeft className="w-4 h-4" />
         <span className="text-sm font-medium">Voltar</span>

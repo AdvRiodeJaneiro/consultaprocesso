@@ -6,8 +6,7 @@ import {
   LayoutDashboard,
   Settings,
   Gavel,
-  LogOut,
-  X
+  LogOut
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -47,24 +46,20 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         className
       )}>
         <div className="p-6 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 overflow-hidden">
+          <div className="flex items-center gap-3 w-full">
             <div className="size-10 rounded-full bg-primary flex items-center justify-center text-deep-indigo shadow-sm shrink-0">
               <Gavel className="w-6 h-6" />
             </div>
-            <div className="flex flex-col overflow-hidden">
+            <div className="flex flex-col min-w-0">
               <h1 className="text-deep-indigo dark:text-white text-lg font-bold leading-none truncate">Consulta Processo</h1>
-              <p className="text-slate-500 dark:text-slate-400 text-[10px] font-medium uppercase tracking-wider mt-1 whitespace-nowrap">Busque e Monitore seus processos com IA</p>
+              <p className="text-slate-500 dark:text-slate-400 text-[10px] font-medium uppercase tracking-wider mt-1 leading-tight">
+                Busque e Monitore seus processos com IA
+              </p>
             </div>
           </div>
-          <button 
-            onClick={toggleSidebar}
-            className="md:hidden p-2 text-slate-400 hover:text-primary transition-colors"
-          >
-            <X size={20} />
-          </button>
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-2">
+        <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
