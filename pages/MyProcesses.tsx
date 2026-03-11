@@ -109,13 +109,13 @@ const MyProcesses: React.FC = () => {
 
                   <div className="mb-6">
                     <div className="flex justify-between items-start mb-4">
-                      <div className="flex gap-4">
+                      <div className="flex gap-4 min-w-0 flex-1">
                         <div className="size-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-primary shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
                           <Gavel size={24} />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Número CNJ</p>
-                          <h4 className="text-lg font-bold text-deep-indigo dark:text-white truncate">{proc.process_number}</h4>
+                          <h4 className="text-lg font-bold text-deep-indigo dark:text-white truncate pr-4">{proc.process_number}</h4>
                         </div>
                       </div>
                     </div>
@@ -126,9 +126,9 @@ const MyProcesses: React.FC = () => {
                           <div className="size-8 bg-primary/20 rounded-lg flex items-center justify-center text-primary">
                              <Scan size={18} className="animate-pulse" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                              <p className="text-[10px] font-black text-primary uppercase tracking-widest">Em Monitoramento</p>
-                             <p className="text-xs text-slate-400 font-medium">Fique tranquilo. Estamos monitorando esse processo e as movimentações vão ser enviadas no seu Whatsapp.</p>
+                             <p className="text-xs text-slate-400 font-medium truncate">Acompanhando atualizações no tribunal...</p>
                           </div>
                        </div>
                        
@@ -145,7 +145,7 @@ const MyProcesses: React.FC = () => {
                       <div className="flex items-center gap-2 mb-2">
                         <Calendar size={14} className="text-primary" />
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Última Movimentação</span>
-                        <span className="text-[10px] font-bold text-primary ml-auto">{proc.last_movement_date || 'Aguardando atualização'}</span>
+                        <span className="text-[10px] font-bold text-primary ml-auto">{proc.last_movement_date || 'Aguardando'}</span>
                       </div>
                       <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed">
                         {proc.last_movement_summary || 'O robô está verificando o tribunal. Você será avisado assim que surgir uma novidade.'}
@@ -160,7 +160,8 @@ const MyProcesses: React.FC = () => {
                       className="flex items-center gap-2 text-slate-400 hover:text-red-500 transition-colors px-3 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 text-xs font-bold"
                     >
                       {isCancelling === proc.id ? <Loader2 size={16} className="animate-spin" /> : <BellOff size={16} />}
-                      <span>Cancelar esse monitoramento</span>
+                      <span className="hidden sm:inline">Cancelar monitoramento</span>
+                      <span className="sm:hidden">Cancelar</span>
                     </button>
 
                     <button 
