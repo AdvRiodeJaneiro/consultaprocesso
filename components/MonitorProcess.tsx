@@ -25,6 +25,8 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     query,
     setQuery,
     results,
+    totalCount,
+    resultsCache,
     setResults,
     isLoading,
     error,
@@ -53,12 +55,12 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
       setShowLimitModal(true);
       return;
     }
-    setActiveFilter('todos'); 
+    setActiveFilter(query); 
     await handleSearch();
   };
 
   useEffect(() => {
-    if (results.length > 0 && query.trim() && !isLoading) {
+    if (results.length > 0 && query.trim() && !isLoading && activeFilter !== 'todos') {
       const type = query.replace(/[^\d]/g, '').length >= 11 ? 'cnj' : 'involved';
       addToHistory(query, type, results.length);
       incrementSearch();
@@ -71,12 +73,41 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     handleSearch(entry.query);
   };
 
-  // Função que realmente limpa tudo
-  const resetAll = () => {
+  // Função para consolidar todos os resultados do histórico visível
+  const handleShowAll = async () => {
     setActiveFilter('todos');
     setQuery('');
-    setResults([]);
     setError(null);
+    
+    const recentQueries = history.slice(0, 3).map(h => h.query);
+    
+    if (recentQueries.length === 0) {
+        setResults([]);
+        return;
+    }
+
+    // Tenta pegar do cache primeiro para ser instantâneo
+    let consolidated: any[] = [];
+    const queriesToFetch: string[] = [];
+
+    recentQueries.forEach(q => {
+        if (resultsCache[q]) {
+            consolidated = [...consolidated, ...resultsCache[q]];
+        } else {
+            queriesToFetch.push(q);
+        }
+    });
+
+    // Se houver itens fora do cache, poderíamos buscar, mas para evitar spam na API
+    // vamos mostrar o que temos ou apenas o resultado da última busca se nada estiver em cache
+    if (consolidated.length > 0) {
+        // Remove duplicatas por CNJ caso o mesmo processo apareça em buscas diferentes
+        const unique = Array.from(new Map(consolidated.map(p => [p.numero_cnj, p])).values());
+        setResults(unique);
+    } else {
+        // Fallback: se não tem nada em cache (ex: após refresh), busca o primeiro item do histórico
+        handleEntrySelect(history[0]);
+    }
   };
 
   const recentTags = history.slice(0, 3);
@@ -109,7 +140,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
 
             <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
                 <button
-                    onClick={resetAll}
+                    onClick={handleShowAll}
                     className={cn(
                         "whitespace-nowrap flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold transition-all border shadow-sm",
                         activeFilter === 'todos' 
@@ -150,7 +181,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
             </h3>
             {!isLoading && (
               <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                {results.length} Encontrados
+                {activeFilter === 'todos' ? `${results.length} Exibidos` : `${results.length} de ${totalCount}`}
               </span>
             )}
           </div>
@@ -215,7 +246,8 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
           })}
         </div>
 
-        {results.length >= 10 && !isLoading && (
+        {/* Só mostra carregar mais se houver mais resultados de fato do que o exibido e NÃO estiver no filtro 'todos' */}
+        {activeFilter !== 'todos' && results.length < totalCount && results.length > 0 && !isLoading && (
           <div className="flex justify-center pb-20">
              <button className="flex items-center gap-2 px-8 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-black text-deep-indigo dark:text-white hover:bg-slate-50 transition-all shadow-sm">
                 Carregar mais processos

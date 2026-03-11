@@ -14,9 +14,10 @@ export function useMonitor() {
   const navigate = useNavigate();
   const addProcessToStore = useProcessStore(state => state.addProcess);
   
-  // Seletores individuais para estabilidade
   const query = useSearchStore(state => state.query);
   const results = useSearchStore(state => state.results);
+  const totalCount = useSearchStore(state => state.totalCount);
+  const resultsCache = useSearchStore(state => state.resultsCache);
   const setSearchData = useSearchStore(state => state.setSearchData);
   const setResults = useSearchStore(state => state.setResults);
 
@@ -27,45 +28,33 @@ export function useMonitor() {
   const [selectedProcess, setSelectedProcess] = useState<EscavadorProcesso | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const logDebug = (message: string, type: 'info' | 'error' | 'success' = 'info', data?: any) => {
-    if ((window as any).addDebugLog) {
-      (window as any).addDebugLog({ message, type, data });
-    }
-  };
-
   const handleSearch = async (searchQuery: string = localQuery) => {
     if (!searchQuery.trim()) return false;
     setIsLoading(true);
     setError(null);
-    logDebug(`Iniciando busca para: ${searchQuery}`);
     
     try {
       const cnjParts = parseCNJ(searchQuery);
       if (cnjParts) {
         const formattedCNJ = formatCNJ(cnjParts);
-        logDebug(`CNJ Detectado: ${formattedCNJ}`);
         const data = await fetchProcessData(formattedCNJ);
         if (data) {
-          logDebug(`Processo encontrado!`, 'success', data);
-          setSearchData(searchQuery, [data], 'cnj');
+          setSearchData(searchQuery, [data], 'cnj', 1);
           return true;
         } else {
           setError("Processo não encontrado no Escavador.");
           return false;
         }
       } else {
-        logDebug(`Busca por Envolvido iniciada...`);
         const data = await fetchProcessesByInvolved(searchQuery);
         if (data && data.items) {
-          logDebug(`Busca finalizada: ${data.items.length} resultados`, 'success');
-          setSearchData(searchQuery, data.items, 'involved');
+          setSearchData(searchQuery, data.items, 'involved', data.total_encontrados);
           if (data.items.length === 0) setError("Nenhum processo encontrado.");
           return data.items.length > 0;
         }
         return false;
       }
     } catch (err: any) {
-      logDebug(`Erro na busca: ${err.message}`, 'error', err);
       setError("Erro na busca técnica.");
       return false;
     } finally {
@@ -126,6 +115,8 @@ export function useMonitor() {
     query: localQuery, 
     setQuery: setLocalQuery, 
     results, 
+    totalCount,
+    resultsCache,
     isLoading, 
     error,
     setError,
