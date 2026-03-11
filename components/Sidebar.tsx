@@ -112,7 +112,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           ) : (
             <button
               onClick={() => {
-                navigate('/auth');
+                navigate('/auth', { state: { from: location.pathname } });
                 if (window.innerWidth < 768) toggleSidebar();
               }}
               className="w-full py-3 px-4 bg-primary text-deep-indigo font-bold rounded-xl shadow-lg hover:scale-[1.02] transition-all"

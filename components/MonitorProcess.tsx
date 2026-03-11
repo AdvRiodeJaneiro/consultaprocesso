@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { AlertCircle, Gavel, Eye, Bell, Search, RefreshCcw, X, Check, History, ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import MonitorConfirmModal from './MonitorConfirmModal';
@@ -18,6 +18,7 @@ import { useSearchHistory, SearchEntry } from '../hooks/useSearchHistory';
 import { useMyProcesses } from '../hooks/useMyProcesses';
 import { useMonitorLayout } from '../hooks/useMonitorLayout';
 import { cn } from '../lib/utils';
+import { useAuth } from '../contexts/AuthContext';
 
 interface MonitorProcessProps {
   whatsappNumber: string;
@@ -26,6 +27,8 @@ interface MonitorProcessProps {
 
 const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdateWhatsapp }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
   const {
     query,
     setQuery,
@@ -47,7 +50,6 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
   const { history, addToHistory, deleteEntry, clearHistory } = useSearchHistory();
   const { processes } = useMyProcesses();
   
-  // Hook de Layout customizado
   const { showSteps, hideSteps, searchBarRef } = useMonitorLayout();
   
   const [showLimitModal, setShowLimitModal] = useState(false);
@@ -63,11 +65,9 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
       return;
     }
     
-    // Esconde o passo a passo e inicia a busca
     hideSteps();
     setActiveFilter(query); 
     await handleSearch();
-    // Rolagem automática removida para melhorar a experiência mobile
   };
 
   useEffect(() => {
@@ -83,7 +83,6 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     setQuery(entry.query);
     setActiveFilter(entry.query); 
     handleSearch(entry.query);
-    // Rolagem automática removida para melhorar a experiência mobile
   };
 
   const recentTags = history.slice(0, 6);
@@ -105,7 +104,6 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
           </button>
         </div>
 
-        {/* Passo a Passo com Animação de Entrada/Saída */}
         <AnimatePresence>
           {showSteps && (
             <motion.div
@@ -215,7 +213,13 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
                     </button>
                   ) : (
                     <button 
-                      onClick={() => handleMonitorClick(proc)}
+                      onClick={() => {
+                        if (!user) {
+                          navigate('/auth', { state: { from: location.pathname } });
+                        } else {
+                          handleMonitorClick(proc);
+                        }
+                      }}
                       className="w-full sm:w-auto flex items-center justify-center gap-2 bg-deep-indigo dark:bg-primary text-white dark:text-deep-indigo px-5 py-2.5 rounded-xl text-sm font-black hover:opacity-90 transition-all shadow-md active:scale-95"
                     >
                       <Eye size={16} />

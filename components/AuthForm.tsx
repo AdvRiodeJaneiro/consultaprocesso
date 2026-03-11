@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, User, Phone, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { GlowingButton } from './GlowingButton';
+import { handleAuthSuccess } from '../utils/navigation';
 
 interface AuthFormProps {
   onSuccess?: () => void;
@@ -19,6 +20,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   const [isLogin, setIsLogin] = useState(defaultIsLogin);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -28,11 +30,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({
     whatsapp: initialWhatsapp
   });
 
-  // Sincroniza se o whatsapp inicial mudar via props
   useEffect(() => {
     if (initialWhatsapp) {
       setFormData(prev => ({ ...prev, whatsapp: initialWhatsapp }));
-      setIsLogin(false); // Garante que abra no cadastro se houver um número vindo do modal
+      setIsLogin(false);
     }
   }, [initialWhatsapp]);
 
@@ -52,8 +53,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         });
         if (error) throw error;
         toast.success('Bem-vindo de volta!');
-        if (onSuccess) onSuccess();
-        else navigate('/');
+        handleAuthSuccess(navigate, location.state, onSuccess);
       } else {
         if (!formData.firstName) {
           toast.error('O nome é obrigatório');
@@ -61,7 +61,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
           return;
         }
 
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
           options: {
@@ -72,9 +72,17 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             }
           }
         });
+        
         if (error) throw error;
-        toast.success('Conta criada! Verifique seu e-mail.');
-        setIsLogin(true);
+
+        // Se o Supabase retornar uma sessão imediatamente (confirmação de email OFF)
+        if (data.session) {
+          toast.success('Conta criada com sucesso!');
+          handleAuthSuccess(navigate, location.state, onSuccess);
+        } else {
+          toast.success('Conta criada! Verifique seu e-mail.');
+          setIsLogin(true);
+        }
       }
     } catch (error: any) {
       toast.error(error.message || 'Ocorreu um erro');
