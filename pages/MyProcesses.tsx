@@ -37,7 +37,7 @@ const MyProcesses: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="flex-1 bg-background dark:bg-background-dark p-8">
+      <div className="flex-1 bg-background dark:bg-background-dark p-8 flex flex-col items-center justify-center min-h-[calc(100vh-80px)]">
         <EmptyStateAnimation 
           title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
           description="Faça login para gerenciar seus processos monitorados e acompanhar cada movimentação em tempo real."
@@ -49,27 +49,33 @@ const MyProcesses: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 bg-background dark:bg-background-dark p-8 overflow-y-auto scrollbar-hide">
-      <div className="max-w-6xl mx-auto w-full">
-        {/* Title Section */}
-        <div className="mb-10">
-          <h2 className="text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Meus Processos</h2>
-          <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">Todos os processos listados aqui estão sendo monitorados e você será avisado via Whatsapp quando houver atualizações</p>
-        </div>
+    <div className="flex-1 bg-background dark:bg-background-dark p-8 overflow-y-auto scrollbar-hide flex flex-col">
+      <div className={cn(
+        "max-w-6xl mx-auto w-full flex-1 flex flex-col",
+        (!loading && filteredProcesses.length === 0) && "justify-center"
+      )}>
+        {/* Renderiza título e busca apenas se houver processos ou estiver carregando */}
+        {(loading || processes.length > 0) && (
+          <>
+            <div className="mb-10">
+              <h2 className="text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Meus Processos</h2>
+              <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">Todos os processos listados aqui estão sendo monitorados e você será avisado via Whatsapp quando houver atualizações</p>
+            </div>
 
-        {/* Search Bar */}
-        <div className="bg-white dark:bg-slate-900 p-2 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 mb-10 flex flex-col md:flex-row gap-2">
-          <div className="flex-1 flex items-center px-4 gap-3 bg-slate-50 dark:bg-slate-800 rounded-xl h-14 border border-transparent focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 transition-all">
-            <Search className="text-slate-300" size={20} />
-            <input
-              className="w-full bg-transparent border-none focus:ring-0 text-deep-indigo dark:text-white placeholder:text-slate-400 font-medium outline-none"
-              placeholder="Filtrar meus processos por número..."
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        </div>
+            <div className="bg-white dark:bg-slate-900 p-2 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 mb-10 flex flex-col md:flex-row gap-2">
+              <div className="flex-1 flex items-center px-4 gap-3 bg-slate-50 dark:bg-slate-800 rounded-xl h-14 border border-transparent focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 transition-all">
+                <Search className="text-slate-300" size={20} />
+                <input
+                  className="w-full bg-transparent border-none focus:ring-0 text-deep-indigo dark:text-white placeholder:text-slate-400 font-medium outline-none"
+                  placeholder="Filtrar meus processos por número..."
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+            </div>
+          </>
+        )}
 
         {loading ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
@@ -177,16 +183,26 @@ const MyProcesses: React.FC = () => {
             })}
           </div>
         ) : (
-          <EmptyStateAnimation 
-            title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
-            description="Você ainda não tem processos em sua lista de monitoramento."
-            buttonText="Começar"
-            onButtonClick={() => navigate('/monitoramento')}
-          />
+          <div className="py-12">
+            <EmptyStateAnimation 
+              title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
+              description={processes.length === 0 
+                ? "Você ainda não tem processos em sua lista de monitoramento." 
+                : "Nenhum processo encontrado com este número em sua lista."}
+              buttonText={processes.length === 0 ? "Começar" : "Limpar Filtro"}
+              onButtonClick={() => {
+                if (processes.length === 0) navigate('/monitoramento');
+                else setSearch('');
+              }}
+            />
+          </div>
         )}
       </div>
     </div>
   );
 };
+
+// Import helper
+import { cn } from '../lib/utils';
 
 export default MyProcesses;
