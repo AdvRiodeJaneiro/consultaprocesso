@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
+import { useUserStore } from '../store/userStore';
 
 interface Profile {
   id: string;
@@ -14,8 +15,8 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
-  sessionLoading: boolean; // Só bloqueia o app inicial
-  profileLoading: boolean; // Carrega em background
+  sessionLoading: boolean; 
+  profileLoading: boolean; 
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -28,6 +29,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
+  
+  const setGlobalProfile = useUserStore(state => state.setProfile);
+  const clearGlobalProfile = useUserStore(state => state.clearProfile);
 
   const fetchProfile = async (userId: string) => {
     setProfileLoading(true);
@@ -39,6 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (!error && data) {
       setProfile(data);
+      setGlobalProfile(data); // Alimenta a Store persistente
     }
     setProfileLoading(false);
   };
@@ -50,7 +55,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // 1. Tentar pegar sessão imediata (não bloqueante se falhar rápido)
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -60,7 +64,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSessionLoading(false);
     });
 
-    // 2. Escutar mudanças (o "desbloqueio" real acontece aqui)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -69,9 +72,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fetchProfile(session.user.id);
       } else {
         setProfile(null);
+        clearGlobalProfile();
       }
 
-      // Se detectamos um evento de login ou logout, liberamos o loading de sessão
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
         setSessionLoading(false);
       }
@@ -82,6 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    clearGlobalProfile();
   };
 
   return (
