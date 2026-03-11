@@ -8,13 +8,13 @@ const CONFIG = {
 
 export function useSearchLimit() {
   const { user } = useAuth();
-  const { 
-    searchCount, 
-    setSearchCount, 
-    isLimitReached, 
-    setIsLimitReached,
-    incrementSearchCount 
-  } = useUIStore();
+  
+  // Seletores individuais para evitar re-renderizações infinitas
+  const searchCount = useUIStore(state => state.searchCount);
+  const setSearchCount = useUIStore(state => state.setSearchCount);
+  const isLimitReached = useUIStore(state => state.isLimitReached);
+  const setIsLimitReached = useUIStore(state => state.setIsLimitReached);
+  const incrementSearchCount = useUIStore(state => state.incrementSearchCount);
 
   // Inicialização e Sincronização com LocalStorage
   useEffect(() => {

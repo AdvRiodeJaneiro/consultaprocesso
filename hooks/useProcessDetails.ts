@@ -12,49 +12,31 @@ export function useProcessDetails(cnj: string | undefined) {
   const [error, setError] = useState<string | null>(null);
   
   const updateProcessInStore = useProcessStore(state => state.updateProcess);
-  const analysisCache = useProcessStore(state => state.analysisCache);
   const setAnalysisCache = useProcessStore(state => state.setAnalysisCache);
 
   const formatMessagesFromCache = useCallback((cache: any) => {
     const newMsgs: Message[] = [];
-    
     if (cache.summary) {
-      newMsgs.push({
-        id: 'summary',
-        role: 'assistant',
-        content: cache.summary,
-        timestamp: new Date()
-      });
+      newMsgs.push({ id: 'summary', role: 'assistant', content: cache.summary, timestamp: new Date() });
     }
-
     if (cache.latest && cache.latest.length > 10) {
-      newMsgs.push({
-        id: 'latest',
-        role: 'assistant',
-        content: `### 🚨 Movimentação Mais Recente\n\n${cache.latest}`,
-        timestamp: new Date()
-      });
+      newMsgs.push({ id: 'latest', role: 'assistant', content: `### 🚨 Movimentação Mais Recente\n\n${cache.latest}`, timestamp: new Date() });
     }
-
     if (cache.history && cache.history.length > 10) {
-      newMsgs.push({
-        id: 'history',
-        role: 'assistant',
-        content: `### 📜 Histórico Anterior\n\n${cache.history}`,
-        timestamp: new Date()
-      });
+      newMsgs.push({ id: 'history', role: 'assistant', content: `### 📜 Histórico Anterior\n\n${cache.history}`, timestamp: new Date() });
     }
-
     setAiMessages(newMsgs);
   }, []);
 
   const loadData = useCallback(async () => {
     if (!cnj) return;
 
-    // 1. TENTATIVA INSTANTÂNEA: Verificar se já temos no Zustand
-    if (analysisCache[cnj]) {
-      formatMessagesFromCache(analysisCache[cnj]);
-      setIsLoading(false); // Já mostra a UI
+    // Acessa o cache atual SEM criar dependência no useCallback
+    const currentCache = useProcessStore.getState().analysisCache[cnj];
+    
+    if (currentCache) {
+      formatMessagesFromCache(currentCache);
+      setIsLoading(false);
     } else {
       setIsLoading(true);
     }
@@ -62,7 +44,6 @@ export function useProcessDetails(cnj: string | undefined) {
     setError(null);
 
     try {
-      // 2. Buscar dados reais do Escavador
       const liveData = await fetchProcessData(cnj);
       if (!liveData) {
         setError("Processo não encontrado na base de dados.");
@@ -71,19 +52,16 @@ export function useProcessDetails(cnj: string | undefined) {
       }
       setProcessData(liveData);
 
-      // 3. Verificar no Supabase se já temos análise em cache
-      const { data: dbProc, error: dbError } = await supabase
+      const { data: dbProc } = await supabase
         .from('monitored_processes')
         .select('id, ai_analysis_cache, last_known_movement_id')
         .eq('process_number', cnj)
         .maybeSingle();
 
       const latestMoveId = liveData.movimentacoes?.[0]?.data || liveData.data_ultima_movimentacao;
-      
       const needsNewAnalysis = !dbProc?.ai_analysis_cache || dbProc?.last_known_movement_id !== latestMoveId;
 
       if (needsNewAnalysis) {
-        // Gerar nova análise via Gemini
         const analysis = await generateLegalAnalysis("Analise este processo monitorado.", liveData, true);
         const parts = analysis.split('<<<SPLIT>>>');
         
@@ -95,7 +73,6 @@ export function useProcessDetails(cnj: string | undefined) {
 
         const summaryForList = parts[1]?.substring(0, 200) || parts[0]?.substring(0, 200);
 
-        // Salvar no banco
         await supabase
           .from('monitored_processes')
           .update({
@@ -106,7 +83,6 @@ export function useProcessDetails(cnj: string | undefined) {
           })
           .eq('process_number', cnj);
 
-        // Atualizar store global (Zustand)
         setAnalysisCache(cnj, cacheObj);
         
         if (dbProc?.id) {
@@ -119,18 +95,16 @@ export function useProcessDetails(cnj: string | undefined) {
 
         formatMessagesFromCache(cacheObj);
       } else {
-        // Se a análise do banco for válida, garantir que ela esteja no Zustand para a próxima vez
         setAnalysisCache(cnj, dbProc.ai_analysis_cache);
         formatMessagesFromCache(dbProc.ai_analysis_cache);
       }
-
     } catch (err: any) {
       console.error("Erro nos detalhes:", err);
-      if (!analysisCache[cnj]) setError(err.message); // Só mostra erro se não tiver cache
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
-  }, [cnj, analysisCache, formatMessagesFromCache, setAnalysisCache, updateProcessInStore]);
+  }, [cnj, formatMessagesFromCache, setAnalysisCache, updateProcessInStore]);
 
   useEffect(() => {
     loadData();

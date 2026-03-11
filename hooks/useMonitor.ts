@@ -14,13 +14,11 @@ export function useMonitor() {
   const navigate = useNavigate();
   const addProcessToStore = useProcessStore(state => state.addProcess);
   
-  // Zustand Search Store
-  const { query, results, setSearchData, setResults } = useSearchStore(state => ({
-    query: state.query,
-    results: state.results,
-    setSearchData: state.setSearchData,
-    setResults: (res: EscavadorProcesso[]) => state.setSearchData(state.query, res, state.lastSearchType || 'involved')
-  }));
+  // Seletores individuais para estabilidade
+  const query = useSearchStore(state => state.query);
+  const results = useSearchStore(state => state.results);
+  const setSearchData = useSearchStore(state => state.setSearchData);
+  const setResults = useSearchStore(state => state.setResults);
 
   const [localQuery, setLocalQuery] = useState(query);
   const [isLoading, setIsLoading] = useState(false);
