@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import MonitorConfirmModal from './MonitorConfirmModal';
 import LimitModal from './LimitModal';
 import SearchBar from './SearchBar';
+import StepsCard from './StepsCard';
 import { HistorySidebar } from './HistorySidebar';
 import { ToastAlert } from './ui/ToastAlert';
 import { useMonitor } from '../hooks/useMonitor';
@@ -128,6 +129,8 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
             Histórico de buscas
           </button>
         </div>
+
+        <StepsCard />
 
         <div className="space-y-6 mb-10">
             <SearchBar 
