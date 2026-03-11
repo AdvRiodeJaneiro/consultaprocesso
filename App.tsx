@@ -13,8 +13,6 @@ import Auth from './pages/Auth';
 import MyProcesses from './pages/MyProcesses';
 import ProcessTimeline from './pages/ProcessTimeline';
 import { useChat } from './hooks/useChat';
-import { DebugOverlay } from './components/DebugOverlay';
-import { useLogStore } from './store/logStore';
 import { useUIStore } from './store/uiStore';
 
 import { cn } from './lib/utils';
@@ -27,7 +25,6 @@ function AppContent() {
   const { user, profile, refreshProfile, sessionLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const addLog = useLogStore(state => state.addLog);
   
   const {
     showWelcome,
@@ -44,12 +41,6 @@ function AppContent() {
     handleWelcomeSubmit,
     handleSend
   } = useChat();
-
-  useEffect(() => {
-    (window as any).addDebugLog = (log: any) => {
-      addLog(log.message, log.type, log.data);
-    };
-  }, [addLog]);
 
   useEffect(() => {
     if (profile?.whatsapp) {
@@ -224,8 +215,6 @@ function AppContent() {
          }}
          initialValue={whatsappNumber}
       />
-
-      <DebugOverlay />
     </div>
   );
 }
