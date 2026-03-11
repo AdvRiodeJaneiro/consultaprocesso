@@ -3,16 +3,20 @@
 import React, { useEffect, useState } from 'react';
 import { AlertCircle, Gavel, Eye, Bell, Search, RefreshCcw, X, Check, History, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+
 import MonitorConfirmModal from './MonitorConfirmModal';
 import LimitModal from './LimitModal';
 import SearchBar from './SearchBar';
 import StepsCard from './StepsCard';
 import { HistorySidebar } from './HistorySidebar';
 import { ToastAlert } from './ui/ToastAlert';
+
 import { useMonitor } from '../hooks/useMonitor';
 import { useSearchLimit } from '../hooks/useSearchLimit';
 import { useSearchHistory, SearchEntry } from '../hooks/useSearchHistory';
 import { useMyProcesses } from '../hooks/useMyProcesses';
+import { useMonitorLayout } from '../hooks/useMonitorLayout';
 import { cn } from '../lib/utils';
 
 interface MonitorProcessProps {
@@ -44,6 +48,9 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
   const { history, addToHistory, deleteEntry, clearHistory } = useSearchHistory();
   const { processes } = useMyProcesses();
   
+  // Hook de Layout customizado
+  const { showSteps, hideSteps, scrollToSearch, searchBarRef } = useMonitorLayout();
+  
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [showAlreadyMonitoredAlert, setShowAlreadyMonitoredAlert] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -56,8 +63,14 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
       setShowLimitModal(true);
       return;
     }
+    
+    // Esconde o passo a passo e inicia a busca
+    hideSteps();
     setActiveFilter(query); 
-    await handleSearch();
+    const success = await handleSearch();
+    
+    // Rola para o topo se a busca teve sucesso ou retornou erro (para o usuário ver o feedback)
+    setTimeout(scrollToSearch, 100);
   };
 
   useEffect(() => {
@@ -69,13 +82,15 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
   }, [results, isLoading]);
 
   const handleEntrySelect = (entry: SearchEntry) => {
+    hideSteps();
     setQuery(entry.query);
     setActiveFilter(entry.query); 
     handleSearch(entry.query);
+    setTimeout(scrollToSearch, 100);
   };
 
-  // Função para consolidar todos os resultados do histórico visível
   const handleShowAll = async () => {
+    hideSteps();
     setActiveFilter('todos');
     setQuery('');
     setError(null);
@@ -87,28 +102,19 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
         return;
     }
 
-    // Tenta pegar do cache primeiro para ser instantâneo
     let consolidated: any[] = [];
-    const queriesToFetch: string[] = [];
-
     recentQueries.forEach(q => {
-        if (resultsCache[q]) {
-            consolidated = [...consolidated, ...resultsCache[q]];
-        } else {
-            queriesToFetch.push(q);
-        }
+        if (resultsCache[q]) consolidated = [...consolidated, ...resultsCache[q]];
     });
 
-    // Se houver itens fora do cache, poderíamos buscar, mas para evitar spam na API
-    // vamos mostrar o que temos ou apenas o resultado da última busca se nada estiver em cache
     if (consolidated.length > 0) {
-        // Remove duplicatas por CNJ caso o mesmo processo apareça em buscas diferentes
         const unique = Array.from(new Map(consolidated.map(p => [p.numero_cnj, p])).values());
         setResults(unique);
     } else {
-        // Fallback: se não tem nada em cache (ex: após refresh), busca o primeiro item do histórico
         handleEntrySelect(history[0]);
     }
+    
+    setTimeout(scrollToSearch, 100);
   };
 
   const recentTags = history.slice(0, 3);
@@ -130,14 +136,30 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
           </button>
         </div>
 
-        <StepsCard />
+        {/* Passo a Passo com Animação de Entrada/Saída */}
+        <AnimatePresence>
+          {showSteps && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: 'auto', marginBottom: 32 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0, transition: { duration: 0.3 } }}
+              className="overflow-hidden"
+            >
+              <StepsCard />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <div className="space-y-6 mb-10">
+        {/* Referência para a barra de busca ser o ponto de ancoragem do topo */}
+        <div ref={searchBarRef} className="space-y-6 mb-10 transition-all">
             <SearchBar 
               value={query}
               onChange={setQuery}
               onSearch={onSearchSubmit}
               isLoading={isLoading}
+              // Quando o usuário clicar no input, já esconde os passos
+              className="focus-within:shadow-2xl"
+              onFocus={hideSteps}
               placeholder="Busque por CPF, CNPJ, Nome ou Número do Processo"
             />
 
@@ -249,7 +271,6 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
           })}
         </div>
 
-        {/* Só mostra carregar mais se houver mais resultados de fato do que o exibido e NÃO estiver no filtro 'todos' */}
         {activeFilter !== 'todos' && results.length < totalCount && results.length > 0 && !isLoading && (
           <div className="flex justify-center pb-20">
              <button className="flex items-center gap-2 px-8 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-black text-deep-indigo dark:text-white hover:bg-slate-50 transition-all shadow-sm">
