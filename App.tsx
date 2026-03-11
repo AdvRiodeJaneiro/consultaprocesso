@@ -13,7 +13,8 @@ import Auth from './pages/Auth';
 import MyProcesses from './pages/MyProcesses';
 import ProcessTimeline from './pages/ProcessTimeline';
 import { useChat } from './hooks/useChat';
-import { DebugOverlay, DebugLog } from './components/DebugOverlay';
+import { DebugOverlay } from './components/DebugOverlay';
+import { useLogStore } from './store/logStore';
 
 import { cn } from './lib/utils';
 import { Settings, Loader2 } from 'lucide-react';
@@ -24,7 +25,7 @@ import { toast } from 'react-hot-toast';
 function AppContent() {
   const { user, profile, refreshProfile, sessionLoading } = useAuth();
   const location = useLocation();
-  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
+  const addLog = useLogStore(state => state.addLog);
   
   const {
     showWelcome,
@@ -42,17 +43,14 @@ function AppContent() {
     handleSend
   } = useChat();
 
-  // Função global para adicionar logs de debug
+  // Função global para compatibilidade com hooks antigos que usam window.addDebugLog
   useEffect(() => {
-    (window as any).addDebugLog = (log: Omit<DebugLog, 'timestamp'>) => {
-      setDebugLogs(prev => [...prev, {
-        ...log,
-        timestamp: new Date().toLocaleTimeString()
-      }]);
+    (window as any).addDebugLog = (log: any) => {
+      addLog(log.message, log.type, log.data);
     };
-  }, []);
+  }, [addLog]);
 
-  // Sync whatsapp number from profile (background update)
+  // Sync whatsapp number from profile
   useEffect(() => {
     if (profile?.whatsapp) {
       setWhatsappNumber(profile.whatsapp);
@@ -90,7 +88,6 @@ function AppContent() {
     }
   };
 
-  // Bloqueio apenas durante a verificação inicial do token/sessão
   if (sessionLoading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-background dark:bg-background-dark">
@@ -223,7 +220,7 @@ function AppContent() {
          initialValue={whatsappNumber}
       />
 
-      <DebugOverlay logs={debugLogs} onClear={() => setDebugLogs([])} />
+      <DebugOverlay />
     </div>
   );
 }

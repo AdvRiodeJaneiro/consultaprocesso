@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Terminal, Copy, Check, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLogStore } from '../store/logStore';
 
 export interface DebugLog {
   timestamp: string;
@@ -11,12 +12,8 @@ export interface DebugLog {
   data?: any;
 }
 
-interface DebugOverlayProps {
-  logs: DebugLog[];
-  onClear: () => void;
-}
-
-export const DebugOverlay: React.FC<DebugOverlayProps> = ({ logs, onClear }) => {
+export const DebugOverlay: React.FC = () => {
+  const { logs, clearLogs } = useLogStore();
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -48,7 +45,7 @@ export const DebugOverlay: React.FC<DebugOverlayProps> = ({ logs, onClear }) => 
                 <button onClick={handleCopy} className="p-1.5 hover:bg-slate-800 rounded text-slate-400 transition-colors">
                   {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                 </button>
-                <button onClick={onClear} className="p-1.5 hover:bg-slate-800 rounded text-slate-400 transition-colors">
+                <button onClick={clearLogs} className="p-1.5 hover:bg-slate-800 rounded text-slate-400 transition-colors">
                   <X size={14} />
                 </button>
               </div>
