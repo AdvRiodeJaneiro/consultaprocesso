@@ -75,18 +75,6 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
             <h2 className="text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Monitoramento de Processo</h2>
             <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">Acompanhe seus processos em tempo real com notificações automáticas.</p>
           </div>
-          
-          <button 
-            onClick={() => {
-              resetLimit();
-              window.location.reload();
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-[10px] font-bold uppercase hover:bg-red-200 transition-colors"
-            title="Botão temporário para testes"
-          >
-            <RefreshCcw size={12} />
-            Resetar Limite
-          </button>
         </div>
 
         <div className="space-y-4 mb-10">

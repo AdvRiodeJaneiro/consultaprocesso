@@ -14,7 +14,6 @@ const MyProcesses: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const [search, setSearch] = useState('');
   const [isCancelling, setIsCancelling] = useState<string | null>(null);
-  const [showDebug, setShowDebug] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const filteredProcesses = processes.filter(p =>
@@ -119,13 +118,6 @@ const MyProcesses: React.FC = () => {
                           <h4 className="text-lg font-bold text-deep-indigo dark:text-white truncate">{proc.process_number}</h4>
                         </div>
                       </div>
-                      
-                      <button 
-                        onClick={() => setShowDebug(showDebug === proc.id ? null : proc.id)}
-                        className="p-2 text-slate-300 hover:text-primary transition-colors"
-                      >
-                        <Bug size={16} />
-                      </button>
                     </div>
 
                     {/* Scanner Animation Section */}
@@ -159,25 +151,6 @@ const MyProcesses: React.FC = () => {
                         {proc.last_movement_summary || 'O robô está verificando o tribunal. Você será avisado assim que surgir uma novidade.'}
                       </p>
                     </div>
-
-                    {/* Debug UI Area */}
-                    <AnimatePresence>
-                      {showDebug === proc.id && (
-                        <motion.div 
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="mt-4 overflow-hidden"
-                        >
-                          <div className="bg-slate-950 rounded-xl p-4 font-mono text-[10px] text-green-400 border border-slate-800">
-                             <p>[{new Date(proc.created_at).toLocaleTimeString()}] MONITORING_STARTED</p>
-                             <p>[ESC_ID] {proc.escavador_monitoring_id}</p>
-                             <p>[WA_TARGET] {proc.whatsapp_number}</p>
-                             <p className="text-yellow-400 mt-2">DICA: Verifique o console global de debug (ícone inferior direito) para ver os logs de persistência.</p>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
 
                   <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-50 dark:border-slate-800">

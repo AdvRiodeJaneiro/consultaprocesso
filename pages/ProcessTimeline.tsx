@@ -137,7 +137,7 @@ const ProcessTimeline: React.FC = () => {
             <div className="pt-8 border-t border-slate-100 dark:border-slate-800">
               <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
                 <History size={16} className="text-primary" />
-                Histórico (Raw)
+                Histórico
               </h3>
               
               <div className="space-y-4">
