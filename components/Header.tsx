@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { ChevronRight, MessageSquare, Bell, Menu } from 'lucide-react';
+import { ChevronRight, MessageSquare, Bell, Menu, Plus } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useUIStore } from '../store/uiStore';
 import { cn } from '../lib/utils';
@@ -9,9 +9,10 @@ import { cn } from '../lib/utils';
 interface HeaderProps {
   viewTitle: string;
   onWhatsappClick?: () => void;
+  onNewSearchClick?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ viewTitle, onWhatsappClick }) => {
+const Header: React.FC<HeaderProps> = ({ viewTitle, onWhatsappClick, onNewSearchClick }) => {
   const { toggleSidebar } = useUIStore();
   const location = useLocation();
   const isHome = location.pathname === '/';
@@ -27,7 +28,7 @@ const Header: React.FC<HeaderProps> = ({ viewTitle, onWhatsappClick }) => {
         </button>
         <div className={cn(
           "items-center gap-2 text-slate-400 overflow-hidden",
-          isHome ? "hidden sm:flex" : "flex" // Oculto no mobile (abaixo de sm), flex no PC e outros
+          isHome ? "hidden sm:flex" : "flex"
         )}>
           <span className="text-xs md:text-sm font-medium hidden sm:inline">Dashboard</span>
           <ChevronRight size={14} className="mt-0.5 hidden sm:inline" />
@@ -48,8 +49,16 @@ const Header: React.FC<HeaderProps> = ({ viewTitle, onWhatsappClick }) => {
           </span>
         </button>
         
-        <button className="size-9 md:size-10 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 shrink-0">
-          <Bell size={18} className="md:w-5 md:h-5" />
+        <button 
+          onClick={isHome ? onNewSearchClick : undefined}
+          className="size-9 md:size-10 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 shrink-0"
+          title={isHome ? "Nova Consulta" : "Notificações"}
+        >
+          {isHome ? (
+            <Plus size={20} className="text-primary" />
+          ) : (
+            <Bell size={18} className="md:w-5 md:h-5" />
+          )}
         </button>
       </div>
     </header>

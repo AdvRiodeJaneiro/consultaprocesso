@@ -9,6 +9,7 @@ import Sidebar from './components/Sidebar';
 import MonitorProcess from './components/MonitorProcess';
 import Header from './components/Header';
 import WhatsappModal from './components/WhatsappModal';
+import ConfirmModal from './components/ConfirmModal';
 import Auth from './pages/Auth';
 import MyProcesses from './pages/MyProcesses';
 import ProcessTimeline from './pages/ProcessTimeline';
@@ -32,15 +33,19 @@ function AppContent() {
     setInput,
     messages,
     isProcessing,
+    activeProcess,
     debugInfo,
     setDebugInfo,
     whatsappNumber,
     setWhatsappNumber,
     isWhatsappModalOpen,
     setIsWhatsappModalOpen,
+    resetSearch,
     handleWelcomeSubmit,
     handleSend
   } = useChat();
+
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     if (profile?.whatsapp) {
@@ -78,6 +83,12 @@ function AppContent() {
             return isMobile ? 'Andamento' : 'Andamento do Processo';
         }
         return 'Dashboard';
+    }
+  };
+
+  const handleNewSearch = () => {
+    if (!showWelcome && (messages.length > 0 || activeProcess)) {
+      setShowResetConfirm(true);
     }
   };
 
@@ -161,6 +172,7 @@ function AppContent() {
           <Header 
             viewTitle={getActiveTitle()} 
             onWhatsappClick={() => setIsWhatsappModalOpen(true)}
+            onNewSearchClick={handleNewSearch}
           />
         )}
         <div className="flex-1 overflow-y-auto">
@@ -208,12 +220,23 @@ function AppContent() {
               }
               setIsWhatsappModalOpen(false);
             } else {
-              // Redireciona para cadastro se não estiver logado
               setIsWhatsappModalOpen(false);
               navigate('/auth', { state: { mode: 'signup', whatsapp: phone } });
             }
          }}
          initialValue={whatsappNumber}
+      />
+
+      <ConfirmModal
+        isOpen={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+        onConfirm={() => {
+          resetSearch();
+          setShowResetConfirm(false);
+        }}
+        title="Nova consulta?"
+        description="Deseja limpar essa consulta e começar outra?"
+        confirmLabel="Sim, começar nova"
       />
     </div>
   );
