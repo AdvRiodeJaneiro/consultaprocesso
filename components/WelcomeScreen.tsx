@@ -75,7 +75,7 @@ export default function WelcomeScreen({ onSubmit }: WelcomeScreenProps) {
   };
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center bg-secondary overflow-hidden">
+    <div className="relative w-full h-full flex flex-col items-center bg-slate-950 overflow-hidden">
       {/* Dynamic Background */}
       <DottedSurface className="fixed inset-0 z-0 pointer-events-none" />
 
