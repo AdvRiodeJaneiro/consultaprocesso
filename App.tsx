@@ -27,7 +27,6 @@ function AppContent() {
   const { user, profile, refreshProfile, sessionLoading } = useAuth();
   const location = useLocation();
   const addLog = useLogStore(state => state.addLog);
-  const { toggleSidebar } = useUIStore();
   
   const {
     showWelcome,
@@ -50,13 +49,6 @@ function AppContent() {
       addLog(log.message, log.type, log.data);
     };
   }, [addLog]);
-
-  // Fechar sidebar no mobile ao trocar de rota
-  useEffect(() => {
-    if (window.innerWidth < 768) {
-      // Garantir que a sidebar feche se estiver aberta (lógica simplificada via zustand se necessário)
-    }
-  }, [location.pathname]);
 
   useEffect(() => {
     if (profile?.whatsapp) {
@@ -82,15 +74,17 @@ function AppContent() {
   };
 
   const getActiveTitle = () => {
+    const isMobile = window.innerWidth < 768;
     switch(location.pathname) {
       case '/monitoramento': return 'Monitoramento';
       case '/meus-processos': return 'Meus Processos';
-      case '/busca-nome': return 'Busca por Nome/CPF';
       case '/': return 'Consulta Processo';
       case '/configuracoes': return 'Configurações';
       case '/auth': return 'Autenticação';
       default:
-        if (location.pathname.startsWith('/processo/')) return 'Andamento do Processo';
+        if (location.pathname.startsWith('/processo/')) {
+            return isMobile ? 'Andamento' : 'Andamento do Processo';
+        }
         return 'Dashboard';
     }
   };
@@ -112,7 +106,7 @@ function AppContent() {
     }
 
     return (
-      <div className="flex flex-col h-full bg-background dark:bg-background-dark overflow-hidden relative">
+      <div className="flex flex-col h-full bg-slate-950 dark:bg-slate-950 overflow-hidden relative">
         <main className="flex-1 overflow-y-auto p-4 scrollbar-hide">
           <div className="flex flex-col space-y-2 max-w-3xl mx-auto w-full pb-24">
              {debugInfo && (
@@ -132,15 +126,15 @@ function AppContent() {
           </div>
         </main>
 
-        <footer className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 border-t border-slate-200 dark:border-slate-800 sticky bottom-0 z-10">
+        <footer className="bg-slate-900/80 backdrop-blur-md p-6 border-t border-slate-800 sticky bottom-0 z-10">
           <div className="max-w-3xl mx-auto w-full">
-            <div className="relative flex items-end gap-2 bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all duration-200">
+            <div className="relative flex items-end gap-2 bg-slate-800 p-2 rounded-xl border border-slate-700 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all duration-200">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Pergunte algo sobre o processo..."
-                className="w-full bg-transparent border-none text-deep-indigo dark:text-white placeholder-slate-400 focus:ring-0 resize-none max-h-32 py-3 px-2 text-sm md:text-base scrollbar-hide leading-relaxed font-medium"
+                className="w-full bg-transparent border-none text-white placeholder-slate-400 focus:ring-0 resize-none max-h-32 py-3 px-2 text-sm md:text-base scrollbar-hide leading-relaxed font-medium"
                 rows={1}
               />
               <button
@@ -150,7 +144,7 @@ function AppContent() {
                   "p-3 rounded-lg flex-shrink-0 mb-0.5 transition-all duration-200",
                   input.trim() && !isProcessing
                     ? "bg-primary text-deep-indigo shadow-lg hover:scale-105"
-                    : "bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed"
+                    : "bg-slate-700 text-slate-400 cursor-not-allowed"
                 )}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">

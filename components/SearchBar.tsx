@@ -26,7 +26,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       "bg-white dark:bg-slate-900 p-2 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row gap-2",
       className
     )}>
-      <div className="flex-1 flex items-center px-4 gap-3 bg-slate-50 dark:bg-slate-800 rounded-xl h-14 border border-transparent focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 transition-all">
+      <div className="flex-1 flex items-center px-4 gap-3 bg-slate-50 dark:bg-slate-800 rounded-xl min-h-[56px] h-14 border border-transparent focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 transition-all">
         <Search className="text-slate-300" size={20} />
         <input 
           className="w-full bg-transparent border-none focus:ring-0 text-deep-indigo dark:text-white placeholder:text-slate-400 font-medium outline-none" 
@@ -40,7 +40,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       <button 
         onClick={onSearch}
         disabled={isLoading || !value.trim()}
-        className="bg-primary hover:bg-primary/90 text-deep-indigo px-8 py-3 rounded-xl font-bold transition-all h-14 whitespace-nowrap shadow-md shadow-primary/20 disabled:opacity-50"
+        className="bg-primary hover:bg-primary/90 text-deep-indigo px-8 py-3 rounded-xl font-bold transition-all h-14 min-h-[56px] whitespace-nowrap shadow-md shadow-primary/20 disabled:opacity-50"
       >
         {isLoading ? 'Buscando...' : 'Buscar Processo'}
       </button>
