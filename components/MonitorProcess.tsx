@@ -54,7 +54,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [showAlreadyMonitoredAlert, setShowAlreadyMonitoredAlert] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [activeFilter, setActiveFilter] = useState('todos');
+  const [activeFilter, setActiveFilter] = useState('');
 
   const monitoredNumbers = processes.map(p => p.process_number);
 
@@ -67,9 +67,9 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     // Esconde o passo a passo e inicia a busca
     hideSteps();
     setActiveFilter(query); 
-    const success = await handleSearch();
+    await handleSearch();
     
-    // Rola para o topo se a busca teve sucesso ou retornou erro (para o usuário ver o feedback)
+    // Rola para o topo para o usuário ver o feedback
     setTimeout(scrollToSearch, 100);
   };
 
@@ -89,38 +89,10 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     setTimeout(scrollToSearch, 100);
   };
 
-  const handleShowAll = async () => {
-    hideSteps();
-    setActiveFilter('todos');
-    setQuery('');
-    setError(null);
-    
-    const recentQueries = history.slice(0, 3).map(h => h.query);
-    
-    if (recentQueries.length === 0) {
-        setResults([]);
-        return;
-    }
-
-    let consolidated: any[] = [];
-    recentQueries.forEach(q => {
-        if (resultsCache[q]) consolidated = [...consolidated, ...resultsCache[q]];
-    });
-
-    if (consolidated.length > 0) {
-        const unique = Array.from(new Map(consolidated.map(p => [p.numero_cnj, p])).values());
-        setResults(unique);
-    } else {
-        handleEntrySelect(history[0]);
-    }
-    
-    setTimeout(scrollToSearch, 100);
-  };
-
-  const recentTags = history.slice(0, 3);
+  const recentTags = history.slice(0, 6);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-background dark:bg-background-dark overflow-y-auto scrollbar-hide">
+    <div className="flex-1 bg-background dark:bg-background-dark">
       <div className="p-4 md:p-8 max-w-6xl mx-auto w-full">
         <div className="mb-8 md:mb-10 flex flex-col md:flex-row justify-between items-start gap-4">
           <div>
@@ -157,40 +129,29 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
               onChange={setQuery}
               onSearch={onSearchSubmit}
               isLoading={isLoading}
-              // Quando o usuário clicar no input, já esconde os passos
               className="focus-within:shadow-2xl"
               onFocus={hideSteps}
               placeholder="Busque por CPF, CNPJ, Nome ou Número do Processo"
             />
 
-            <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
-                <button
-                    onClick={handleShowAll}
-                    className={cn(
-                        "whitespace-nowrap flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold transition-all border shadow-sm",
-                        activeFilter === 'todos' 
-                          ? 'bg-deep-indigo text-white border-deep-indigo dark:bg-white dark:text-deep-indigo dark:border-white shadow-lg' 
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
-                    )}
-                >
-                    Todos
-                </button>
-                
-                {recentTags.map((entry, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => handleEntrySelect(entry)}
-                        className={cn(
-                            "whitespace-nowrap flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold transition-all border shadow-sm",
-                            activeFilter === entry.query 
-                                ? 'bg-deep-indigo text-white border-deep-indigo dark:bg-white dark:text-deep-indigo dark:border-white shadow-lg' 
-                                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
-                        )}
-                    >
-                        {entry.query}
-                    </button>
-                ))}
-            </div>
+            {recentTags.length > 0 && (
+              <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+                  {recentTags.map((entry, idx) => (
+                      <button
+                          key={idx}
+                          onClick={() => handleEntrySelect(entry)}
+                          className={cn(
+                              "whitespace-nowrap flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold transition-all border shadow-sm",
+                              activeFilter === entry.query 
+                                  ? 'bg-deep-indigo text-white border-deep-indigo dark:bg-white dark:text-deep-indigo dark:border-white shadow-lg' 
+                                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
+                          )}
+                      >
+                          {entry.query}
+                      </button>
+                  ))}
+              </div>
+            )}
         </div>
 
         {error && (
@@ -206,7 +167,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
             </h3>
             {!isLoading && (
               <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                {activeFilter === 'todos' ? `${results.length} Exibidos` : `${results.length} de ${totalCount}`}
+                {results.length} de {totalCount}
               </span>
             )}
           </div>
@@ -271,7 +232,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
           })}
         </div>
 
-        {activeFilter !== 'todos' && results.length < totalCount && results.length > 0 && !isLoading && (
+        {results.length < totalCount && results.length > 0 && !isLoading && (
           <div className="flex justify-center pb-20">
              <button className="flex items-center gap-2 px-8 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-black text-deep-indigo dark:text-white hover:bg-slate-50 transition-all shadow-sm">
                 Carregar mais processos
