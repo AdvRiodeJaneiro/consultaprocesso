@@ -13,6 +13,8 @@ export interface MonitoredProcess {
   last_movement_date?: string;
   created_at: string;
   debug_logs?: string;
+  title_polo_ativo?: string;
+  title_polo_passivo?: string;
 }
 
 export function useMyProcesses() {

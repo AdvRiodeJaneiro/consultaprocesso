@@ -81,7 +81,9 @@ export function useMonitor() {
         process_number: selectedProcess.numero_cnj,
         whatsapp_number: waNumber,
         status: 'PENDENTE',
-        last_movement_summary: 'Aguardando sincronização com o tribunal...'
+        last_movement_summary: 'Aguardando sincronização com o tribunal...',
+        title_polo_ativo: selectedProcess.titulo_polo_ativo,
+        title_polo_passivo: selectedProcess.titulo_polo_passivo
       };
 
       const { data, error: dbError } = await supabase

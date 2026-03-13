@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Search, Gavel, Calendar, Trash2, ChevronRight, BellOff, Loader2, Bug, Scan, Activity } from 'lucide-react';
+import { Search, Gavel, Calendar, Trash2, ChevronRight, BellOff, Loader2, Bug, Scan, Activity, User } from 'lucide-react';
 import { useMyProcesses, MonitoredProcess } from '../hooks/useMyProcesses';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -123,6 +123,24 @@ const MyProcesses: React.FC = () => {
                       </div>
                     </div>
 
+                    {/* Partes do Processo */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                      <div className="flex gap-2 items-start">
+                        <User size={14} className="text-primary mt-1 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Autor</p>
+                          <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate">{proc.title_polo_ativo || 'Não informado'}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 items-start">
+                        <User size={14} className="text-slate-400 mt-1 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Réu</p>
+                          <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate">{proc.title_polo_passivo || 'Não informado'}</p>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Scanner Animation Section */}
                     <div className="mb-4 bg-slate-900 rounded-2xl p-4 border border-slate-800 relative overflow-hidden group/scanner">
                        <div className="flex items-center gap-3 relative z-10">
@@ -198,8 +216,5 @@ const MyProcesses: React.FC = () => {
     </div>
   );
 };
-
-// Import helper
-import { cn } from '../lib/utils';
 
 export default MyProcesses;
