@@ -1,4 +1,4 @@
-import { useZApiStore } from '../store/zApiStore';
+import { useZApiStore } from './store';
 
 const PROXY_URL = "https://corsproxy.io/?";
 

@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useZApiStore } from '../store/zApiStore';
+import { useZApiStore } from '../integrations/zapi/store';
 import { useAuth } from '../contexts/AuthContext';
-import { checkZApiStatus, sendZApiText } from '../services/zApiService';
+import { checkZApiStatus, sendZApiText } from '../integrations/zapi/service';
 import { 
   Settings, 
   Send, 
