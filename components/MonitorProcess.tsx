@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, Gavel, Eye, Bell, Search, RefreshCcw, X, Check, History, ChevronDown } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { AlertCircle, Gavel, Eye, Search, History, ChevronDown, Loader2, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import MonitorConfirmModal from './MonitorConfirmModal';
@@ -25,21 +25,17 @@ interface MonitorProcessProps {
   onUpdateWhatsapp: (phone: string) => void;
 }
 
-const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdateWhatsapp }) => {
+const MonitorProcess: React.FC<MonitorProcessProps> = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuth();
+  
   const {
-    query,
-    setQuery,
+    query, setQuery,
     results,
     totalCount,
-    setResults,
     isLoading,
     error,
-    setError,
-    isConfirmModalOpen,
-    setIsConfirmModalOpen,
+    isConfirmModalOpen, setIsConfirmModalOpen,
     selectedProcess,
     handleSearch,
     handleMonitorClick,
@@ -49,7 +45,6 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
   const { isLimitReached, incrementSearch, checkLimitBeforeSearch } = useSearchLimit();
   const { history, addToHistory, deleteEntry, clearHistory } = useSearchHistory();
   const { processes } = useMyProcesses();
-  
   const { showSteps, hideSteps, searchBarRef } = useMonitorLayout();
   
   const [showLimitModal, setShowLimitModal] = useState(false);
@@ -85,10 +80,8 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     handleSearch(entry.query);
   };
 
-  const recentTags = history.slice(0, 6);
-
   return (
-    <div className="flex-1 bg-background dark:bg-background-dark">
+    <div className="flex-1 bg-background dark:bg-background-dark overflow-y-auto scrollbar-hide">
       <div className="p-4 md:p-8 max-w-6xl mx-auto w-full">
         <div className="mb-8 md:mb-10 flex flex-col md:flex-row justify-between items-start gap-4">
           <div className="flex-1">
@@ -114,7 +107,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
             <motion.div
               initial={{ opacity: 0, height: 0, marginBottom: 0 }}
               animate={{ opacity: 1, height: 'auto', marginBottom: 32 }}
-              exit={{ opacity: 0, height: 0, marginBottom: 0, transition: { duration: 0.3 } }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
               className="overflow-hidden"
             >
               <StepsCard />
@@ -128,21 +121,19 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
               onChange={setQuery}
               onSearch={onSearchSubmit}
               isLoading={isLoading}
-              className="focus-within:shadow-2xl"
               onFocus={hideSteps}
-              placeholder="Busque por CPF, CNPJ, Nome ou Número do Processo"
             />
 
-            {recentTags.length > 0 && (
+            {history.length > 0 && (
               <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
-                  {recentTags.map((entry, idx) => (
+                  {history.slice(0, 6).map((entry, idx) => (
                       <button
                           key={idx}
                           onClick={() => handleEntrySelect(entry)}
                           className={cn(
                               "whitespace-nowrap flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold transition-all border shadow-sm",
                               activeFilter === entry.query 
-                                  ? 'bg-deep-indigo text-white border-deep-indigo dark:bg-white dark:text-deep-indigo dark:border-white shadow-lg' 
+                                  ? 'bg-deep-indigo text-white border-deep-indigo dark:bg-white dark:text-deep-indigo' 
                                   : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
                           )}
                       >
@@ -172,25 +163,20 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20">
           {results.map((proc) => {
             const isMonitored = monitoredNumbers.includes(proc.numero_cnj);
             return (
-              <div key={proc.numero_cnj} className="bg-white dark:bg-slate-900 rounded-2xl border-l-4 border-accent-gold shadow-sm hover:shadow-xl transition-all p-6 flex flex-col justify-between group">
+              <div key={proc.numero_cnj} className="bg-white dark:bg-slate-900 rounded-2xl border-l-4 border-primary shadow-sm hover:shadow-xl transition-all p-6 flex flex-col justify-between group">
                 <div>
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex gap-3 min-w-0">
-                      <div className="mt-1 text-accent-gold group-hover:scale-110 transition-transform shrink-0">
-                        <Gavel size={20} />
-                      </div>
+                      <Gavel className="text-primary mt-1 shrink-0" size={20} />
                       <div className="min-w-0">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Número do Processo</p>
-                        <h4 className="text-base md:text-lg font-bold text-deep-indigo dark:text-white break-all">{proc.numero_cnj}</h4>
+                        <h4 className="text-base font-bold text-deep-indigo dark:text-white break-all">{proc.numero_cnj}</h4>
                       </div>
                     </div>
-                    <span className="bg-accent-gold/10 text-accent-gold text-[10px] font-black px-2 py-1 rounded-md uppercase shrink-0">
-                      {proc.fontes?.[0]?.sigla || 'CNJ'}
-                    </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                     <div>
@@ -203,33 +189,29 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
                     </div>
                   </div>
                 </div>
-                <div className="pt-4 border-t border-slate-50 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="pt-4 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between gap-4">
                   <span className="text-[10px] text-slate-400 italic">
-                    Última mov: {proc.data_ultima_movimentacao}
+                    {proc.data_ultima_movimentacao}
                   </span>
                   
                   {isMonitored ? (
                     <button 
                       onClick={() => setShowAlreadyMonitoredAlert(true)}
-                      className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-400 px-4 py-2 rounded-lg text-sm font-bold cursor-default shrink-0"
+                      className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-400 px-4 py-2 rounded-lg text-sm font-bold cursor-default"
                     >
                       <Check size={16} />
-                      <span>Monitorando...</span>
+                      <span>Monitorando</span>
                     </button>
                   ) : (
                     <button 
                       onClick={() => {
-                        if (!user) {
-                          // Forçamos o modo 'signup' ao vir do fluxo de monitoramento
-                          navigate('/auth', { state: { from: location.pathname, mode: 'signup' } });
-                        } else {
-                          handleMonitorClick(proc);
-                        }
+                        if (!user) navigate('/auth', { state: { from: '/monitoramento', mode: 'signup' } });
+                        else handleMonitorClick(proc);
                       }}
-                      className="w-full sm:w-auto flex items-center justify-center gap-2 bg-deep-indigo dark:bg-primary text-white dark:text-deep-indigo px-5 py-2.5 rounded-xl text-sm font-black hover:opacity-90 transition-all shadow-md active:scale-95"
+                      className="flex items-center gap-2 bg-deep-indigo dark:bg-primary text-white dark:text-deep-indigo px-5 py-2.5 rounded-xl text-sm font-black hover:opacity-90 transition-all shadow-md active:scale-95"
                     >
                       <Eye size={16} />
-                      <span>Quero monitorar</span>
+                      <span>Monitorar</span>
                     </button>
                   )}
                 </div>
@@ -238,22 +220,11 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
           })}
         </div>
 
-        {results.length < totalCount && results.length > 0 && !isLoading && (
-          <div className="flex justify-center pb-20">
-             <button className="flex items-center gap-2 px-8 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-black text-deep-indigo dark:text-white hover:bg-slate-50 transition-all shadow-sm">
-                Carregar mais processos
-                <ChevronDown size={18} className="text-primary" />
-             </button>
-          </div>
-        )}
-
         {!isLoading && results.length === 0 && !error && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="size-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 mb-6 shadow-inner">
-              <Search size={40} className="animate-pulse" />
-            </div>
-            <h3 className="text-xl font-bold text-deep-indigo dark:text-white">Inicie uma nova busca</h3>
-            <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-sm font-medium">Busque por Nome, CPF ou CNPJ para localizar seus processos e ativar o monitoramento.</p>
+            <Search size={48} className="text-slate-200 dark:text-slate-800 mb-4" />
+            <h3 className="text-lg font-bold text-deep-indigo dark:text-white">Inicie uma nova busca</h3>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-sm">Busque por Nome, CPF ou CNPJ para localizar processos.</p>
           </div>
         )}
       </div>
@@ -282,8 +253,8 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
       <ToastAlert 
         isOpen={showAlreadyMonitoredAlert}
         onClose={() => setShowAlreadyMonitoredAlert(false)}
-        title="Esse processo já está sendo monitorado. Deseja ir para a tela de processos monitorados?"
-        actionLabel="Sim"
+        title="Esse processo já está sendo monitorado."
+        actionLabel="Ver meus processos"
         onAction={() => navigate('/meus-processos')}
       />
     </div>
