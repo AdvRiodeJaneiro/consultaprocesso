@@ -25,7 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 
   const menuItems = [
     { id: 'search-number', label: 'Consulta Processo', icon: Search, path: '/' },
-    { id: 'monitor-new', label: 'Monitoramento', icon: LayoutDashboard, path: '/monitoramento' },
+    { id: 'monitor-new', label: 'Consulta CPF e CNPJ', icon: LayoutDashboard, path: '/monitoramento' },
     { id: 'my-processes', label: 'Processos Monitorados', icon: Gavel, path: '/meus-processos' },
     { id: 'settings', label: 'Configurações', icon: Settings, path: '/configuracoes' },
   ];
