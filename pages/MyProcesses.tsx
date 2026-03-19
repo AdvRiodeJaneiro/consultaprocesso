@@ -10,6 +10,7 @@ import { EmptyStateAnimation } from '../components/EmptyStateAnimation';
 import { motion } from 'framer-motion';
 import { useProcessStore } from '../store/processStore';
 import { supabase } from '../integrations/supabase/client';
+import { cn } from '../lib/utils';
 
 const MyProcesses: React.FC = () => {
   const { processes, loading, cancelMonitoring } = useMyProcesses();
@@ -24,7 +25,6 @@ const MyProcesses: React.FC = () => {
   );
 
   const handleDetailsClick = async (proc: MonitoredProcess) => {
-    // Se tiver atualizações novas, limpamos a flag no banco e na store antes de navegar
     if (proc.has_new_updates) {
       updateProcessInStore(proc.id, { has_new_updates: false });
       await supabase
@@ -90,7 +90,6 @@ const MyProcesses: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
           {filteredProcesses.map((proc) => {
-            const isPendente = proc.status === 'PENDENTE';
             const hasUpdates = proc.has_new_updates;
 
             return (
@@ -102,7 +101,6 @@ const MyProcesses: React.FC = () => {
                   hasUpdates ? "border-red-200 ring-2 ring-red-500/10" : "border-slate-100 dark:border-slate-800"
                 )}
               >
-                {/* Unread Badge */}
                 {hasUpdates && (
                   <div className="absolute top-0 right-0 px-4 py-1.5 bg-red-500 text-white text-[10px] font-black rounded-bl-2xl uppercase flex items-center gap-1.5 animate-pulse z-10">
                     <Bell size={10} fill="white" />
@@ -123,7 +121,6 @@ const MyProcesses: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Partes */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div className="flex gap-2 items-start">
                       <User size={14} className="text-primary mt-1 shrink-0" />
@@ -141,7 +138,6 @@ const MyProcesses: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Last Movement Highlight */}
                   <div className={cn(
                     "rounded-2xl p-4 border transition-colors",
                     hasUpdates ? "bg-red-50 border-red-100 dark:bg-red-900/10 dark:border-red-900/20" : "bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700/50"
