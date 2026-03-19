@@ -49,7 +49,7 @@ export const fetchProcessData = async (processNumber: string): Promise<Escavador
 export const createMonitoring = async (processNumber: string) => {
     return fetchWithFallback(`${BASE_URL}/monitoramentos/processos`, 'POST', {
         numero: processNumber,
-        frequencia: 'DIARIA'
+        frequencia: 'SEMANAL' // Alterado de DIARIA para SEMANAL
     });
 };
 
