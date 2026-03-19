@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '../contexts/AuthContext';
 import { useProcessStore } from '../store/processStore';
-import { deleteMonitoring } from '../services/escavadorService';
 
 export interface MonitoredProcess {
   id: string;
@@ -65,10 +64,6 @@ export function useMyProcesses() {
 
   const cancelMonitoring = async (id: string, escavadorId: number) => {
     try {
-      // 1. Chamar API do Escavador para parar o monitoramento real
-      await deleteMonitoring(escavadorId);
-
-      // 2. Remover do nosso banco de dados
       const { error: dbError } = await supabase
         .from('monitored_processes')
         .delete()
@@ -80,7 +75,6 @@ export function useMyProcesses() {
       removeProcess(id);
       return { success: true };
     } catch (err: any) {
-      console.error("[cancelMonitoring] Erro:", err);
       return { success: false, error: err.message };
     }
   };
