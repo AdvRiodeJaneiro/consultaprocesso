@@ -6,7 +6,8 @@ import {
   LayoutDashboard,
   Settings,
   Gavel,
-  LogOut
+  LogOut,
+  Zap
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -29,6 +30,11 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     { id: 'my-processes', label: 'Processos Monitorados', icon: Gavel, path: '/meus-processos' },
     { id: 'settings', label: 'Configurações', icon: Settings, path: '/configuracoes' },
   ];
+
+  // Adiciona item de teste Z-API apenas se estiver logado
+  if (user) {
+    menuItems.push({ id: 'z-api-test', label: 'Integração WhatsApp', icon: Zap, path: '/z-api' });
+  }
 
   return (
     <>

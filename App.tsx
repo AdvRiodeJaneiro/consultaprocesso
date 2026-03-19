@@ -13,6 +13,7 @@ import ConfirmModal from './components/ConfirmModal';
 import Auth from './pages/Auth';
 import MyProcesses from './pages/MyProcesses';
 import ProcessTimeline from './pages/ProcessTimeline';
+import ZApiTest from './pages/ZApiTest';
 import { useChat } from './hooks/useChat';
 import { useUIStore } from './store/uiStore';
 import { useSearchStore } from './store/searchStore';
@@ -80,6 +81,7 @@ function AppContent() {
       case '/': return 'Consulta Processo';
       case '/configuracoes': return 'Configurações';
       case '/auth': return 'Autenticação';
+      case '/z-api': return 'Integração WhatsApp';
       default:
         if (location.pathname.startsWith('/processo/')) {
             return isMobile ? 'Andamento' : 'Andamento do Processo';
@@ -94,7 +96,6 @@ function AppContent() {
     }
   };
 
-  // NOVO: Função para levar o processo consultado para a tela de monitoramento
   const handleTransitionToMonitor = () => {
     if (activeProcess) {
       setSearchData(activeProcess.numero_cnj, [activeProcess], 'cnj', 1);
@@ -195,6 +196,7 @@ function AppContent() {
             <Route path="/auth" element={<Auth />} />
             <Route path="/meus-processos" element={<MyProcesses />} />
             <Route path="/processo/:cnj" element={<ProcessTimeline />} />
+            <Route path="/z-api" element={<ZApiTest />} />
             <Route path="/monitoramento" element={
               <MonitorProcess
                 whatsappNumber={whatsappNumber}
