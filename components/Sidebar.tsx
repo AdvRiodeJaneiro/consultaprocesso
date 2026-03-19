@@ -31,10 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     { id: 'settings', label: 'Configurações', icon: Settings, path: '/configuracoes' },
   ];
 
-  // Adiciona item de teste Z-API apenas se estiver logado
-  if (user) {
-    menuItems.push({ id: 'z-api-test', label: 'Integração WhatsApp', icon: Zap, path: '/z-api' });
-  }
+  // Item 'z-api-test' (Integração WhatsApp) foi removido da lista visual mas a página continua acessível via rota /z-api se necessário.
 
   return (
     <>
