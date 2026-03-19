@@ -91,9 +91,14 @@ const MonitorProcess: React.FC<MonitorProcessProps> = ({ whatsappNumber, onUpdat
     <div className="flex-1 bg-background dark:bg-background-dark">
       <div className="p-4 md:p-8 max-w-6xl mx-auto w-full">
         <div className="mb-8 md:mb-10 flex flex-col md:flex-row justify-between items-start gap-4">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Monitoramento de Processo</h2>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm md:text-lg font-medium">Busque e escolha o processo para receber atualizações no Whatsapp</p>
+          <div className="flex-1">
+            <div className="flex flex-wrap items-center gap-3 mb-1">
+              <h2 className="text-2xl md:text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Monitoramento de Processo</h2>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-primary text-deep-indigo uppercase tracking-wider shadow-sm">
+                Consulta CPF e CNPJ
+              </span>
+            </div>
+            <p className="text-slate-500 dark:text-slate-400 text-sm md:text-lg font-medium">Busque e escolha o processo para receber atualizações no Whatsapp</p>
           </div>
           <button 
             onClick={() => setIsHistoryOpen(true)}
