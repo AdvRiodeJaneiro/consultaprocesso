@@ -5,7 +5,6 @@ const API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiZm
 const BASE_URL = "https://api.escavador.com/api/v2";
 const PROXY_URL = "https://corsproxy.io/?";
 
-// Helper to handle the fetch logic with Proxy fallback
 const fetchWithFallback = async (endpoint: string): Promise<any> => {
     const headers = {
         'Authorization': `Bearer ${API_KEY}`,
@@ -20,57 +19,38 @@ const fetchWithFallback = async (endpoint: string): Promise<any> => {
         });
 
         if (!response.ok) {
-            let errorBody = "";
-            try {
-                errorBody = await response.text();
-            } catch (e) {
-                errorBody = "No error details available";
-            }
+            const errorText = await response.text();
+            console.error(`[Escavador API] Erro real: ${response.status} - ${errorText}`);
             
-            // Allow 404 to be handled by caller
-            if (response.status === 404) {
-                return null;
-            }
-
-            throw new Error(`API Error ${response.status}: ${errorBody}`);
+            if (response.status === 404) return null;
+            
+            // Lançamos o erro genérico para a UI
+            throw new Error("Erro na integração com base de dados jurídica. Contate o suporte.");
         }
         return response.json();
     };
 
     try {
-        // Attempt 1: Direct
         return await doFetch(endpoint);
     } catch (error: any) {
-        // If logic error, throw
-        if (error.message.includes('API Error')) {
-            throw error;
-        }
+        if (error.message.includes('Erro na integração')) throw error;
         
-        // If network/CORS error, try proxy
-        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('Load failed')) {
-            try {
-                const proxiedUrl = `${PROXY_URL}${encodeURIComponent(endpoint)}`;
-                return await doFetch(proxiedUrl);
-            } catch (proxyError: any) {
-                console.error("Proxy error for endpoint " + endpoint, proxyError);
-                throw proxyError;
-            }
+        console.error("[Escavador API] Erro de rede:", error);
+        try {
+            const proxiedUrl = `${PROXY_URL}${encodeURIComponent(endpoint)}`;
+            return await doFetch(proxiedUrl);
+        } catch (proxyError: any) {
+            throw new Error("Erro na integração com base de dados jurídica. Contate o suporte.");
         }
-        throw error;
     }
 };
 
-// Robust date parser for both ISO (YYYY-MM-DD) and BR (DD/MM/YYYY) formats
 const parseDateString = (dateStr: string): number => {
     if (!dateStr) return 0;
-    
-    // Check for DD/MM/YYYY format
     if (dateStr.match(/^\d{2}\/\d{2}\/\d{4}/)) {
         const [day, month, year] = dateStr.split('/').map(Number);
         return new Date(year, month - 1, day).getTime();
     }
-    
-    // Fallback to standard Date parse (handles YYYY-MM-DD)
     const timestamp = new Date(dateStr).getTime();
     return isNaN(timestamp) ? 0 : timestamp;
 };
@@ -80,54 +60,31 @@ export const fetchProcessData = async (processNumber: string): Promise<Escavador
   const movesEndpoint = `${BASE_URL}/processos/numero_cnj/${processNumber}/movimentacoes`;
 
   try {
-      // 1. Fetch Process Metadata
       const processData = await fetchWithFallback(processEndpoint);
-      
-      if (!processData) {
-          return null; // Process not found
-      }
+      if (!processData) return null;
 
-      // 2. Fetch Moves (Best effort - if fails, we still return process data)
       let movesList = [];
       try {
           const movesData = await fetchWithFallback(movesEndpoint);
           if (movesData && movesData.items) {
               movesList = movesData.items;
-              
-              // 3. Sort Moves: Descending Order (Newest First)
-              movesList.sort((a: any, b: any) => {
-                const dateA = parseDateString(a.data);
-                const dateB = parseDateString(b.data);
-                return dateB - dateA; // Descending
-              });
+              movesList.sort((a: any, b: any) => parseDateString(b.data) - parseDateString(a.data));
           }
       } catch (e) {
-          console.warn("Could not fetch detailed movements, continuing with basic data.", e);
+          console.warn("[Escavador API] Falha nas movimentações detalhadas.");
       }
 
-      // 4. Merge Data
-      const result: EscavadorResponse = {
-          ...processData,
-          movimentacoes: movesList
-      };
-
-      return result;
-
-  } catch (error) {
-      console.error("Escavador Service Error:", error);
+      return { ...processData, movimentacoes: movesList };
+  } catch (error: any) {
       throw error;
   }
 };
 
 export const fetchProcessesByInvolved = async (query: string): Promise<EscavadorInvolvedSearchResponse | null> => {
-    // Determine if query is CPF/CNPJ (all digits after cleaning) or Name
     const digitsOnly = query.replace(/\D/g, '');
     const isNumeric = digitsOnly.length > 0 && digitsOnly.length <= 14 && /^\d+$/.test(digitsOnly);
     
-    // According to documentation: api/v2/envolvido/processos
-    // with query parameters 'nome' or 'cpf_cnpj'
     let endpoint = `${BASE_URL}/envolvido/processos`;
-    
     if (isNumeric && (digitsOnly.length === 11 || digitsOnly.length === 14)) {
         endpoint += `?cpf_cnpj=${digitsOnly}`;
     } else {
@@ -136,13 +93,9 @@ export const fetchProcessesByInvolved = async (query: string): Promise<Escavador
 
     try {
         const data = await fetchWithFallback(endpoint);
-        // The API returns { envolvido_encontrado: ..., items: [...] }
-        if (!data || !data.items) {
-            return { total_encontrados: 0, items: [] };
-        }
+        if (!data || !data.items) return { total_encontrados: 0, items: [] };
         return data as EscavadorInvolvedSearchResponse;
-    } catch (error) {
-        console.error("Escavador Service Error (Involved Search):", error);
+    } catch (error: any) {
         throw error;
     }
 };
