@@ -1,139 +1,89 @@
 import { useState } from 'react';
-import { EscavadorProcesso } from '../types';
-import { fetchProcessesByInvolved, fetchProcessData } from '../services/escavadorService';
-import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { parseCNJ, formatCNJ } from '../utils/cnjParser';
-import { supabase } from '../integrations/supabase/client';
-import { toast } from 'react-hot-toast';
+import { fetchProcessData, createMonitoring } from '../services/escavadorService';
 import { useProcessStore } from '../store/processStore';
-import { useSearchStore } from '../store/searchStore';
+import { EscavadorProcesso } from '../types';
+import { toast } from 'react-hot-toast';
+import { supabase } from '../integrations/supabase/client';
+import { useAuth } from '../contexts/AuthContext';
 
-export function useMonitor() {
+export function useMonitor(onUpdateWhatsapp: (phone: string) => void) {
   const { user, profile } = useAuth();
-  const navigate = useNavigate();
-  const addProcessToStore = useProcessStore(state => state.addProcess);
-  
-  const query = useSearchStore(state => state.query);
-  const results = useSearchStore(state => state.results);
-  const totalCount = useSearchStore(state => state.totalCount);
-  const resultsCache = useSearchStore(state => state.resultsCache);
-  const setSearchData = useSearchStore(state => state.setSearchData);
-  const setResults = useSearchStore(state => state.setResults);
+  const [cnj, setCnj] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [processData, setProcessData] = useState<EscavadorProcesso | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isMonitoring, setIsMonitoring] = useState(false);
 
-  const [localQuery, setLocalQuery] = useState(query);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [selectedProcess, setSelectedProcess] = useState<EscavadorProcesso | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const addProcess = useProcessStore(state => state.addProcess);
 
-  const handleSearch = async (searchQuery: string = localQuery) => {
-    if (!searchQuery.trim()) return false;
-    setIsLoading(true);
-    setError(null);
-    
+  const handleSearch = async () => {
+    if (!cnj.trim()) return;
+    setLoading(true);
     try {
-      const cnjParts = parseCNJ(searchQuery);
-      if (cnjParts) {
-        const formattedCNJ = formatCNJ(cnjParts);
-        const data = await fetchProcessData(formattedCNJ);
-        if (data) {
-          setSearchData(searchQuery, [data], 'cnj', 1);
-          return true;
-        } else {
-          setError("Processo não encontrado no Escavador.");
-          return false;
-        }
-      } else {
-        const data = await fetchProcessesByInvolved(searchQuery);
-        if (data && data.items) {
-          setSearchData(searchQuery, data.items, 'involved', data.total_encontrados);
-          if (data.items.length === 0) setError("Nenhum processo encontrado.");
-          return data.items.length > 0;
-        }
-        return false;
-      }
-    } catch (err: any) {
-      setError("Erro na busca técnica.");
-      return false;
+      const data = await fetchProcessData(cnj);
+      if (data) setProcessData(data);
+      else toast.error("Processo não encontrado.");
+    } catch (error: any) {
+      toast.error(error.message);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const confirmMonitoring = async () => {
-    if (!selectedProcess || !user) {
-      toast.error("Você precisa estar logado para monitorar.");
+  const startMonitoring = async () => {
+    if (!user || !profile?.whatsapp || !processData) {
+      toast.error("Verifique seus dados e o número do processo.");
       return;
     }
 
-    setIsSaving(true);
-    const loadingToast = toast.loading('Iniciando monitoramento...');
-
+    setIsMonitoring(true);
     try {
-      const mockEscavadorId = Math.floor(Math.random() * 1000000);
-      const waNumber = profile?.whatsapp || "Não Informado";
-
-      const payload = {
-        user_id: user.id,
-        escavador_monitoring_id: mockEscavadorId,
-        process_number: selectedProcess.numero_cnj,
-        whatsapp_number: waNumber,
-        status: 'PENDENTE',
-        last_movement_summary: 'Aguardando sincronização com o tribunal...',
-        title_polo_ativo: selectedProcess.titulo_polo_ativo,
-        title_polo_passivo: selectedProcess.titulo_polo_passivo
-      };
-
-      const { data, error: dbError } = await supabase
-        .from('monitored_processes')
-        .insert([payload])
-        .select();
-
-      if (dbError) throw new Error(dbError.message);
-
-      if (data && data[0]) {
-        addProcessToStore(data[0]);
+      // 1. CRIAR MONITORAMENTO REAL NO ESCAVADOR
+      const escavadorRes = await createMonitoring(processData.numero_cnj);
+      
+      if (!escavadorRes || !escavadorRes.id) {
+          throw new Error("Falha ao registrar monitoramento no tribunal.");
       }
 
-      toast.dismiss(loadingToast);
-      toast.success('Monitoramento iniciado com sucesso!');
-      setIsConfirmModalOpen(false);
-      
-      setTimeout(() => {
-        navigate('/meus-processos');
-      }, 500);
+      // 2. SALVAR NO NOSSO BANCO COM O ID REAL
+      const { data, error } = await supabase
+        .from('monitored_processes')
+        .insert({
+          user_id: user.id,
+          process_number: processData.numero_cnj,
+          escavador_monitoring_id: escavadorRes.id, // ID REAL DA API
+          whatsapp_number: profile.whatsapp,
+          title_polo_ativo: processData.titulo_polo_ativo,
+          title_polo_passivo: processData.titulo_polo_passivo,
+          status: escavadorRes.status || 'PENDENTE'
+        })
+        .select()
+        .single();
 
-    } catch (err: any) {
-      toast.dismiss(loadingToast);
-      toast.error('Erro ao salvar: ' + (err.message || 'Erro desconhecido'));
+      if (error) throw error;
+
+      addProcess(data);
+      toast.success("Monitoramento real ativado com sucesso!");
+      setShowConfirmModal(false);
+      setProcessData(null);
+      setCnj('');
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao iniciar monitoramento.");
+      console.error(error);
     } finally {
-      setIsSaving(false);
+      setIsMonitoring(false);
     }
   };
 
   return {
-    query: localQuery, 
-    setQuery: setLocalQuery, 
-    results, 
-    totalCount,
-    resultsCache,
-    isLoading, 
-    error,
-    setError,
-    setResults,
-    isConfirmModalOpen, 
-    setIsConfirmModalOpen,
-    selectedProcess, 
-    setSelectedProcess, 
-    isSaving,
+    cnj, setCnj,
+    loading,
+    processData, setProcessData,
+    showConfirmModal, setShowConfirmModal,
+    isMonitoring,
     handleSearch,
-    handleMonitorClick: (p: EscavadorProcesso) => {
-      if (!user) { navigate('/auth'); return; }
-      setSelectedProcess(p);
-      setIsConfirmModalOpen(true);
-    },
-    confirmMonitoring
+    startMonitoring,
+    user,
+    profile
   };
 }
