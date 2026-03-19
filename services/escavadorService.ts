@@ -5,27 +5,28 @@ const API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiZm
 const BASE_URL = "https://api.escavador.com/api/v2";
 const PROXY_URL = "https://corsproxy.io/?";
 
-const fetchWithFallback = async (endpoint: string): Promise<any> => {
+const fetchEscavador = async (method: 'GET' | 'POST' | 'DELETE', path: string, body?: any): Promise<any> => {
+    const endpoint = `${BASE_URL}${path}`;
     const headers = {
         'Authorization': `Bearer ${API_KEY}`,
         'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
     };
 
     const doFetch = async (url: string) => {
         const response = await fetch(url, {
-            method: 'GET',
-            headers: headers
+            method,
+            headers,
+            body: body ? JSON.stringify(body) : undefined
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`[Escavador API] Erro real: ${response.status} - ${errorText}`);
+            const errorData = await response.json().catch(() => ({}));
+            console.error(`[Escavador API] Erro: ${response.status}`, errorData);
             
             if (response.status === 404) return null;
-            
-            // Lançamos o erro genérico para a UI
-            throw new Error("Erro na integração com base de dados jurídica. Contate o suporte.");
+            throw new Error(errorData.message || "Erro na integração com base de dados jurídica. Contate o suporte.");
         }
         return response.json();
     };
@@ -35,7 +36,7 @@ const fetchWithFallback = async (endpoint: string): Promise<any> => {
     } catch (error: any) {
         if (error.message.includes('Erro na integração')) throw error;
         
-        console.error("[Escavador API] Erro de rede:", error);
+        // Tentar via Proxy em caso de erro de rede/CORS
         try {
             const proxiedUrl = `${PROXY_URL}${encodeURIComponent(endpoint)}`;
             return await doFetch(proxiedUrl);
@@ -45,57 +46,46 @@ const fetchWithFallback = async (endpoint: string): Promise<any> => {
     }
 };
 
-const parseDateString = (dateStr: string): number => {
-    if (!dateStr) return 0;
-    if (dateStr.match(/^\d{2}\/\d{2}\/\d{4}/)) {
-        const [day, month, year] = dateStr.split('/').map(Number);
-        return new Date(year, month - 1, day).getTime();
-    }
-    const timestamp = new Date(dateStr).getTime();
-    return isNaN(timestamp) ? 0 : timestamp;
-};
-
 export const fetchProcessData = async (processNumber: string): Promise<EscavadorResponse | null> => {
-  const processEndpoint = `${BASE_URL}/processos/numero_cnj/${processNumber}`;
-  const movesEndpoint = `${BASE_URL}/processos/numero_cnj/${processNumber}/movimentacoes`;
-
   try {
-      const processData = await fetchWithFallback(processEndpoint);
+      const processData = await fetchEscavador('GET', `/processos/numero_cnj/${processNumber}`);
       if (!processData) return null;
 
       let movesList = [];
       try {
-          const movesData = await fetchWithFallback(movesEndpoint);
-          if (movesData && movesData.items) {
-              movesList = movesData.items;
-              movesList.sort((a: any, b: any) => parseDateString(b.data) - parseDateString(a.data));
-          }
-      } catch (e) {
-          console.warn("[Escavador API] Falha nas movimentações detalhadas.");
-      }
+          const movesData = await fetchEscavador('GET', `/processos/numero_cnj/${processNumber}/movimentacoes`);
+          if (movesData && movesData.items) movesList = movesData.items;
+      } catch (e) { console.warn("Falha nas movimentações detalhadas."); }
 
       return { ...processData, movimentacoes: movesList };
-  } catch (error: any) {
-      throw error;
-  }
+  } catch (error: any) { throw error; }
 };
 
 export const fetchProcessesByInvolved = async (query: string): Promise<EscavadorInvolvedSearchResponse | null> => {
     const digitsOnly = query.replace(/\D/g, '');
-    const isNumeric = digitsOnly.length > 0 && digitsOnly.length <= 14 && /^\d+$/.test(digitsOnly);
-    
-    let endpoint = `${BASE_URL}/envolvido/processos`;
-    if (isNumeric && (digitsOnly.length === 11 || digitsOnly.length === 14)) {
-        endpoint += `?cpf_cnpj=${digitsOnly}`;
+    let path = `/envolvido/processos`;
+    if (digitsOnly.length === 11 || digitsOnly.length === 14) {
+        path += `?cpf_cnpj=${digitsOnly}`;
     } else {
-        endpoint += `?nome=${encodeURIComponent(query)}`;
+        path += `?nome=${encodeURIComponent(query)}`;
     }
+    return await fetchEscavador('GET', path);
+};
 
-    try {
-        const data = await fetchWithFallback(endpoint);
-        if (!data || !data.items) return { total_encontrados: 0, items: [] };
-        return data as EscavadorInvolvedSearchResponse;
-    } catch (error: any) {
-        throw error;
-    }
+// --- NOVAS FUNÇÕES DE MONITORAMENTO REAL ---
+
+export const createProcessMonitoring = async (cnj: string) => {
+    return await fetchEscavador('POST', '/monitoramentos/processos', {
+        tipo_monitoramento: "UNICO",
+        valor: cnj,
+        frequencia: "DIARIA"
+    });
+};
+
+export const listActiveMonitorings = async () => {
+    return await fetchEscavador('GET', '/monitoramentos/processos');
+};
+
+export const deleteMonitoring = async (id: number) => {
+    return await fetchEscavador('DELETE', `/monitoramentos/processos/${id}`);
 };

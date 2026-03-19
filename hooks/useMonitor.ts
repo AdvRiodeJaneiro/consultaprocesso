@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { EscavadorProcesso } from '../types';
-import { fetchProcessesByInvolved, fetchProcessData } from '../services/escavadorService';
+import { fetchProcessesByInvolved, fetchProcessData, createProcessMonitoring } from '../services/escavadorService';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { parseCNJ, formatCNJ } from '../utils/cnjParser';
@@ -8,18 +8,18 @@ import { supabase } from '../integrations/supabase/client';
 import { toast } from 'react-hot-toast';
 import { useProcessStore } from '../store/processStore';
 import { useSearchStore } from '../store/searchStore';
+import { useLogStore } from '../store/logStore';
 
 export function useMonitor() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const addProcessToStore = useProcessStore(state => state.addProcess);
+  const addLog = useLogStore(state => state.addLog);
   
   const query = useSearchStore(state => state.query);
   const results = useSearchStore(state => state.results);
   const totalCount = useSearchStore(state => state.totalCount);
-  const resultsCache = useSearchStore(state => state.resultsCache);
   const setSearchData = useSearchStore(state => state.setSearchData);
-  const setResults = useSearchStore(state => state.setResults);
 
   const [localQuery, setLocalQuery] = useState(query);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,13 +49,12 @@ export function useMonitor() {
         const data = await fetchProcessesByInvolved(searchQuery);
         if (data && data.items) {
           setSearchData(searchQuery, data.items, 'involved', data.total_encontrados);
-          if (data.items.length === 0) setError("Nenhum processo encontrado.");
           return data.items.length > 0;
         }
         return false;
       }
     } catch (err: any) {
-      setError("Erro na busca técnica.");
+      setError(err.message);
       return false;
     } finally {
       setIsLoading(false);
@@ -69,19 +68,29 @@ export function useMonitor() {
     }
 
     setIsSaving(true);
-    const loadingToast = toast.loading('Iniciando monitoramento...');
+    const loadingToast = toast.loading('Registrando monitoramento no tribunal...');
 
     try {
-      const mockEscavadorId = Math.floor(Math.random() * 1000000);
+      // 1. CHAMADA REAL PARA O ESCAVADOR (POST /monitoramentos/processos)
+      addLog("Iniciando requisição POST ao Escavador...", "info", { cnj: selectedProcess.numero_cnj });
+      const escavadorRes = await createProcessMonitoring(selectedProcess.numero_cnj);
+      
+      if (!escavadorRes || !escavadorRes.id) {
+          throw new Error("O tribunal não devolveu um ID de monitoramento válido.");
+      }
+
+      addLog("Monitoramento criado no Escavador com sucesso!", "success", escavadorRes);
+
       const waNumber = profile?.whatsapp || "Não Informado";
 
+      // 2. SALVAR NO NOSSO BANCO DE DADOS
       const payload = {
         user_id: user.id,
-        escavador_monitoring_id: mockEscavadorId,
+        escavador_monitoring_id: escavadorRes.id, // ID REAL AQUI
         process_number: selectedProcess.numero_cnj,
         whatsapp_number: waNumber,
         status: 'PENDENTE',
-        last_movement_summary: 'Aguardando sincronização com o tribunal...',
+        last_movement_summary: 'Aguardando primeira sincronização...',
         title_polo_ativo: selectedProcess.titulo_polo_ativo,
         title_polo_passivo: selectedProcess.titulo_polo_passivo
       };
@@ -98,16 +107,15 @@ export function useMonitor() {
       }
 
       toast.dismiss(loadingToast);
-      toast.success('Monitoramento iniciado com sucesso!');
+      toast.success('Monitoramento Ativado! Você receberá o aviso no WhatsApp em breve.');
       setIsConfirmModalOpen(false);
       
-      setTimeout(() => {
-        navigate('/meus-processos');
-      }, 500);
+      setTimeout(() => navigate('/meus-processos'), 500);
 
     } catch (err: any) {
+      addLog("Falha ao ativar monitoramento", "error", err);
       toast.dismiss(loadingToast);
-      toast.error('Erro ao salvar: ' + (err.message || 'Erro desconhecido'));
+      toast.error(err.message);
     } finally {
       setIsSaving(false);
     }
@@ -118,17 +126,12 @@ export function useMonitor() {
     setQuery: setLocalQuery, 
     results, 
     totalCount,
-    resultsCache,
     isLoading, 
     error,
     setError,
-    setResults,
     isConfirmModalOpen, 
     setIsConfirmModalOpen,
     selectedProcess, 
-    setSelectedProcess, 
-    isSaving,
-    handleSearch,
     handleMonitorClick: (p: EscavadorProcesso) => {
       if (!user) { navigate('/auth'); return; }
       setSelectedProcess(p);
