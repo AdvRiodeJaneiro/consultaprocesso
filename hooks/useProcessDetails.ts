@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { EscavadorProcesso, Message } from '../types';
-import { fetchProcessData, fetchProcessMovements } from '../services/escavadorService';
+import { fetchProcessData } from '../services/escavadorService';
 import { generateLegalAnalysis } from '../services/geminiService';
 import { supabase } from '../integrations/supabase/client';
 import { useProcessStore } from '../store/processStore';
@@ -44,24 +44,12 @@ export function useProcessDetails(cnj: string | undefined) {
     setError(null);
 
     try {
-      // 1. Busca os dados da capa
       const liveData = await fetchProcessData(cnj);
       if (!liveData) {
         setError("Processo não encontrado na base de dados.");
         setIsLoading(false);
         return;
       }
-
-      // 2. Busca as movimentações e anexa ao objeto
-      try {
-        const movementsRes = await fetchProcessMovements(cnj);
-        if (movementsRes && movementsRes.items) {
-          liveData.movimentacoes = movementsRes.items;
-        }
-      } catch (movErr) {
-        console.warn("Erro ao buscar movimentações:", movErr);
-      }
-
       setProcessData(liveData);
 
       const { data: dbProc } = await supabase
