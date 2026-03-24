@@ -31,9 +31,10 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     { id: 'pricing', label: 'Assinar Plano', icon: Zap, path: '/planos' },
   ];
 
-  if (profile?.is_admin) {
-    menuItems.push({ id: 'settings', label: 'Configurações', icon: Settings, path: '/configuracoes' });
-  }
+  // Adiciona Configurações apenas se o usuário for administrador
+  const filteredMenuItems = profile?.is_admin
+    ? [...menuItems, { id: 'settings', label: 'Configurações', icon: Settings, path: '/configuracoes' }]
+    : menuItems;
 
   // Item 'z-api-test' (Integração WhatsApp) foi removido da lista visual mas a página continua acessível via rota /z-api se necessário.
 
@@ -67,7 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         </div>
 
         <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
-          {menuItems.map((item) => {
+          {filteredMenuItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <button
