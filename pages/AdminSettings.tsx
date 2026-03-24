@@ -158,6 +158,7 @@ const AdminSettings: React.FC = () => {
   };
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>, planIdx: number) => {
+    // Extrai apenas dígitos, ignorando qualquer caractere de formatação
     const value = e.target.value.replace(/\D/g, '');
     const cents = parseInt(value || '0', 10);
     const numericValue = cents / 100;
@@ -222,9 +223,16 @@ const AdminSettings: React.FC = () => {
                   <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Preço (R$)</label>
                   <input 
                     type="text" 
+                    inputMode="numeric"
                     value={formatPriceForInput(plan.price)} 
                     onChange={(e) => handlePriceChange(e, planIdx)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground text-right font-medium"
+                    onFocus={(e) => {
+                      // Move o cursor para o final ao focar para facilitar a edição
+                      const val = e.target.value;
+                      e.target.value = '';
+                      e.target.value = val;
+                    }}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground text-left font-medium"
                   />
                 </div>
               </div>
