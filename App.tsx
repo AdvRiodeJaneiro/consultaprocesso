@@ -23,7 +23,9 @@ import { useSearchStore } from './store/searchStore';
 
 import { cn } from './lib/utils';
 import { Settings, Loader2 } from 'lucide-react';
+import { Button } from './components/ui/button';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+
 import { supabase } from './integrations/supabase/client';
 import { toast } from 'react-hot-toast';
 
