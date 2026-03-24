@@ -93,13 +93,13 @@ export const generateLegalAnalysis = async (
       <<<SPLIT>>>
 
       PARTE 3: HISTÓRICO ANTERIOR (LINHA DO TEMPO)
-      Pegue as movimentações seguintes (do index 1 até o index 10).
+      Analise as movimentações seguintes (do index 1 até o index 20).
       Siga rigorosamente a ordem cronológica inversa (mais recente para o mais antigo).
-      NÃO coloque título como "Histórico Recente". Comece direto nos dados.
+      NÃO coloque título como "Histórico Anterior". Comece direto nos dados.
       
       Formatação para cada item:
       📅 [Data DD/MM/AAAA]
-      💡 **Resumo:** [Explique em 1 linha o que aconteceu usando linguagem simples, os nomes **${nomeAutor}** e **${nomeReu}**, e baseando-se no campo 'conteudo' de cada movimentação]
+      💡 **Resumo:** [Explique de forma clara e visual o que houve nessa etapa. O objetivo é que o usuário entenda o PROPÓSITO daquela movimentação burocrática (ex: se o processo mudou de sala, se o juiz pediu um documento, etc). Use os nomes **${nomeAutor}** e **${nomeReu}** e evite ser resumido demais. Dê luz ao passo a passo para que ele entenda o fluxo do processo.]
       
       [Pule uma linha entre os itens]
     `;
