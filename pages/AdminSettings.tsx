@@ -150,6 +150,20 @@ const AdminSettings: React.FC = () => {
     }
   };
 
+  const formatPriceForInput = (val: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(val);
+  };
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>, planIdx: number) => {
+    const value = e.target.value.replace(/\D/g, '');
+    const cents = parseInt(value || '0', 10);
+    const numericValue = cents / 100;
+    updatePlanField(planIdx, 'price', numericValue);
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center min-h-[400px]">
@@ -207,10 +221,10 @@ const AdminSettings: React.FC = () => {
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Preço (R$)</label>
                   <input 
-                    type="number" 
-                    value={plan.price} 
-                    onChange={(e) => updatePlanField(planIdx, 'price', parseFloat(e.target.value))}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground"
+                    type="text" 
+                    value={formatPriceForInput(plan.price)} 
+                    onChange={(e) => handlePriceChange(e, planIdx)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground text-right font-medium"
                   />
                 </div>
               </div>
