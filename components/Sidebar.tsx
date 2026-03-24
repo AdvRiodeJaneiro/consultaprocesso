@@ -26,21 +26,23 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 
   const menuItems = [
     { id: 'search-number', label: 'Consulta Processo', icon: Search, path: '/' },
-    { id: 'monitor-new', label: 'Consulta CPF e CNPJ', icon: LayoutDashboard, path: '/monitoramento' },
+    { 
+      id: 'monitor-new', 
+      label: 'Consulta CPF e CNPJ', 
+      icon: LayoutDashboard, 
+      path: '/monitoramento',
+      maintenance: true 
+    },
     { id: 'my-processes', label: 'Processos Monitorados', icon: Gavel, path: '/meus-processos' },
     { id: 'pricing', label: 'Assinar Plano', icon: Zap, path: '/planos' },
   ];
 
-  // Adiciona Configurações apenas se o usuário for administrador
   const filteredMenuItems = profile?.is_admin
     ? [...menuItems, { id: 'settings', label: 'Configurações', icon: Settings, path: '/configuracoes' }]
     : menuItems;
 
-  // Item 'z-api-test' (Integração WhatsApp) foi removido da lista visual mas a página continua acessível via rota /z-api se necessário.
-
   return (
     <>
-      {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm transition-opacity"
@@ -68,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         </div>
 
         <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
-          {filteredMenuItems.map((item) => {
+          {filteredMenuItems.map((item: any) => {
             const isActive = location.pathname === item.path;
             return (
               <button
@@ -78,14 +80,21 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
                   if (window.innerWidth < 768) toggleSidebar();
                 }}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
+                  "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all group",
                   isActive
                     ? "bg-primary/10 text-primary font-bold"
                     : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold"
                 )}
               >
-                <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "group-hover:text-primary")} />
-                <span className="text-sm">{item.label}</span>
+                <div className="flex items-center gap-3">
+                  <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "group-hover:text-primary")} />
+                  <span className="text-sm">{item.label}</span>
+                </div>
+                {item.maintenance && (
+                  <span className="text-[8px] font-black bg-slate-100 dark:bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded uppercase border border-slate-200 dark:border-slate-700">
+                    Maint
+                  </span>
+                )}
               </button>
             );
           })}
