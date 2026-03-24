@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Message, EscavadorProcesso } from '../types';
 import { parseCNJ, formatCNJ } from '../utils/cnjParser';
-import { fetchProcessData } from '../services/escavadorService';
+import { fetchProcessData, fetchProcessMovements } from '../services/escavadorService';
 import { generateLegalAnalysis } from '../services/geminiService';
 
 export function useChat() {
@@ -55,6 +55,7 @@ export function useChat() {
           isLoading: true
         }]);
 
+        // 1. Busca Dados da Capa
         const processData = await fetchProcessData(formattedCNJ);
 
         if (!processData) {
@@ -82,7 +83,19 @@ export function useChat() {
           return;
         }
 
+        // 2. NUTRIÇÃO: Busca Movimentações Detalhadas para a IA ter o que explicar
+        try {
+          const movementsRes = await fetchProcessMovements(formattedCNJ);
+          if (movementsRes && movementsRes.items) {
+            processData.movimentacoes = movementsRes.items;
+          }
+        } catch (movErr) {
+          console.warn("Erro ao nutrir consulta simples:", movErr);
+        }
+
         setActiveProcess(processData);
+
+        // 3. Gera Análise com o objeto agora "Nutrido"
         const fullAnalysis = await generateLegalAnalysis("Analise este processo.", processData, true);
 
         const parts = fullAnalysis.split('<<<SPLIT>>>');
@@ -122,7 +135,7 @@ export function useChat() {
           delay += 800;
         }
 
-        // NOVO: Sugestão de Monitoramento
+        // Sugestão de Monitoramento
         setTimeout(() => {
           setMessages(prev => [...prev, {
             id: Date.now().toString() + '-monitor-suggest',

@@ -87,7 +87,7 @@ export const generateLegalAnalysis = async (
       Use EXATAMENTE este formato:
       
       📅 **Data:** [Data DD/MM/AAAA]
-      💡 **O que aconteceu:** [Explique como se estivesse contando fofoca para um vizinho. Use os nomes **${nomeAutor}** e **${nomeReu}**.]
+      💡 **O que aconteceu:** [Explique como se estivesse contando fofoca para um vizinho. Use os nomes **${nomeAutor}** e **${nomeReu}** para contar a história baseada no CONTEÚDO detalhado da movimentação.]
       🔮 **Próximos passos:** [O que isso muda na vida de **${nomeAutor}** agora? Precisa fazer algo? Explique o impacto prático sem juridiquês.]
 
       <<<SPLIT>>>
@@ -99,7 +99,7 @@ export const generateLegalAnalysis = async (
       
       Formatação para cada item:
       📅 [Data DD/MM/AAAA]
-      💡 **Resumo:** [Explique em 1 linha o que aconteceu usando linguagem simples e os nomes **${nomeAutor}** e **${nomeReu}**]
+      💡 **Resumo:** [Explique em 1 linha o que aconteceu usando linguagem simples, os nomes **${nomeAutor}** e **${nomeReu}**, e baseando-se no campo 'conteudo' de cada movimentação]
       
       [Pule uma linha entre os itens]
     `;
