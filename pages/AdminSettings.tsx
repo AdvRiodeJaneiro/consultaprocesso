@@ -1,5 +1,7 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '../integrations/supabase/client';
 import { toast } from 'react-hot-toast';
 import { 
   Plus, 
@@ -13,7 +15,7 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '../components/ui/button';
 
 interface Plan {
   id?: string;
@@ -150,7 +152,7 @@ const AdminSettings: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-full items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
@@ -158,7 +160,7 @@ const AdminSettings: React.FC = () => {
 
   return (
     <div className="p-6 max-w-5xl mx-auto pb-24">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-deep-indigo dark:text-white flex items-center gap-2">
             <CreditCard className="w-8 h-8 text-primary" />
@@ -166,7 +168,7 @@ const AdminSettings: React.FC = () => {
           </h1>
           <p className="text-slate-500 mt-1">Gerencie os preços e links de checkout da Cakto que aparecerão para os usuários.</p>
         </div>
-        <Button onClick={savePlans} disabled={saving} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
+        <Button onClick={savePlans} disabled={saving} className="gap-2 bg-emerald-600 hover:bg-emerald-700 w-full md:w-auto">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Salvar Tudo
         </Button>
@@ -178,7 +180,6 @@ const AdminSettings: React.FC = () => {
             <div className="absolute top-0 left-0 w-1 h-full bg-primary"></div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Informações Básicas */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider mb-2">
                   <Tag className="w-4 h-4" /> Básico
@@ -190,7 +191,7 @@ const AdminSettings: React.FC = () => {
                     value={plan.name} 
                     onChange={(e) => updatePlanField(planIdx, 'name', e.target.value)}
                     placeholder="Ex: Plano Ouro"
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground"
                   />
                 </div>
                 <div>
@@ -200,7 +201,7 @@ const AdminSettings: React.FC = () => {
                     value={plan.badge} 
                     onChange={(e) => updatePlanField(planIdx, 'badge', e.target.value)}
                     placeholder="Ex: Mais Escolhido"
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground"
                   />
                 </div>
                 <div>
@@ -209,12 +210,11 @@ const AdminSettings: React.FC = () => {
                     type="number" 
                     value={plan.price} 
                     onChange={(e) => updatePlanField(planIdx, 'price', parseFloat(e.target.value))}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground"
                   />
                 </div>
               </div>
 
-              {/* Integração Cakto */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider mb-2">
                   <LinkIcon className="w-4 h-4" /> Integração
@@ -222,14 +222,14 @@ const AdminSettings: React.FC = () => {
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase mb-1 flex items-center gap-1">
                     ID do Produto (Cakto)
-                    <AlertCircle className="w-3 h-3 text-slate-400 cursor-help" title="Use o ID que aparece no dashboard da Cakto para o webhook funcionar" />
+                    <AlertCircle className="w-3 h-3 text-slate-400 cursor-help" />
                   </label>
                   <input 
                     type="text" 
                     value={plan.cakto_product_id} 
                     onChange={(e) => updatePlanField(planIdx, 'cakto_product_id', e.target.value)}
                     placeholder="UUID do produto"
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm font-mono focus:ring-2 ring-primary/20"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm font-mono focus:ring-2 ring-primary/20 text-foreground"
                   />
                 </div>
                 <div>
@@ -239,12 +239,11 @@ const AdminSettings: React.FC = () => {
                     value={plan.checkout_url} 
                     onChange={(e) => updatePlanField(planIdx, 'checkout_url', e.target.value)}
                     placeholder="https://pay.cakto.com.br/..."
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground"
                   />
                 </div>
               </div>
 
-              {/* Benefícios */}
               <div className="space-y-4 lg:col-span-1">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
@@ -262,7 +261,7 @@ const AdminSettings: React.FC = () => {
                           value={benefit} 
                           onChange={(e) => updateBenefit(planIdx, benIdx, e.target.value)}
                           placeholder="Benefício..."
-                          className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-2 pl-9 text-xs focus:ring-2 ring-primary/20"
+                          className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-2 pl-9 text-xs focus:ring-2 ring-primary/20 text-foreground"
                         />
                       </div>
                       <button 

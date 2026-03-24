@@ -1,6 +1,8 @@
+"use client";
+
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '../integrations/supabase/client';
+import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
   Check, 
@@ -12,9 +14,9 @@ import {
   Globe,
   Loader2
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '../components/ui/button';
 import { toast } from 'react-hot-toast';
-import { DottedSurface } from '@/components/ui/dotted-surface';
+import { DottedSurface } from '../components/ui/dotted-surface';
 
 interface Plan {
   id: string;
@@ -54,47 +56,48 @@ const Pricing: React.FC = () => {
   const handleSubscribe = (checkoutUrl: string) => {
     if (!user) {
       toast.error('Você precisa estar logado para assinar um plano');
-      navigate('/auth');
+      navigate('/auth', { state: { from: '/planos' } });
       return;
     }
 
-    // Adiciona o e-mail do usuário como parâmetro para o checkout se a Cakto suportar
-    // (Geralmente melhora a conversão pois o e-mail já vem preenchido)
     const url = new URL(checkoutUrl);
-    url.searchParams.append('email', user.email || '');
+    if (user.email) url.searchParams.append('email', user.email);
     
     window.open(url.toString(), '_blank');
   };
 
   if (loading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-slate-950">
+      <div className="h-full flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 dark text-white relative overflow-hidden flex flex-col items-center py-20 px-4">
+    <div className="min-h-full bg-slate-950 dark text-white relative overflow-x-hidden flex flex-col items-center py-12 px-4 scrollbar-hide">
       <DottedSurface />
 
-      {/* Header Section */}
       <div className="text-center relative z-10 mb-16 max-w-2xl">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-bold uppercase tracking-widest mb-6 animate-pulse">
           <Sparkles className="w-4 h-4" />
           Planos e Assinaturas
         </div>
         <h1 className="text-4xl md:text-6xl font-black mb-6 bg-gradient-to-r from-white via-primary to-emerald-400 bg-clip-text text-transparent">
-          Escolha o Plano Ideal para seu Monitoramento
+          Planos de Monitoramento
         </h1>
-        <p className="text-slate-400 text-lg md:text-xl font-medium">
-          Acompanhe seus processos em tempo real com inteligência artificial e receba atualizações direto no WhatsApp.
+        <p className="text-slate-400 text-lg font-medium">
+          Acompanhe seus processos em tempo real com IA e receba atualizações no WhatsApp.
         </p>
       </div>
 
-      {/* Plans Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-7xl relative z-10 px-4">
-        {plans.map((plan) => {
+        {plans.length === 0 ? (
+          <div className="col-span-full text-center py-20 bg-slate-900/50 rounded-3xl border border-slate-800">
+             <CreditCard className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+             <p className="text-slate-500 font-bold">Nenhum plano disponível no momento.</p>
+          </div>
+        ) : plans.map((plan) => {
           const isCurrentPlan = profile?.current_plan_id === plan.id;
           
           return (
@@ -102,7 +105,7 @@ const Pricing: React.FC = () => {
               key={plan.id}
               className={`relative flex flex-col bg-slate-900/50 backdrop-blur-xl border-2 rounded-3xl p-8 transition-all duration-300 hover:scale-[1.02] ${
                 plan.badge 
-                ? 'border-primary/50 shadow-[0_0_30px_rgba(var(--primary-rgb),0.1)] ring-2 ring-primary/20' 
+                ? 'border-primary/50 shadow-[0_0_30px_rgba(223,184,42,0.1)] ring-2 ring-primary/20' 
                 : 'border-slate-800 hover:border-slate-700'
               }`}
             >
@@ -136,7 +139,7 @@ const Pricing: React.FC = () => {
                 disabled={isCurrentPlan}
                 className={`w-full py-6 rounded-2xl text-lg font-black uppercase tracking-widest transition-all duration-300 gap-3 group ${
                   plan.badge 
-                  ? 'bg-primary text-deep-indigo hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.4)]' 
+                  ? 'bg-primary text-deep-indigo hover:shadow-[0_0_20px_rgba(223,184,42,0.4)]' 
                   : 'bg-white text-slate-950 hover:bg-slate-200'
                 }`}
               >
@@ -151,22 +154,21 @@ const Pricing: React.FC = () => {
         })}
       </div>
 
-      {/* Trust Badges */}
       <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl text-center px-4 opacity-60">
         <div className="flex flex-col items-center">
           <CreditCard className="w-8 h-8 text-primary mb-3" />
           <h4 className="font-bold text-sm uppercase tracking-widest mb-1">Pagamento Seguro</h4>
-          <p className="text-xs text-slate-500">Processado via Cakto com criptografia SSL</p>
+          <p className="text-xs text-slate-500">Processado via Cakto</p>
         </div>
         <div className="flex flex-col items-center">
           <Zap className="w-8 h-8 text-emerald-400 mb-3" />
-          <h4 className="font-bold text-sm uppercase tracking-widest mb-1">Liberação Instantânea</h4>
-          <p className="text-xs text-slate-500">Acesso liberado assim que o pagamento for aprovado</p>
+          <h4 className="font-bold text-sm uppercase tracking-widest mb-1">Acesso Imediato</h4>
+          <p className="text-xs text-slate-500">Liberação após aprovação</p>
         </div>
         <div className="flex flex-col items-center">
           <Globe className="w-8 h-8 text-indigo-400 mb-3" />
           <h4 className="font-bold text-sm uppercase tracking-widest mb-1">Sincronização 24/7</h4>
-          <p className="text-xs text-slate-500">Monitoramento ativo em todos os tribunais</p>
+          <p className="text-xs text-slate-500">Tribunais ativos o tempo todo</p>
         </div>
       </div>
     </div>
