@@ -1,0 +1,176 @@
+import React, { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Check, 
+  Sparkles, 
+  CreditCard, 
+  ArrowRight,
+  ShieldCheck,
+  Zap,
+  Globe,
+  Loader2
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'react-hot-toast';
+import { DottedSurface } from '@/components/ui/dotted-surface';
+
+interface Plan {
+  id: string;
+  name: string;
+  badge: string;
+  benefits: string[];
+  price: number;
+  checkout_url: string;
+}
+
+const Pricing: React.FC = () => {
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  const fetchPlans = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('plans')
+      .select('*')
+      .order('price', { ascending: true });
+    
+    if (error) {
+      toast.error('Erro ao carregar planos');
+      console.error(error);
+    } else {
+      setPlans(data || []);
+    }
+    setLoading(false);
+  };
+
+  const handleSubscribe = (checkoutUrl: string) => {
+    if (!user) {
+      toast.error('Você precisa estar logado para assinar um plano');
+      navigate('/auth');
+      return;
+    }
+
+    // Adiciona o e-mail do usuário como parâmetro para o checkout se a Cakto suportar
+    // (Geralmente melhora a conversão pois o e-mail já vem preenchido)
+    const url = new URL(checkoutUrl);
+    url.searchParams.append('email', user.email || '');
+    
+    window.open(url.toString(), '_blank');
+  };
+
+  if (loading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-slate-950">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-950 dark text-white relative overflow-hidden flex flex-col items-center py-20 px-4">
+      <DottedSurface />
+
+      {/* Header Section */}
+      <div className="text-center relative z-10 mb-16 max-w-2xl">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-bold uppercase tracking-widest mb-6 animate-pulse">
+          <Sparkles className="w-4 h-4" />
+          Planos e Assinaturas
+        </div>
+        <h1 className="text-4xl md:text-6xl font-black mb-6 bg-gradient-to-r from-white via-primary to-emerald-400 bg-clip-text text-transparent">
+          Escolha o Plano Ideal para seu Monitoramento
+        </h1>
+        <p className="text-slate-400 text-lg md:text-xl font-medium">
+          Acompanhe seus processos em tempo real com inteligência artificial e receba atualizações direto no WhatsApp.
+        </p>
+      </div>
+
+      {/* Plans Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-7xl relative z-10 px-4">
+        {plans.map((plan) => {
+          const isCurrentPlan = profile?.current_plan_id === plan.id;
+          
+          return (
+            <div 
+              key={plan.id}
+              className={`relative flex flex-col bg-slate-900/50 backdrop-blur-xl border-2 rounded-3xl p-8 transition-all duration-300 hover:scale-[1.02] ${
+                plan.badge 
+                ? 'border-primary/50 shadow-[0_0_30px_rgba(var(--primary-rgb),0.1)] ring-2 ring-primary/20' 
+                : 'border-slate-800 hover:border-slate-700'
+              }`}
+            >
+              {plan.badge && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-emerald-500 text-deep-indigo text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">
+                  {plan.badge}
+                </div>
+              )}
+
+              <div className="mb-8">
+                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-black">R$ {plan.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  <span className="text-slate-500 font-medium text-sm">/mês</span>
+                </div>
+              </div>
+
+              <div className="flex-1 space-y-4 mb-8">
+                {plan.benefits.map((benefit, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="bg-emerald-500/10 rounded-full p-1 mt-0.5">
+                      <Check className="w-4 h-4 text-emerald-500" />
+                    </div>
+                    <span className="text-slate-300 text-sm font-medium leading-relaxed">{benefit}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Button 
+                onClick={() => handleSubscribe(plan.checkout_url)}
+                disabled={isCurrentPlan}
+                className={`w-full py-6 rounded-2xl text-lg font-black uppercase tracking-widest transition-all duration-300 gap-3 group ${
+                  plan.badge 
+                  ? 'bg-primary text-deep-indigo hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.4)]' 
+                  : 'bg-white text-slate-950 hover:bg-slate-200'
+                }`}
+              >
+                {isCurrentPlan ? (
+                  <>Seu Plano Atual <ShieldCheck className="w-5 h-5" /></>
+                ) : (
+                  <>Assinar Agora <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
+                )}
+              </Button>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Trust Badges */}
+      <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl text-center px-4 opacity-60">
+        <div className="flex flex-col items-center">
+          <CreditCard className="w-8 h-8 text-primary mb-3" />
+          <h4 className="font-bold text-sm uppercase tracking-widest mb-1">Pagamento Seguro</h4>
+          <p className="text-xs text-slate-500">Processado via Cakto com criptografia SSL</p>
+        </div>
+        <div className="flex flex-col items-center">
+          <Zap className="w-8 h-8 text-emerald-400 mb-3" />
+          <h4 className="font-bold text-sm uppercase tracking-widest mb-1">Liberação Instantânea</h4>
+          <p className="text-xs text-slate-500">Acesso liberado assim que o pagamento for aprovado</p>
+        </div>
+        <div className="flex flex-col items-center">
+          <Globe className="w-8 h-8 text-indigo-400 mb-3" />
+          <h4 className="font-bold text-sm uppercase tracking-widest mb-1">Sincronização 24/7</h4>
+          <p className="text-xs text-slate-500">Monitoramento ativo em todos os tribunais</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Pricing;

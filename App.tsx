@@ -14,7 +14,10 @@ import Auth from './pages/Auth';
 import MyProcesses from './pages/MyProcesses';
 import ProcessTimeline from './pages/ProcessTimeline';
 import ZApiTest from './pages/ZApiTest';
+import AdminSettings from './pages/AdminSettings';
+import Pricing from './pages/Pricing';
 import { useChat } from './hooks/useChat';
+
 import { useUIStore } from './store/uiStore';
 import { useSearchStore } from './store/searchStore';
 
@@ -80,7 +83,9 @@ function AppContent() {
       case '/meus-processos': return 'Meus Processos';
       case '/': return 'Consulta Processo';
       case '/configuracoes': return 'Configurações';
+      case '/planos': return 'Assinaturas';
       case '/auth': return 'Autenticação';
+
       case '/z-api': return 'Integração WhatsApp';
       default:
         if (location.pathname.startsWith('/processo/')) {
@@ -197,23 +202,15 @@ function AppContent() {
             <Route path="/meus-processos" element={<MyProcesses />} />
             <Route path="/processo/:cnj" element={<ProcessTimeline />} />
             <Route path="/z-api" element={<ZApiTest />} />
+            <Route path="/planos" element={<Pricing />} />
             <Route path="/monitoramento" element={
               <MonitorProcess
                 whatsappNumber={whatsappNumber}
                 onUpdateWhatsapp={setWhatsappNumber}
               />
             } />
-            <Route path="/configuracoes" element={
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                <div className="max-w-md space-y-4">
-                  <div className="bg-white dark:bg-slate-900 p-10 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xl inline-block">
-                    <Settings className="w-16 h-16 text-primary mx-auto mb-6 opacity-20" />
-                    <h2 className="text-2xl font-bold text-deep-indigo dark:text-white">Página em construção</h2>
-                    <p className="text-slate-500 mt-2 font-medium">Estamos preparando a tela de "Configurações" para você.</p>
-                  </div>
-                </div>
-              </div>
-            } />
+            <Route path="/configuracoes" element={<AdminSettings />} />
+
           </Routes>
         </div>
       </div>
