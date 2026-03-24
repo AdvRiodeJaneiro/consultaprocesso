@@ -78,3 +78,17 @@ export interface EscavadorInvolvedSearchResponse {
   total_encontrados: number;
   items: EscavadorProcesso[];
 }
+
+export interface Profile {
+  id: string;
+  first_name: string;
+  last_name?: string;
+  whatsapp?: string;
+  email?: string;
+  avatar_url?: string;
+  is_admin: boolean;
+  subscription_status: 'active' | 'inactive';
+  current_plan_id?: string;
+  subscription_expires_at?: string;
+  updated_at: string;
+}

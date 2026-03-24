@@ -29,8 +29,11 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     { id: 'monitor-new', label: 'Consulta CPF e CNPJ', icon: LayoutDashboard, path: '/monitoramento' },
     { id: 'my-processes', label: 'Processos Monitorados', icon: Gavel, path: '/meus-processos' },
     { id: 'pricing', label: 'Assinar Plano', icon: Zap, path: '/planos' },
-    { id: 'settings', label: 'Configurações', icon: Settings, path: '/configuracoes' },
   ];
+
+  if (profile?.is_admin) {
+    menuItems.push({ id: 'settings', label: 'Configurações', icon: Settings, path: '/configuracoes' });
+  }
 
   // Item 'z-api-test' (Integração WhatsApp) foi removido da lista visual mas a página continua acessível via rota /z-api se necessário.
 

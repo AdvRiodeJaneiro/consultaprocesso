@@ -2,16 +2,10 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { useUserStore } from '../store/userStore';
-
-interface Profile {
-  id: string;
-  first_name: string;
-  last_name: string | null;
-  whatsapp: string | null;
-  avatar_url: string | null;
-}
+import { Profile } from '../types';
 
 interface AuthContextType {
+
   session: Session | null;
   user: User | null;
   profile: Profile | null;
