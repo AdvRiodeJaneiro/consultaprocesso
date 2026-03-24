@@ -14,27 +14,19 @@ serve(async (req) => {
     rawBody = await req.text();
     console.log("[cakto-webhook] Raw Request Body:", rawBody);
 
-    // Tentar converter para JSON
     const payload = JSON.parse(rawBody);
-    console.log("[cakto-webhook] Evento:", payload.event || payload.eventType || "desconhecido");
-
-    // Validação Opcional da Chave (X-Cakto-Signature)
-    const signature = req.headers.get('x-cakto-signature') || req.headers.get('x-cakto-token');
-    const expectedKey = Deno.env.get('CAKTO_WEBHOOK_KEY');
     
-    if (expectedKey && signature && signature !== expectedKey) {
-       console.warn("[cakto-webhook] Assinatura inválida detectada. Verifique as chaves.");
-       // Não bloqueamos aqui por enquanto para você conseguir testar, apenas logamos.
-    }
-
+    // Mapeamento Robusto de Campos (Logs Reais vs Documentação)
     const event = payload.event || payload.eventType || payload.status; 
-    const customerEmail = payload.data?.customer?.email || payload.customer?.email;
+    const customerEmail = payload.data?.customerEmail || payload.data?.customer?.email || payload.customer?.email;
     const productName = payload.data?.product?.name || payload.product?.name;
     const productId = payload.data?.product?.id || payload.product?.id;
 
+    console.log(`[cakto-webhook] Processando Evento: ${event} | Cliente: ${customerEmail}`);
+
     if (!customerEmail) {
-      console.log("[cakto-webhook] Evento ignorado (sem e-mail de cliente).");
-      return new Response(JSON.stringify({ status: "ignored", reason: "no email" }), { status: 200 });
+      console.log("[cakto-webhook] Evento ignorado (Campo de e-mail não identificado).");
+      return new Response(JSON.stringify({ status: "ignored", reason: "no email found in mapping" }), { status: 200 });
     }
 
     const supabase = createClient(
@@ -49,7 +41,7 @@ serve(async (req) => {
       .or(`cakto_product_id.eq.${productId},name.eq."${productName}"`)
       .maybeSingle();
 
-    // 2. Localizar o Perfil
+    // 2. Localizar o Perfil do Usuário pelo E-mail
     const { data: profile } = await supabase
       .from('profiles')
       .select('id')
@@ -57,30 +49,47 @@ serve(async (req) => {
       .maybeSingle();
 
     if (!profile) {
-      console.error(`[cakto-webhook] Usuário ${customerEmail} não encontrado no banco.`);
-      return new Response("User not found", { status: 200 });
+      console.warn(`[cakto-webhook] Usuário ${customerEmail} não encontrado no banco de dados.`);
+      return new Response(JSON.stringify({ status: "user_not_found", email: customerEmail }), { status: 200 });
     }
 
-    // 3. Processar Sucesso de Pagamento
-    const successEvents = ['purchase_approved', 'subscription_renewed', 'paid', 'approved'];
+    // 3. Eventos de Sucesso que ativam a assinatura
+    const successEvents = [
+      'purchase_approved', 
+      'subscription_renewed', 
+      'paid', 
+      'approved', 
+      'order_approved',
+      'payment_approved'
+    ];
     
     if (successEvents.includes(event)) {
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 32); 
+      expiresAt.setDate(expiresAt.getDate() + 32); // Adiciona 32 dias de acesso
 
-      await supabase.from('profiles').update({
-        subscription_status: 'active',
-        current_plan_id: plan?.id || null,
-        subscription_expires_at: expiresAt.toISOString()
-      }).eq('id', profile.id);
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          subscription_status: 'active',
+          current_plan_id: plan?.id || null,
+          subscription_expires_at: expiresAt.toISOString()
+        })
+        .eq('id', profile.id);
 
-      console.log(`[cakto-webhook] Assinatura ATIVADA para ${customerEmail}`);
+      if (updateError) {
+        console.error("[cakto-webhook] Erro ao atualizar perfil:", updateError);
+        return new Response("Update error", { status: 500 });
+      }
+
+      console.log(`[cakto-webhook] ✅ Assinatura ATIVADA com sucesso para ${customerEmail}`);
+    } else {
+      console.log(`[cakto-webhook] Evento informativo (${event}) recebido para ${customerEmail}. Nenhuma ação necessária.`);
     }
 
-    return new Response(JSON.stringify({ success: true }), { status: 200, headers: corsHeaders });
+    return new Response(JSON.stringify({ success: true, event_processed: event }), { status: 200, headers: corsHeaders });
 
   } catch (err) {
-    console.error("[cakto-webhook] Erro CRÍTICO:", err.message, "Body:", rawBody);
+    console.error("[cakto-webhook] Erro Crítico de Processamento:", err.message);
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
   }
 });
