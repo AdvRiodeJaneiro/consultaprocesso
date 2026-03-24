@@ -44,12 +44,19 @@ export const fetchProcessData = async (processNumber: string): Promise<Escavador
   return fetchWithFallback(`${BASE_URL}/processos/numero_cnj/${processNumber}`);
 };
 
-// --- NOVAS FUNÇÕES DE MONITORAMENTO REAL ---
+/**
+ * Busca as movimentações (timeline) de um processo específico.
+ */
+export const fetchProcessMovements = async (processNumber: string): Promise<any> => {
+    return fetchWithFallback(`${BASE_URL}/processos/numero_cnj/${processNumber}/movimentacoes`);
+};
+
+// --- FUNÇÕES DE MONITORAMENTO REAL ---
 
 export const createMonitoring = async (processNumber: string) => {
     return fetchWithFallback(`${BASE_URL}/monitoramentos/processos`, 'POST', {
         numero: processNumber,
-        frequencia: 'SEMANAL' // Alterado de DIARIA para SEMANAL
+        frequencia: 'SEMANAL'
     });
 };
 

@@ -92,13 +92,14 @@ export const generateLegalAnalysis = async (
 
       <<<SPLIT>>>
 
-      PARTE 3: HISTÓRICO ANTERIOR
-      Pegue as movimentações seguintes (index 1, 2 e 3).
+      PARTE 3: HISTÓRICO ANTERIOR (LINHA DO TEMPO)
+      Pegue as movimentações seguintes (do index 1 até o index 10).
+      Siga rigorosamente a ordem cronológica inversa (mais recente para o mais antigo).
       NÃO coloque título como "Histórico Recente". Comece direto nos dados.
       
       Formatação para cada item:
       📅 [Data DD/MM/AAAA]
-      💡 **Resumo:** [Explicação super curta e simples de 1 linha]
+      💡 **Resumo:** [Explique em 1 linha o que aconteceu usando linguagem simples e os nomes **${nomeAutor}** e **${nomeReu}**]
       
       [Pule uma linha entre os itens]
     `;
@@ -124,7 +125,7 @@ export const generateLegalAnalysis = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash',
       config: {
         systemInstruction: systemInstruction,
       },
