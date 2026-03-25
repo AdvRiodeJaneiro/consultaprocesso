@@ -142,7 +142,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
             <div className="flex flex-wrap items-center gap-3 mb-1">
               <h2 className="text-2xl md:text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Monitoramento de Processo</h2>
               <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-primary text-deep-indigo uppercase tracking-wider shadow-sm">
-                Consulta CPF e CNPJ
+                Consulta CPF, CNPJ e Nome
               </span>
             </div>
             <p className="text-slate-500 dark:text-slate-400 text-sm md:text-lg font-medium">Busque e escolha o processo para receber atualizações no Whatsapp</p>
