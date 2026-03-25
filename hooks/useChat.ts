@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Message, EscavadorProcesso } from '../types';
-import { parseCNJ, formatCNJ } from '../utils/cnjParser';
-import { fetchProcessData, fetchProcessMovements } from '../services/escavadorService';
+import { legalDataService } from '../services/legalDataService';
 import { generateLegalAnalysis } from '../services/geminiService';
 
 export function useChat() {
@@ -38,15 +37,7 @@ export function useChat() {
 
     try {
       if (!activeProcess) {
-        const cnjParts = parseCNJ(userText);
-        if (!cnjParts) {
-          setIsProcessing(false);
-          return; 
-        }
-        
-        const formattedCNJ = formatCNJ(cnjParts);
         const loadingId = 'loading-' + Date.now();
-
         setMessages(prev => [...prev, {
           id: loadingId,
           role: 'assistant',
@@ -55,44 +46,24 @@ export function useChat() {
           isLoading: true
         }]);
 
-        // 1. Busca Dados da Capa
-        const processData = await fetchProcessData(formattedCNJ);
+        const result = await legalDataService.fetchAndNutritiveProcess(userText);
 
-        if (!processData) {
+        if (!result) {
+          // Se não retornou resultado, pode ser que o CNJ seja inválido ou não encontrado
+          const isInvalidCNJ = userText.length < 11; // Simples check para exemplo
+          
           setMessages(prev => prev.map(m => m.id === loadingId ? {
             ...m,
             isLoading: false,
-            content: `🔍 Não encontrei o processo **${formattedCNJ}** na base do Escavador.\n\nPossíveis motivos:\n- O processo corre em segredo de justiça.\n- O número digitado está incorreto.\n- O processo é muito recente e ainda não foi indexado.`
+            content: isInvalidCNJ 
+              ? "Por favor, informe um número de processo válido."
+              : `🔍 Não encontrei o processo na base de dados.\n\nPossíveis motivos:\n- O processo corre em segredo de justiça.\n- O número digitado está incorreto.\n- O processo é muito recente e ainda não foi indexado.`
           } : m));
           setIsProcessing(false);
           return;
         }
 
-        if (!processData.numero_cnj) {
-          const jsonStr = JSON.stringify(processData, null, 2);
-          setDebugInfo({ 
-            type: 'info', 
-            content: `API retornou dados incompletos:\n${jsonStr}` 
-          });
-          setMessages(prev => prev.map(m => m.id === loadingId ? {
-            ...m,
-            isLoading: false,
-            content: "Recebi uma resposta da API, mas os dados parecem incompletos. Veja o debug acima."
-          } : m));
-          setIsProcessing(false);
-          return;
-        }
-
-        // 2. NUTRIÇÃO: Busca Movimentações Detalhadas para a IA ter o que explicar
-        try {
-          const movementsRes = await fetchProcessMovements(formattedCNJ);
-          if (movementsRes && movementsRes.items) {
-            processData.movimentacoes = movementsRes.items;
-          }
-        } catch (movErr) {
-          console.warn("Erro ao nutrir consulta simples:", movErr);
-        }
-
+        const { processData } = result;
         setActiveProcess(processData);
 
         // 3. Gera Análise com o objeto agora "Nutrido"
