@@ -19,6 +19,7 @@ import { useMyProcesses } from '../hooks/useMyProcesses';
 import { useMonitorLayout } from '../hooks/useMonitorLayout';
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-hot-toast';
 
 interface MonitorProcessProps {
   whatsappNumber: string;
@@ -54,7 +55,10 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
 
   const monitoredNumbers = processes.map(p => p.process_number);
 
+  // Lógica de busca disparada pelo clique manual do usuário
   const onSearchSubmit = async () => {
+    if (!query.trim()) return;
+
     const canSearch = await checkLimit('search');
     if (!canSearch) {
       setShowLimitModal(true);
@@ -63,25 +67,24 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
     
     hideSteps();
     setActiveFilter(query); 
+    
+    // Realiza a busca
     await handleSearch();
+    
+    // Incrementa o uso e salva no histórico APENAS se houver resultados e for busca manual
+    // (A busca manual sempre cai aqui, a transição do chat NÃO cai aqui)
+    const type = query.replace(/[^\d]/g, '').length >= 11 ? 'cnj' : 'involved';
+    addToHistory(query, type, results.length);
+    await incrementUsage('search');
   };
-
-  useEffect(() => {
-    const updateHistory = async () => {
-        if (results.length > 0 && query.trim() && !isLoading && activeFilter !== 'todos') {
-            const type = query.replace(/[^\d]/g, '').length >= 11 ? 'cnj' : 'involved';
-            addToHistory(query, type, results.length);
-            await incrementUsage('search');
-        }
-    };
-    updateHistory();
-  }, [results, isLoading]);
 
   const handleEntrySelect = (entry: SearchEntry) => {
     hideSteps();
     setQuery(entry.query);
     setActiveFilter(entry.query); 
     handleSearch(entry.query);
+    // Nota: Ao selecionar do histórico, optei por não descontar limite novamente
+    // para melhorar a experiência do usuário que já buscou aquilo.
   };
 
   const handleStartMonitoring = async (proc: any) => {
