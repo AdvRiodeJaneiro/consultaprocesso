@@ -19,6 +19,8 @@ import { Button } from '../components/ui/button';
 
 interface SystemSettings {
   guest_search_limit: number;
+  guest_process_limit: number;
+  guest_monitoring_limit: number;
   free_search_limit: number;
   free_process_limit: number;
   free_monitoring_limit: number;
@@ -27,6 +29,8 @@ interface SystemSettings {
 const UsageLimits: React.FC = () => {
   const [settings, setSettings] = useState<SystemSettings>({
     guest_search_limit: 2,
+    guest_process_limit: 0,
+    guest_monitoring_limit: 0,
     free_search_limit: 5,
     free_process_limit: 1,
     free_monitoring_limit: 0
@@ -153,13 +157,23 @@ const UsageLimits: React.FC = () => {
                 className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground"
               />
             </div>
-            <div className="opacity-40 select-none">
-              <label className="text-xs font-bold text-slate-400 uppercase">Consulta n° de Processo</label>
-              <div className="bg-slate-100 dark:bg-slate-900/50 rounded-lg p-3 text-sm text-slate-400 italic">Desativado p/ Visitante</div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Consulta n° de Processo</label>
+              <input 
+                type="number" 
+                value={settings.guest_process_limit}
+                onChange={(e) => handleGlobalChange('guest_process_limit', parseInt(e.target.value))}
+                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground"
+              />
             </div>
-            <div className="opacity-40 select-none">
-              <label className="text-xs font-bold text-slate-400 uppercase">Processos Monitorados</label>
-              <div className="bg-slate-100 dark:bg-slate-900/50 rounded-lg p-3 text-sm text-slate-400 italic">Desativado p/ Visitante</div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Processos Monitorados</label>
+              <input 
+                type="number" 
+                value={settings.guest_monitoring_limit}
+                onChange={(e) => handleGlobalChange('guest_monitoring_limit', parseInt(e.target.value))}
+                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground"
+              />
             </div>
           </div>
         </div>
