@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import { Message, EscavadorProcesso } from '../types';
 import { legalDataService } from '../services/legalDataService';
 import { generateLegalAnalysis } from '../services/geminiService';
+import { useSearchLimit } from './useSearchLimit';
+import { toast } from 'react-hot-toast';
 
 export function useChat() {
   const [activeView, setActiveView] = useState('search-number');
@@ -13,6 +15,8 @@ export function useChat() {
   const [debugInfo, setDebugInfo] = useState<{type: 'error' | 'info', content: string} | null>(null);
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
+  
+  const { checkLimit, incrementUsage } = useSearchLimit();
 
   const resetSearch = useCallback(() => {
     setActiveProcess(null);
@@ -26,6 +30,16 @@ export function useChat() {
     
     setIsProcessing(true);
     setDebugInfo(null);
+
+    // Se não houver processo ativo, é uma nova busca (Consulta IA)
+    if (!activeProcess) {
+      const canConsult = await checkLimit('process');
+      if (!canConsult) {
+        toast.error("Você atingiu seu limite de consultas de IA.");
+        setIsProcessing(false);
+        return;
+      }
+    }
 
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -65,6 +79,9 @@ export function useChat() {
 
         const { processData } = result;
         setActiveProcess(processData);
+        
+        // Incrementar uso após busca bem-sucedida
+        await incrementUsage('process');
 
         // 3. Gera Análise com o objeto agora "Nutrido"
         const fullAnalysis = await generateLegalAnalysis("Analise este processo.", processData, true);
@@ -174,7 +191,7 @@ export function useChat() {
     } finally {
       setIsProcessing(false);
     }
-  }, [activeProcess, isProcessing]);
+  }, [activeProcess, isProcessing, checkLimit, incrementUsage]);
 
   const handleWelcomeSubmit = useCallback((text: string) => {
     setShowWelcome(false);

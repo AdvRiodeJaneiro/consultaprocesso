@@ -42,7 +42,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
     confirmMonitoring
   } = useMonitor();
 
-  const { isLimitReached, incrementSearch, checkLimitBeforeSearch } = useSearchLimit();
+  const { checkLimit, incrementUsage } = useSearchLimit();
   const { history, addToHistory, deleteEntry, clearHistory } = useSearchHistory();
   const { processes } = useMyProcesses();
   const { showSteps, hideSteps, searchBarRef } = useMonitorLayout();
@@ -55,7 +55,8 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
   const monitoredNumbers = processes.map(p => p.process_number);
 
   const onSearchSubmit = async () => {
-    if (!checkLimitBeforeSearch()) {
+    const canSearch = await checkLimit('search');
+    if (!canSearch) {
       setShowLimitModal(true);
       return;
     }
@@ -66,11 +67,14 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
   };
 
   useEffect(() => {
-    if (results.length > 0 && query.trim() && !isLoading && activeFilter !== 'todos') {
-      const type = query.replace(/[^\d]/g, '').length >= 11 ? 'cnj' : 'involved';
-      addToHistory(query, type, results.length);
-      incrementSearch();
-    }
+    const updateHistory = async () => {
+        if (results.length > 0 && query.trim() && !isLoading && activeFilter !== 'todos') {
+            const type = query.replace(/[^\d]/g, '').length >= 11 ? 'cnj' : 'involved';
+            addToHistory(query, type, results.length);
+            await incrementUsage('search');
+        }
+    };
+    updateHistory();
   }, [results, isLoading]);
 
   const handleEntrySelect = (entry: SearchEntry) => {
@@ -79,6 +83,15 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
     setActiveFilter(entry.query); 
     handleSearch(entry.query);
   };
+
+  const handleStartMonitoring = async (proc: any) => {
+      const canMonitor = await checkLimit('monitoring');
+      if (!canMonitor) {
+          toast.error("Você atingiu seu limite de monitoramentos.");
+          return;
+      }
+      handleMonitorClick(proc);
+  }
 
   return (
     <div className="flex-1 bg-background dark:bg-background-dark overflow-y-auto scrollbar-hide">
@@ -206,7 +219,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
                     <button 
                       onClick={() => {
                         if (!user) navigate('/auth', { state: { from: '/monitoramento', mode: 'signup' } });
-                        else handleMonitorClick(proc);
+                        else handleStartMonitoring(proc);
                       }}
                       className="flex items-center gap-2 bg-deep-indigo dark:bg-primary text-white dark:text-deep-indigo px-5 py-2.5 rounded-xl text-sm font-black hover:opacity-90 transition-all shadow-md active:scale-95"
                     >

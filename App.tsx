@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
