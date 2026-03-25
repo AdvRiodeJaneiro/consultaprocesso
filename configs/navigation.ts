@@ -28,8 +28,7 @@ export const MAIN_MENU: MenuItem[] = [
     id: 'monitor-new', 
     label: 'Consulta CPF e CNPJ', 
     icon: LayoutDashboard, 
-    path: '/monitoramento',
-    maintenance: true 
+    path: '/monitoramento'
   },
   { 
     id: 'my-processes', 
