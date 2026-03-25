@@ -143,7 +143,7 @@ const UsageLimits: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1">
-                Consulta CPF/CNPJ
+                Consulta CPF/CNPJ/nome
                 <Info size={12} className="cursor-help" title="Número máximo de buscas permitidas por navegador (Guest)" />
               </label>
               <input 
@@ -154,11 +154,11 @@ const UsageLimits: React.FC = () => {
               />
             </div>
             <div className="opacity-40 select-none">
-              <label className="text-xs font-bold text-slate-400 uppercase">Análise de Processo (IA)</label>
+              <label className="text-xs font-bold text-slate-400 uppercase">Consulta n° de Processo</label>
               <div className="bg-slate-100 dark:bg-slate-900/50 rounded-lg p-3 text-sm text-slate-400 italic">Desativado p/ Visitante</div>
             </div>
             <div className="opacity-40 select-none">
-              <label className="text-xs font-bold text-slate-400 uppercase">Monitoramento (WA)</label>
+              <label className="text-xs font-bold text-slate-400 uppercase">Processos Monitorados</label>
               <div className="bg-slate-100 dark:bg-slate-900/50 rounded-lg p-3 text-sm text-slate-400 italic">Desativado p/ Visitante</div>
             </div>
           </div>
@@ -179,7 +179,7 @@ const UsageLimits: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-500 uppercase">Buscas CPF/CNPJ /mês</label>
+              <label className="text-xs font-bold text-slate-500 uppercase">Consulta CPF/CNPJ/nome</label>
               <input 
                 type="number" 
                 value={settings.free_search_limit}
@@ -188,7 +188,7 @@ const UsageLimits: React.FC = () => {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-500 uppercase">Consultas IA /mês</label>
+              <label className="text-xs font-bold text-slate-500 uppercase">Consulta n° de Processo</label>
               <input 
                 type="number" 
                 value={settings.free_process_limit}
@@ -229,7 +229,7 @@ const UsageLimits: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                      <Search size={10} /> Buscas p/ Mês
+                      <Search size={10} /> Consulta CPF/CNPJ/nome
                     </label>
                     <input 
                       type="number" 
@@ -240,7 +240,7 @@ const UsageLimits: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                      <Gavel size={10} /> Consultas IA p/ Mês
+                      <Gavel size={10} /> Consulta n° de Processo
                     </label>
                     <input 
                       type="number" 
@@ -251,7 +251,7 @@ const UsageLimits: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                      <Smartphone size={10} /> Limite de Monitoramento
+                      <Smartphone size={10} /> Processos Monitorados
                     </label>
                     <input 
                       type="number" 
