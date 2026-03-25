@@ -16,6 +16,7 @@ import MyProcesses from './pages/MyProcesses';
 import ProcessTimeline from './pages/ProcessTimeline';
 import ZApiTest from './pages/ZApiTest';
 import AdminSettings from './pages/AdminSettings';
+import UsageLimits from './pages/UsageLimits';
 import Pricing from './pages/Pricing';
 
 import { useChat } from './hooks/useChat';
@@ -71,8 +72,10 @@ function AppContent() {
       case '/monitoramento': return 'Monitoramento';
       case '/meus-processos': return 'Meus Processos';
       case '/': return 'Consulta Processo';
-      case '/configuracoes': return 'Configurações';
+      case '/configuracoes': return 'Gestão de Planos';
+      case '/limites-de-uso': return 'Limites de Uso';
       case '/planos': return 'Assinaturas';
+
       case '/auth': return 'Autenticação';
       case '/z-api': return 'Integração WhatsApp';
       default:
@@ -148,19 +151,18 @@ function AppContent() {
               profile?.is_admin ? (
                 <AdminSettings />
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-950 min-h-screen">
-                  <div className="max-w-md space-y-4">
-                    <div className="bg-slate-900 p-10 rounded-3xl border border-slate-800 shadow-xl inline-block">
-                      <Settings className="w-16 h-16 text-red-500 mx-auto mb-6 opacity-50" />
-                      <h2 className="text-2xl font-bold text-white">Acesso Restrito</h2>
-                      <p className="text-slate-400 mt-2 font-medium">Você não tem permissão para acessar as configurações de administrador.</p>
-                      <Button onClick={() => navigate('/')} className="mt-6 bg-primary text-deep-indigo font-bold">Voltar para o Início</Button>
-                    </div>
-                  </div>
-                </div>
+                <Navigate to="/" />
+              )
+            } />
+            <Route path="/limites-de-uso" element={
+              profile?.is_admin ? (
+                <UsageLimits />
+              ) : (
+                <Navigate to="/" />
               )
             } />
           </Routes>
+
         </div>
       </div>
 

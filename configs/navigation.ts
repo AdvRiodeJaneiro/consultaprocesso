@@ -46,11 +46,18 @@ export const MAIN_MENU: MenuItem[] = [
 ];
 
 export const ADMIN_MENU: MenuItem[] = [
-  { 
-    id: 'settings', 
-    label: 'Gestão de Planos', 
-    icon: Settings, 
+  {
+    id: 'settings',
+    label: 'Gestão de Planos',
+    icon: Settings,
     path: '/configuracoes',
+    adminOnly: true
+  },
+  {
+    id: 'usage-limits',
+    label: 'Limites de Uso',
+    icon: ShieldCheck,
+    path: '/limites-de-uso',
     adminOnly: true
   },
   {
