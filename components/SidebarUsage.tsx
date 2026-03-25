@@ -28,13 +28,12 @@ const UsageItem: React.FC<UsageItemProps> = ({ label, type, updateTrigger }) => 
 
   if (loading) return (
     <div className="space-y-2 animate-pulse">
-      <div className="h-2 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
-      <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full" />
+      <div className="h-2 w-20 bg-white/10 rounded" />
+      <div className="h-1.5 w-full bg-white/5 rounded-full" />
     </div>
   );
 
   const percentage = Math.min((current / limit) * 100, 100);
-  // Invertendo para "esvaziar" conforme solicitado: a barra colorida representa o que RESTA
   const remainingPercentage = 100 - percentage;
   const isWarning = remainingPercentage < 20;
 
@@ -44,12 +43,12 @@ const UsageItem: React.FC<UsageItemProps> = ({ label, type, updateTrigger }) => 
         <span className="text-slate-400 truncate pr-2">{label}</span>
         <span className={cn(
           "shrink-0",
-          isWarning ? "text-red-500" : "text-deep-indigo dark:text-white"
+          isWarning ? "text-red-400" : "text-white"
         )}>
           {current} de {limit}
         </span>
       </div>
-      <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+      <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
         <div 
           className={cn(
             "h-full transition-all duration-500 ease-out",
@@ -64,13 +63,16 @@ const UsageItem: React.FC<UsageItemProps> = ({ label, type, updateTrigger }) => 
 
 export const SidebarUsage: React.FC = () => {
   const { user, profile } = useAuth();
-  // Usamos um contador simples baseado no perfil para forçar o componente de uso a se atualizar
   const updateTrigger = (profile?.current_month_searches || 0) + (profile?.current_month_process_consults || 0);
 
   return (
-    <div className="px-4 py-6 space-y-6">
-      <div className="px-2">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Seu Limite</p>
+    <div className="px-4 py-4">
+      <div className="bg-[#1E1B4B] rounded-2xl p-5 space-y-5 border border-white/5 shadow-xl">
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Uso e saldo</p>
+          <div className="size-1.5 rounded-full bg-primary animate-pulse" />
+        </div>
+        
         <div className="space-y-5">
           <UsageItem 
             label="N° de processo" 
@@ -88,15 +90,15 @@ export const SidebarUsage: React.FC = () => {
             updateTrigger={updateTrigger}
           />
         </div>
+
+        {!user && (
+          <div className="pt-2 border-t border-white/5">
+            <p className="text-[9px] font-bold text-slate-400 leading-tight">
+              Crie uma conta para aumentar seus limites.
+            </p>
+          </div>
+        )}
       </div>
-      
-      {!user && (
-        <div className="mx-2 p-3 bg-primary/5 border border-primary/10 rounded-xl">
-          <p className="text-[9px] font-bold text-primary leading-tight">
-            Crie uma conta para aumentar seus limites e monitorar processos.
-          </p>
-        </div>
-      )}
     </div>
   );
 };
