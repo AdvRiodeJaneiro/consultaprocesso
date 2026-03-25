@@ -20,10 +20,26 @@ const fetchWithFallback = async (endpoint: string, method: 'GET' | 'POST' | 'DEL
 
         if (!response.ok) {
             const errorText = await response.text();
+            let errorMessage = "Erro na integração com base de dados jurídica. Contate o suporte.";
+            
+            try {
+                const errorJson = JSON.parse(errorText);
+                if (errorJson.errors) {
+                    const firstError = Object.values(errorJson.errors)[0];
+                    if (Array.isArray(firstError) && firstError[0]) {
+                        errorMessage = firstError[0];
+                    }
+                } else if (errorJson.message) {
+                    errorMessage = errorJson.message;
+                }
+            } catch (e) {
+                // Não é JSON, mantém o padrão
+            }
+
             console.error(`[Escavador API] Erro real (${method}): ${response.status} - ${errorText}`);
             
             if (response.status === 404) return null;
-            throw new Error("Erro na integração com base de dados jurídica. Contate o suporte.");
+            throw new Error(errorMessage);
         }
         
         if (response.status === 204) return { success: true };
@@ -33,7 +49,7 @@ const fetchWithFallback = async (endpoint: string, method: 'GET' | 'POST' | 'DEL
     try {
         return await doFetch(endpoint);
     } catch (error: any) {
-        if (error.message.includes('Erro na integração')) throw error;
+        if (error.message.includes('Erro na integração') || error.message.includes('inválido')) throw error;
         console.error("[Escavador API] Erro de rede:", error);
         const proxiedUrl = `${PROXY_URL}${encodeURIComponent(endpoint)}`;
         return await doFetch(proxiedUrl);

@@ -81,13 +81,15 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
     hideSteps();
     setActiveFilter(query); 
     
-    // Realiza a busca
-    await handleSearch();
+    // Realiza a busca e captura o status de sucesso
+    const success = await handleSearch();
     
-    // Incrementa o uso e salva no histórico APENAS se houver resultados e for busca manual
-    const type = query.replace(/[^\d]/g, '').length >= 11 ? 'cnj' : 'involved';
-    addToHistory(query, type, results.length);
-    await incrementUsage('search');
+    // Incrementa o uso e salva no histórico APENAS se a busca foi bem-sucedida (API respondeu 200)
+    if (success) {
+        const type = query.replace(/[^\d]/g, '').length >= 11 ? 'cnj' : 'involved';
+        addToHistory(query, type, results.length);
+        await incrementUsage('search');
+    }
   };
 
   const handleEntrySelect = (entry: SearchEntry) => {

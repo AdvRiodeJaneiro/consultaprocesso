@@ -32,9 +32,9 @@ export function useMonitor() {
     }
   }, [storeQuery, storeResults, storeTotal]);
 
-  const handleSearch = async (overrideQuery?: string) => {
+  const handleSearch = async (overrideQuery?: string): Promise<boolean> => {
     const searchTarget = overrideQuery || query;
-    if (!searchTarget.trim()) return;
+    if (!searchTarget.trim()) return false;
 
     setIsLoading(true);
     setError(null);
@@ -73,10 +73,12 @@ export function useMonitor() {
       
       // Atualiza a Store Global para persistência entre telas
       setSearchData(searchTarget, currentResults, type, currentTotal);
+      return true;
 
     } catch (err: any) {
       console.error("[Search Error]:", err);
       setError(err.message);
+      return false;
     } finally {
       setIsLoading(false);
     }
