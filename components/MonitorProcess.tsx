@@ -149,7 +149,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
           </div>
           <button 
             onClick={() => setIsHistoryOpen(true)}
-            className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2.5 rounded-xl text-xs font-black text-deep-indigo dark:text-white shadow-sm hover:shadow-md transition-all active:scale-95"
+            className="flex items-center gap-2 bg-[#1E1B4B] dark:bg-slate-900 border border-[#1E1B4B] dark:border-slate-800 px-4 py-2.5 rounded-xl text-xs font-black text-white shadow-sm hover:shadow-md transition-all active:scale-95"
           >
             <History size={16} className="text-primary" />
             Histórico de buscas

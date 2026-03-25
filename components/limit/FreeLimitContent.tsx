@@ -3,7 +3,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ChevronRight } from 'lucide-react';
-import { GlowingButton } from '../GlowingButton';
 
 interface FreeLimitContentProps {
   onClose: () => void;
@@ -29,13 +28,14 @@ export const FreeLimitContent: React.FC<FreeLimitContentProps> = ({ onClose }) =
       </div>
 
       <div className="pt-4">
-        <GlowingButton onClick={handleAction} className="w-full py-5">
-          <div className="flex items-center justify-center gap-2">
-            <Sparkles size={20} />
-            <span className="text-lg">Quero fazer mais consultas</span>
-            <ChevronRight size={20} />
-          </div>
-        </GlowingButton>
+        <button 
+          onClick={handleAction}
+          className="w-full py-4 bg-[#1E1B4B] text-white font-bold rounded-2xl hover:bg-[#2d2a5d] transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 group"
+        >
+          <Sparkles size={20} />
+          <span className="text-lg">Quero fazer mais consultas</span>
+          <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+        </button>
         
         <button 
           onClick={onClose}
