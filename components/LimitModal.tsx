@@ -3,7 +3,10 @@
 import React from 'react';
 import { X, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AuthForm } from './AuthForm';
+import { useAuth } from '../contexts/AuthContext';
+import { GuestLimitContent } from './limit/GuestLimitContent';
+import { FreeLimitContent } from './limit/FreeLimitContent';
+import { ProLimitContent } from './limit/ProLimitContent';
 
 interface LimitModalProps {
   isOpen: boolean;
@@ -11,6 +14,21 @@ interface LimitModalProps {
 }
 
 const LimitModal: React.FC<LimitModalProps> = ({ isOpen, onClose }) => {
+  const { user, profile } = useAuth();
+
+  // Define qual conteúdo exibir baseado no estado do usuário
+  const renderContent = () => {
+    if (!user) {
+      return <GuestLimitContent onSuccess={onClose} />;
+    }
+    
+    if (profile?.subscription_status === 'active') {
+      return <ProLimitContent onClose={onClose} />;
+    }
+    
+    return <FreeLimitContent onClose={onClose} />;
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -41,16 +59,8 @@ const LimitModal: React.FC<LimitModalProps> = ({ isOpen, onClose }) => {
                 <div className="size-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-4">
                   <Lock size={32} />
                 </div>
-                <h3 className="text-2xl font-black text-deep-indigo dark:text-white leading-tight">
-                  Deseja fazer mais consultas?
-                </h3>
-                <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm font-medium">
-                  Você atingiu o limite de consultas gratuitas. Faça Login ou Cadastre-se para continuar buscando sem limites.
-                </p>
-              </div>
-
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
-                 <AuthForm onSuccess={onClose} />
+                
+                {renderContent()}
               </div>
             </div>
           </motion.div>
