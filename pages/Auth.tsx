@@ -43,7 +43,7 @@ export default function Auth() {
           </div>
           <h1 className="text-3xl font-bold text-deep-indigo dark:text-white">Consulta Processo</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2">
-            Acesse sua conta para monitorar processos sem limites
+            Acesse sua conta para monitorar andamentos do seu processo via Whatsapp
           </p>
         </div>
 
