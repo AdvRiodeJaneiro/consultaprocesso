@@ -9,6 +9,9 @@ export function useSearchLimit() {
   const [globalSettings, setGlobalSettings] = useState<any>(null);
   const [planSettings, setPlanSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Estado interno para forçar a re-leitura dos limites quando algo muda
+  const [updateCounter, setUpdateCounter] = useState(0);
 
   // Fetch settings on mount
   useEffect(() => {
@@ -75,6 +78,7 @@ export function useSearchLimit() {
 
   /**
    * Busca o uso atual do usuário (Banco ou LocalStorage)
+   * Agora depende de updateCounter para ser reativo a incrementos locais
    */
   const getCurrentUsage = useCallback(async (type: LimitType) => {
     // 1. Visitante (LocalStorage)
@@ -102,7 +106,7 @@ export function useSearchLimit() {
     }
 
     return 0;
-  }, [user, profile]);
+  }, [user, profile, updateCounter]); 
 
   /**
    * Verifica se o limite foi atingido antes de permitir a ação
@@ -125,8 +129,12 @@ export function useSearchLimit() {
         monitoring: 'guest_monitoring_count'
       };
       
-      const current = await getCurrentUsage(type);
+      // Busca valor atual direto do localStorage para evitar delay de estado
+      const stored = localStorage.getItem(storageKeys[type]);
+      const current = stored ? parseInt(stored, 10) : 0;
+      
       localStorage.setItem(storageKeys[type], (current + 1).toString());
+      setUpdateCounter(prev => prev + 1); // Dispara re-render em quem usa o hook
       return;
     }
 
@@ -140,9 +148,12 @@ export function useSearchLimit() {
         .update({ [field]: current + 1 })
         .eq('id', user.id);
       
-      if (!error) refreshProfile();
+      if (!error) {
+        setUpdateCounter(prev => prev + 1);
+        refreshProfile();
+      }
     }
-  }, [user, profile, getCurrentUsage, refreshProfile]);
+  }, [user, profile, refreshProfile]);
 
   return {
     loading,
