@@ -11,6 +11,7 @@ import SearchBar from './SearchBar';
 import StepsCard from './StepsCard';
 import { HistorySidebar } from './HistorySidebar';
 import { ToastAlert } from './ui/ToastAlert';
+import { MaskedProcessNumber } from './MaskedProcessNumber'; // Novo Componente
 
 import { useMonitor } from '../hooks/useMonitor';
 import { useSearchLimit } from '../hooks/useSearchLimit';
@@ -116,7 +117,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
                 <span>Debug Limites</span>
             </div>
             <div className="flex gap-4 text-[11px] font-mono">
-                <div className="text-slate-400">TIPO: <span className="text-white font-bold">BUSCA (Visitante)</span></div>
+                <div className="text-slate-400">TIPO: <span className="text-white font-bold">BUSCA</span></div>
                 <div className="text-slate-400">LIMITE: <span className="text-primary font-bold">{debugData?.limit ?? '...'}</span></div>
                 <div className="text-slate-400">USO ATUAL: <span className="text-emerald-400 font-bold">{debugData?.current ?? '...'}</span></div>
                 <div className="text-slate-400">ATINGIDO: <span className={cn("font-bold", (debugData?.current ?? 0) >= (debugData?.limit ?? 0) ? "text-red-500" : "text-emerald-500")}>
@@ -225,7 +226,8 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
                       <Gavel className="text-primary mt-1 shrink-0" size={20} />
                       <div className="min-w-0">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Número do Processo</p>
-                        <h4 className="text-base font-bold text-deep-indigo dark:text-white break-all">{proc.numero_cnj}</h4>
+                        {/* SUBSTITUÍDO: Agora usa o componente de proteção de dados */}
+                        <MaskedProcessNumber cnj={proc.numero_cnj} />
                       </div>
                     </div>
                   </div>
