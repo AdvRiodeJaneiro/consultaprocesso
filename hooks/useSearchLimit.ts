@@ -46,10 +46,10 @@ export function useSearchLimit() {
   /**
    * Identifica o limite atual baseado no nível do usuário
    */
-  const getLimitForType = (type: LimitType) => {
-    if (!globalSettings) return 999; // Fallback alto se falhar carregamento
+  const getLimitForType = useCallback((type: LimitType) => {
+    if (!globalSettings) return 999;
 
-    // 1. Visitante (Obedece as novas colunas do banco)
+    // 1. Visitante
     if (!user) {
       if (type === 'search') return globalSettings.guest_search_limit || 0;
       if (type === 'process') return globalSettings.guest_process_limit || 0;
@@ -59,7 +59,7 @@ export function useSearchLimit() {
 
     // 2. PRO (Ativo)
     if (profile?.subscription_status === 'active') {
-      if (!planSettings) return 999; // Fallback se o plano não carregou
+      if (!planSettings) return 999;
       if (type === 'search') return planSettings.search_limit;
       if (type === 'process') return planSettings.process_limit;
       if (type === 'monitoring') return planSettings.monitoring_limit;
@@ -71,12 +71,12 @@ export function useSearchLimit() {
     if (type === 'monitoring') return globalSettings.free_monitoring_limit;
 
     return 0;
-  };
+  }, [globalSettings, planSettings, user, profile]);
 
   /**
    * Busca o uso atual do usuário (Banco ou LocalStorage)
    */
-  const getCurrentUsage = async (type: LimitType) => {
+  const getCurrentUsage = useCallback(async (type: LimitType) => {
     // 1. Visitante (LocalStorage)
     if (!user) {
       const storageKeys: Record<LimitType, string> = {
@@ -102,21 +102,21 @@ export function useSearchLimit() {
     }
 
     return 0;
-  };
+  }, [user, profile]);
 
   /**
    * Verifica se o limite foi atingido antes de permitir a ação
    */
-  const checkLimit = async (type: LimitType) => {
+  const checkLimit = useCallback(async (type: LimitType) => {
     const limit = getLimitForType(type);
     const current = await getCurrentUsage(type);
     return current < limit;
-  };
+  }, [getLimitForType, getCurrentUsage]);
 
   /**
    * Incrementa o uso após uma ação bem-sucedida
    */
-  const incrementUsage = async (type: LimitType) => {
+  const incrementUsage = useCallback(async (type: LimitType) => {
     // 1. Visitante
     if (!user) {
       const storageKeys: Record<LimitType, string> = {
@@ -142,7 +142,7 @@ export function useSearchLimit() {
       
       if (!error) refreshProfile();
     }
-  };
+  }, [user, profile, getCurrentUsage, refreshProfile]);
 
   return {
     loading,
