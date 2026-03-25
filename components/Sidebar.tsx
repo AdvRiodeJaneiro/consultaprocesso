@@ -10,6 +10,7 @@ import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { useUIStore } from '../store/uiStore';
 import { MAIN_MENU, ADMIN_MENU, MenuItem } from '../configs/navigation';
+import { SidebarUsage } from './SidebarUsage';
 
 interface SidebarProps {
   className?: string;
@@ -92,6 +93,9 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             </div>
           )}
         </nav>
+
+        {/* Sistema de acompanhamento de limites */}
+        <SidebarUsage />
 
         <div className="p-4 border-t border-slate-100 dark:border-slate-800">
           {user ? (
