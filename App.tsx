@@ -10,6 +10,7 @@ import WhatsappModal from './components/WhatsappModal';
 import ConfirmModal from './components/ConfirmModal';
 import { ChatView } from './components/ChatView';
 import { MaintenanceView } from './components/MaintenanceView';
+import MonitorProcess from './components/MonitorProcess';
 
 import Auth from './pages/Auth';
 import MyProcesses from './pages/MyProcesses';
@@ -146,7 +147,12 @@ function AppContent() {
             <Route path="/processo/:cnj" element={<ProcessTimeline />} />
             <Route path="/z-api" element={<ZApiTest />} />
             <Route path="/planos" element={<Pricing />} />
-            <Route path="/monitoramento" element={<MaintenanceView />} />
+            <Route path="/monitoramento" element={
+              <MonitorProcess 
+                whatsappNumber={whatsappNumber} 
+                onUpdateWhatsapp={setWhatsappNumber} 
+              />
+            } />
             <Route path="/configuracoes" element={
               profile?.is_admin ? (
                 <AdminSettings />
