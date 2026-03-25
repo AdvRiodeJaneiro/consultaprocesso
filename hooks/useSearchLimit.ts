@@ -49,10 +49,12 @@ export function useSearchLimit() {
   const getLimitForType = (type: LimitType) => {
     if (!globalSettings) return 999; // Fallback alto se falhar carregamento
 
-    // 1. Visitante
+    // 1. Visitante (Obedece as novas colunas do banco)
     if (!user) {
-      if (type === 'search') return globalSettings.guest_search_limit;
-      return 0; // Outros usos bloqueados para visitante
+      if (type === 'search') return globalSettings.guest_search_limit || 0;
+      if (type === 'process') return globalSettings.guest_process_limit || 0;
+      if (type === 'monitoring') return globalSettings.guest_monitoring_limit || 0;
+      return 0;
     }
 
     // 2. PRO (Ativo)
@@ -77,11 +79,14 @@ export function useSearchLimit() {
   const getCurrentUsage = async (type: LimitType) => {
     // 1. Visitante (LocalStorage)
     if (!user) {
-      if (type === 'search') {
-        const stored = localStorage.getItem('guest_search_count');
-        return stored ? parseInt(stored, 10) : 0;
-      }
-      return 999; // Bloqueado
+      const storageKeys: Record<LimitType, string> = {
+        search: 'guest_search_count',
+        process: 'guest_process_count',
+        monitoring: 'guest_monitoring_count'
+      };
+      
+      const stored = localStorage.getItem(storageKeys[type]);
+      return stored ? parseInt(stored, 10) : 0;
     }
 
     // 2. Logado (Banco)
@@ -114,10 +119,14 @@ export function useSearchLimit() {
   const incrementUsage = async (type: LimitType) => {
     // 1. Visitante
     if (!user) {
-      if (type === 'search') {
-        const current = await getCurrentUsage('search');
-        localStorage.setItem('guest_search_count', (current + 1).toString());
-      }
+      const storageKeys: Record<LimitType, string> = {
+        search: 'guest_search_count',
+        process: 'guest_process_count',
+        monitoring: 'guest_monitoring_count'
+      };
+      
+      const current = await getCurrentUsage(type);
+      localStorage.setItem(storageKeys[type], (current + 1).toString());
       return;
     }
 
