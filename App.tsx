@@ -20,7 +20,7 @@ import Pricing from './pages/Pricing';
 
 import { useChat } from './hooks/useChat';
 import { useSearchStore } from './store/searchStore';
-import { useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { supabase } from './integrations/supabase/client';
 import { toast } from 'react-hot-toast';
 import { Loader2, Settings } from 'lucide-react';
