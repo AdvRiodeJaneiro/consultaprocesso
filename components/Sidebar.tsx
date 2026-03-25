@@ -2,17 +2,14 @@
 
 import React from 'react';
 import {
-  Search,
-  LayoutDashboard,
-  Settings,
-  Gavel,
   LogOut,
-  Zap
+  Gavel
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { useUIStore } from '../store/uiStore';
+import { MAIN_MENU, ADMIN_MENU, MenuItem } from '../configs/navigation';
 
 interface SidebarProps {
   className?: string;
@@ -24,22 +21,34 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const { user, profile, signOut } = useAuth();
   const { isSidebarOpen, toggleSidebar } = useUIStore();
 
-  const menuItems = [
-    { id: 'search-number', label: 'Consulta Processo', icon: Search, path: '/' },
-    { 
-      id: 'monitor-new', 
-      label: 'Consulta CPF e CNPJ', 
-      icon: LayoutDashboard, 
-      path: '/monitoramento',
-      maintenance: true 
-    },
-    { id: 'my-processes', label: 'Processos Monitorados', icon: Gavel, path: '/meus-processos' },
-    { id: 'pricing', label: 'Assinar Plano', icon: Zap, path: '/planos' },
-  ];
-
-  const filteredMenuItems = profile?.is_admin
-    ? [...menuItems, { id: 'settings', label: 'Configurações', icon: Settings, path: '/configuracoes' }]
-    : menuItems;
+  const renderMenuItem = (item: MenuItem) => {
+    const isActive = location.pathname === item.path;
+    return (
+      <button
+        key={item.id}
+        onClick={() => {
+          navigate(item.path);
+          if (window.innerWidth < 768) toggleSidebar();
+        }}
+        className={cn(
+          "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all group",
+          isActive
+            ? "bg-primary/10 text-primary font-bold"
+            : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold"
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "group-hover:text-primary")} />
+          <span className="text-sm">{item.label}</span>
+        </div>
+        {item.maintenance && (
+          <span className="text-[8px] font-black bg-slate-100 dark:bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded uppercase border border-slate-200 dark:border-slate-700">
+            Maint
+          </span>
+        )}
+      </button>
+    );
+  };
 
   return (
     <>
@@ -69,35 +78,19 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           </div>
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
-          {filteredMenuItems.map((item: any) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  navigate(item.path);
-                  if (window.innerWidth < 768) toggleSidebar();
-                }}
-                className={cn(
-                  "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all group",
-                  isActive
-                    ? "bg-primary/10 text-primary font-bold"
-                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "group-hover:text-primary")} />
-                  <span className="text-sm">{item.label}</span>
-                </div>
-                {item.maintenance && (
-                  <span className="text-[8px] font-black bg-slate-100 dark:bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded uppercase border border-slate-200 dark:border-slate-700">
-                    Maint
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto scrollbar-hide">
+          <div className="space-y-1">
+            {MAIN_MENU.map(renderMenuItem)}
+          </div>
+
+          {profile?.is_admin && (
+            <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 space-y-1">
+              <div className="px-4 mb-2">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Adm</p>
+              </div>
+              {ADMIN_MENU.map(renderMenuItem)}
+            </div>
+          )}
         </nav>
 
         <div className="p-4 border-t border-slate-100 dark:border-slate-800">
