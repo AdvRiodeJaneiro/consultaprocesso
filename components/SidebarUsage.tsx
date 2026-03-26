@@ -64,6 +64,10 @@ const UsageItem: React.FC<UsageItemProps> = ({ label, type, updateTrigger }) => 
 
 export const SidebarUsage: React.FC = () => {
   const { user, profile } = useAuth();
+  
+  // Se não estiver logado, não mostramos a barra de créditos (pois ele não pode usar sem logar)
+  if (!user) return null;
+
   const updateTrigger = (profile?.current_month_searches || 0) + (profile?.current_month_process_consults || 0);
 
   return (
@@ -94,14 +98,6 @@ export const SidebarUsage: React.FC = () => {
             updateTrigger={updateTrigger}
           />
         </div>
-
-        {!user && (
-          <div className="pt-2 border-t border-white/5">
-            <p className="text-[9px] font-bold text-slate-400 leading-tight">
-              Crie uma conta para aumentar seus limites.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

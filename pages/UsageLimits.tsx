@@ -131,53 +131,6 @@ const UsageLimits: React.FC = () => {
       </div>
 
       <div className="space-y-8">
-        {/* Nível: Visitante (Não Logado) */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-slate-400"></div>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="size-10 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-500">
-              <Users size={20} />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-deep-indigo dark:text-white leading-none">Visitante</h3>
-              <p className="text-xs text-slate-400 mt-1 uppercase tracking-widest font-black">Usuário Não Logado</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1">
-                Consulta CPF/CNPJ/nome
-                <Info size={12} className="cursor-help" title="Número máximo de buscas permitidas por navegador (Guest)" />
-              </label>
-              <input 
-                type="number" 
-                value={settings.guest_search_limit}
-                onChange={(e) => handleGlobalChange('guest_search_limit', parseInt(e.target.value))}
-                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-500 uppercase">Consulta n° de Processo</label>
-              <input 
-                type="number" 
-                value={settings.guest_process_limit}
-                onChange={(e) => handleGlobalChange('guest_process_limit', parseInt(e.target.value))}
-                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-500 uppercase">Processos Monitorados</label>
-              <input 
-                type="number" 
-                value={settings.guest_monitoring_limit}
-                onChange={(e) => handleGlobalChange('guest_monitoring_limit', parseInt(e.target.value))}
-                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground"
-              />
-            </div>
-          </div>
-        </div>
-
         {/* Nível: Free (Logado sem Plano) */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
@@ -186,7 +139,7 @@ const UsageLimits: React.FC = () => {
               <UserPlus size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-deep-indigo dark:text-white leading-none">Free</h3>
+              <h3 className="text-lg font-bold text-deep-indigo dark:text-white leading-none">Limites Gratuitos (Usuários Logados)</h3>
               <p className="text-xs text-blue-400 mt-1 uppercase tracking-widest font-black">Usuário Logado s/ Assinatura</p>
             </div>
           </div>
