@@ -8,6 +8,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import WhatsappModal from './components/WhatsappModal';
 import ConfirmModal from './components/ConfirmModal';
+import AuthModal from './components/AuthModal'; // Novo Import
 import { ChatView } from './components/ChatView';
 import MonitorProcess from './components/MonitorProcess';
 
@@ -52,6 +53,7 @@ function AppContent() {
   } = useChat();
 
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false); // Controle do novo modal
 
   useEffect(() => {
     if (profile?.whatsapp) {
@@ -135,8 +137,24 @@ function AppContent() {
                 isProcessing={isProcessing}
                 debugInfo={debugInfo}
                 setDebugInfo={setDebugInfo}
-                handleWelcomeSubmit={handleWelcomeSubmit}
-                handleSend={handleSend}
+                handleWelcomeSubmit={(text) => {
+                  // Se o usuário não estiver logado, abrimos o AuthModal em vez de buscar
+                  if (!user) {
+                    setIsAuthModalOpen(true);
+                    // Guardamos o texto para a próxima etapa
+                    sessionStorage.setItem('pending_search', text);
+                  } else {
+                    handleWelcomeSubmit(text);
+                  }
+                }}
+                handleSend={() => {
+                   if (!user && input.trim()) {
+                      setIsAuthModalOpen(true);
+                      sessionStorage.setItem('pending_search', input);
+                   } else {
+                      handleSend();
+                   }
+                }}
                 handleKeyDown={handleKeyDown}
                 handleTransitionToMonitor={handleTransitionToMonitor}
               />
@@ -180,6 +198,12 @@ function AppContent() {
             }
          }}
          initialValue={whatsappNumber}
+      />
+
+      {/* Novo Modal de Auth Interceptado */}
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
       />
 
       <ConfirmModal
