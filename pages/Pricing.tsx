@@ -55,7 +55,6 @@ const Pricing: React.FC = () => {
 
   const handleSubscribe = (checkoutUrl: string) => {
     if (!user) {
-      toast.error('Você precisa estar logado para assinar um plano');
       navigate('/auth', { state: { from: '/planos' } });
       return;
     }

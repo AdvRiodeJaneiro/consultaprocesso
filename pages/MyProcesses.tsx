@@ -57,7 +57,7 @@ const MyProcesses: React.FC = () => {
           title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
           description="Faça login para gerenciar seus processos monitorados."
           buttonText="Começar"
-          onButtonClick={() => navigate('/monitoramento')}
+          onButtonClick={() => navigate('/auth', { state: { from: '/meus-processos' } })}
         />
       </div>
     );
