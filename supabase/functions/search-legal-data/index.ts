@@ -46,17 +46,15 @@ serve(async (req) => {
     const BASE_URL = "https://api.escavador.com/api/v2"
 
     if (!ESC_API_KEY) {
-      console.error("[search-legal-data] API Key is missing");
       return new Response(JSON.stringify({ error: 'Server configuration error' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    // Determine usage type based on request
     const usageType = type === 'involved' ? 'search' : (type === 'process' ? 'process' : null)
 
-    // 1. Check limits (if it's a countable action)
+    // 1. Verificação de Limites
     if (usageType) {
         const { data: hasLimit, error: limitError } = await supabaseAdmin.rpc('check_user_usage_limit', {
             target_user_id: user.id,
@@ -65,13 +63,7 @@ serve(async (req) => {
 
         if (limitError) {
             console.error("[search-legal-data] Limit check error:", limitError)
-            return new Response(JSON.stringify({ error: 'Error checking limits' }), {
-                status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
-        }
-
-        if (!hasLimit) {
+        } else if (hasLimit === false) {
             return new Response(JSON.stringify({ error: 'Limit reached' }), {
                 status: 403,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -79,7 +71,7 @@ serve(async (req) => {
         }
     }
 
-    // 2. Prepare Escavador request
+    // 2. Chamada ao Escavador
     let endpoint = ""
     if (type === 'process') {
       endpoint = `${BASE_URL}/processos/numero_cnj/${processNumber}`
@@ -116,20 +108,18 @@ serve(async (req) => {
 
     const data = await escResponse.json()
 
-    // 3. Increment usage on success
-    // Corrigido: Verificamos campos reais do Escavador (numero_cnj ou items)
+    // 3. Incremento de uso em caso de sucesso
     const isRealSuccess = (type === 'process' && data?.numero_cnj) || 
                           (type === 'involved' && data?.items);
 
     if (usageType && isRealSuccess) {
-        console.log(`[search-legal-data] Incrementing ${usageType} for user ${user.id}`);
-        const { error: incError } = await supabaseAdmin.rpc('increment_user_usage', {
+        // Incrementamos via RPC, mas sem travar a resposta em caso de erro no log
+        supabaseAdmin.rpc('increment_user_usage', {
             target_user_id: user.id,
             usage_type: usageType
-        })
-        if (incError) {
-            console.error("[search-legal-data] Increment error:", incError)
-        }
+        }).then(({ error }) => {
+            if (error) console.error("[search-legal-data] Increment error:", error);
+        });
     }
 
     return new Response(JSON.stringify(data), {
