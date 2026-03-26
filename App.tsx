@@ -19,6 +19,7 @@ import ZApiTest from './pages/ZApiTest';
 import AdminSettings from './pages/AdminSettings';
 import UsageLimits from './pages/UsageLimits';
 import Pricing from './pages/Pricing';
+import AdminUsers from './pages/AdminUsers'; // Importando a nova página
 
 import { useChat } from './hooks/useChat';
 import { useSearchStore } from './store/searchStore';
@@ -75,6 +76,7 @@ function AppContent() {
       case '/': return 'Consulta Processo';
       case '/configuracoes': return 'Gestão de Planos';
       case '/limites-de-uso': return 'Limites de Uso';
+      case '/usuarios': return 'Gestão de Usuários'; // Título da nova página
       case '/planos': return 'Assinaturas';
 
       case '/auth': return 'Autenticação';
@@ -152,6 +154,13 @@ function AppContent() {
                 whatsappNumber={whatsappNumber} 
                 onUpdateWhatsapp={setWhatsappNumber} 
               />
+            } />
+            <Route path="/usuarios" element={
+              profile?.is_admin ? (
+                <AdminUsers />
+              ) : (
+                <Navigate to="/" />
+              )
             } />
             <Route path="/configuracoes" element={
               profile?.is_admin ? (

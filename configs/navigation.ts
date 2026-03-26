@@ -5,7 +5,8 @@ import {
   Zap,
   Settings,
   ShieldCheck,
-  Smartphone
+  Smartphone,
+  Users
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -45,6 +46,13 @@ export const MAIN_MENU: MenuItem[] = [
 ];
 
 export const ADMIN_MENU: MenuItem[] = [
+  {
+    id: 'users',
+    label: 'Usuários',
+    icon: Users,
+    path: '/usuarios',
+    adminOnly: true
+  },
   {
     id: 'settings',
     label: 'Gestão de Planos',
