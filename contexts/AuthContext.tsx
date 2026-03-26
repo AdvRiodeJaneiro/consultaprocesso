@@ -4,7 +4,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { useUserStore } from '../store/userStore';
-import { useLogStore } from '../store/logStore';
 import { Profile } from '../types';
 
 interface AuthContextType {
@@ -26,13 +25,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [sessionLoading, setSessionLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
   
-  const { addLog } = useLogStore();
   const setGlobalProfile = useUserStore(state => state.setProfile);
   const clearGlobalProfile = useUserStore(state => state.clearProfile);
 
   const fetchProfile = async (userId: string) => {
     setProfileLoading(true);
-    addLog(`Buscando perfil para o usuário: ${userId}`, 'info');
 
     const { data, error } = await supabase
       .from('profiles')
@@ -41,12 +38,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .single();
 
     if (error) {
-      addLog("Erro ao carregar perfil do banco de dados", 'error', error);
       console.error("[AuthContext] Erro no perfil:", error);
     }
 
     if (data) {
-      addLog("Perfil carregado com sucesso", 'success', { is_admin: data.is_admin, email: data.email });
       setProfile(data);
       setGlobalProfile(data); 
     }
@@ -66,7 +61,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      addLog(`Evento de Autenticação: ${event}`, 'info');
       setSession(session);
       setUser(session?.user ?? null);
       

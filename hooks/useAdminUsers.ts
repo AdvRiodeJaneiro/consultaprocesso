@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { Profile } from '../types';
-import { useLogStore } from '../store/logStore';
 
 export interface AdminUser extends Profile {
   plan_name?: string;
@@ -14,16 +13,13 @@ export function useAdminUsers() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const { addLog } = useLogStore();
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     
-    addLog("Iniciando busca de perfis na tabela 'profiles'...", 'info');
-
     try {
-      const { data, error: dbError, status, statusText } = await supabase
+      const { data, error: dbError } = await supabase
         .from('profiles')
         .select(`
           *,
@@ -33,22 +29,7 @@ export function useAdminUsers() {
         `)
         .order('updated_at', { ascending: false });
 
-      // Log completo da resposta para inspeção
-      addLog("Resposta do Supabase recebida", 'info', { 
-        status, 
-        statusText, 
-        count: data?.length || 0,
-        error: dbError 
-      });
-
-      if (dbError) {
-        addLog("Erro na query de usuários", 'error', dbError);
-        throw dbError;
-      }
-
-      if (data && data.length === 0) {
-        addLog("Atenção: A tabela 'profiles' retornou 0 registros. Verifique se os usuários do Auth possuem entrada correspondente em public.profiles.", 'error');
-      }
+      if (dbError) throw dbError;
 
       const formattedUsers: AdminUser[] = (data || []).map((u: any) => ({
         ...u,
@@ -59,11 +40,10 @@ export function useAdminUsers() {
     } catch (err: any) {
       console.error("[useAdminUsers] Erro:", err);
       setError(err.message);
-      addLog("Falha crítica ao carregar usuários", 'error', { message: err.message });
     } finally {
       setLoading(false);
     }
-  }, [addLog]);
+  }, []);
 
   useEffect(() => {
     fetchUsers();

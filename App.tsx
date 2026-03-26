@@ -9,9 +9,7 @@ import Header from './components/Header';
 import WhatsappModal from './components/WhatsappModal';
 import ConfirmModal from './components/ConfirmModal';
 import { ChatView } from './components/ChatView';
-import { MaintenanceView } from './components/MaintenanceView';
 import MonitorProcess from './components/MonitorProcess';
-import { DebugOverlay } from './components/DebugOverlay'; // Importando o inspetor
 
 import Auth from './pages/Auth';
 import MyProcesses from './pages/MyProcesses';
@@ -166,9 +164,6 @@ function AppContent() {
           </Routes>
         </div>
       </div>
-
-      {/* Inspetor Visual posicionado na direita inferior */}
-      <DebugOverlay />
 
       <WhatsappModal
          isOpen={isWhatsappModalOpen}
