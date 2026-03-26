@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import MonitorConfirmModal from './MonitorConfirmModal';
 import LimitModal from './LimitModal';
+import MonitoringLimitModal from './MonitoringLimitModal';
 import SearchBar from './SearchBar';
 import StepsCard from './StepsCard';
 import { HistorySidebar } from './HistorySidebar';
@@ -50,6 +51,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
   const { showSteps, hideSteps, searchBarRef } = useMonitorLayout();
   
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [showMonitoringLimitModal, setShowMonitoringLimitModal] = useState(false);
   const [showAlreadyMonitoredAlert, setShowAlreadyMonitoredAlert] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState('');
@@ -102,7 +104,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
   const handleStartMonitoring = async (proc: any) => {
       const canMonitor = await checkLimit('monitoring');
       if (!canMonitor) {
-          toast.error("Você atingiu seu limite de monitoramentos.");
+          setShowMonitoringLimitModal(true);
           return;
       }
       handleMonitorClick(proc);
@@ -303,6 +305,11 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
       <LimitModal 
         isOpen={showLimitModal} 
         onClose={() => setShowLimitModal(false)} 
+      />
+
+      <MonitoringLimitModal 
+        isOpen={showMonitoringLimitModal} 
+        onClose={() => setShowMonitoringLimitModal(false)} 
       />
 
       <ToastAlert 
