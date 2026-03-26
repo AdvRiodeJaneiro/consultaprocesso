@@ -10,11 +10,14 @@ export function useSearchLimit() {
   const [planSettings, setPlanSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
+  // Estado interno para forçar a re-leitura dos limites quando algo muda
   const [updateCounter, setUpdateCounter] = useState(0);
 
+  // Fetch settings on mount
   useEffect(() => {
     async function fetchSettings() {
       try {
+        // 1. Fetch Global Settings
         const { data: gData } = await supabase
           .from('system_settings')
           .select('*')
@@ -23,6 +26,7 @@ export function useSearchLimit() {
         
         if (gData) setGlobalSettings(gData);
 
+        // 2. Fetch Plan Settings if User is PRO
         if (profile?.current_plan_id) {
           const { data: pData } = await supabase
             .from('plans')
@@ -42,10 +46,10 @@ export function useSearchLimit() {
     fetchSettings();
   }, [profile?.current_plan_id]);
 
+  /**
+   * Identifica o limite atual baseado no nível do usuário
+   */
   const getLimitForType = useCallback((type: LimitType) => {
-    // 0. ADMINISTRADOR: Sempre retorna um limite altíssimo (Ilimitado na prática)
-    if (profile?.is_admin) return 9999;
-
     if (!globalSettings) return 999;
 
     // 1. Visitante
@@ -72,7 +76,12 @@ export function useSearchLimit() {
     return 0;
   }, [globalSettings, planSettings, user, profile]);
 
+  /**
+   * Busca o uso atual do usuário (Banco ou LocalStorage)
+   * Agora depende de updateCounter para ser reativo a incrementos locais
+   */
   const getCurrentUsage = useCallback(async (type: LimitType) => {
+    // 1. Visitante (LocalStorage)
     if (!user) {
       const storageKeys: Record<LimitType, string> = {
         search: 'guest_search_count',
@@ -84,6 +93,7 @@ export function useSearchLimit() {
       return stored ? parseInt(stored, 10) : 0;
     }
 
+    // 2. Logado (Banco)
     if (type === 'search') return profile?.current_month_searches || 0;
     if (type === 'process') return profile?.current_month_process_consults || 0;
     
@@ -98,16 +108,20 @@ export function useSearchLimit() {
     return 0;
   }, [user, profile, updateCounter]); 
 
+  /**
+   * Verifica se o limite foi atingido antes de permitir a ação
+   */
   const checkLimit = useCallback(async (type: LimitType) => {
-    // Admins nunca são bloqueados
-    if (profile?.is_admin) return true;
-    
     const limit = getLimitForType(type);
     const current = await getCurrentUsage(type);
     return current < limit;
-  }, [getLimitForType, getCurrentUsage, profile]);
+  }, [getLimitForType, getCurrentUsage]);
 
+  /**
+   * Incrementa o uso após uma ação bem-sucedida
+   */
   const incrementUsage = useCallback(async (type: LimitType) => {
+    // 1. Visitante
     if (!user) {
       const storageKeys: Record<LimitType, string> = {
         search: 'guest_search_count',
@@ -115,14 +129,16 @@ export function useSearchLimit() {
         monitoring: 'guest_monitoring_count'
       };
       
+      // Busca valor atual direto do localStorage para evitar delay de estado
       const stored = localStorage.getItem(storageKeys[type]);
       const current = stored ? parseInt(stored, 10) : 0;
       
       localStorage.setItem(storageKeys[type], (current + 1).toString());
-      setUpdateCounter(prev => prev + 1);
+      setUpdateCounter(prev => prev + 1); // Dispara re-render em quem usa o hook
       return;
     }
 
+    // 2. Logado
     if (type === 'search' || type === 'process') {
       const field = type === 'search' ? 'current_month_searches' : 'current_month_process_consults';
       const current = (profile as any)?.[field] || 0;
