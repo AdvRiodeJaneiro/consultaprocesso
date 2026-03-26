@@ -1,7 +1,10 @@
+"use client";
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { useUserStore } from '../store/userStore';
+import { useLogStore } from '../store/logStore';
 import { Profile } from '../types';
 
 interface AuthContextType {
@@ -23,74 +26,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [sessionLoading, setSessionLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
   
+  const { addLog } = useLogStore();
   const setGlobalProfile = useUserStore(state => state.setProfile);
   const clearGlobalProfile = useUserStore(state => state.clearProfile);
 
   const fetchProfile = async (userId: string) => {
     setProfileLoading(true);
+    addLog(`Buscando perfil para o usuário: ${userId}`, 'info');
+
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
 
-    if (!error && data) {
-      // --- LÓGICA DE SELF-HEALING (Limpeza de Expiração no Login) ---
-      const now = new Date();
-      const expiresAt = data.subscription_expires_at ? new Date(data.subscription_expires_at) : null;
-      
-      if (data.subscription_status === 'active' && expiresAt && now > expiresAt) {
-        console.log("[AuthContext] Assinatura expirada detectada. Realizando limpeza...");
-        
-        // Faz o downgrade imediato no banco de dados
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            subscription_status: 'inactive',
-            current_plan_id: null,
-            subscription_expires_at: null
-          })
-          .eq('id', userId);
+    if (error) {
+      addLog("Erro ao carregar perfil do banco de dados", 'error', error);
+      console.error("[AuthContext] Erro no perfil:", error);
+    }
 
-        if (!updateError) {
-          // Recarrega os dados já "limpos"
-          const { data: cleanedData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
-          
-          if (cleanedData) {
-            setProfile(cleanedData);
-            setGlobalProfile(cleanedData);
-          }
-        }
-      } else {
-        // Fluxo normal
-        setProfile(data);
-        setGlobalProfile(data); 
-      }
+    if (data) {
+      addLog("Perfil carregado com sucesso", 'success', { is_admin: data.is_admin, email: data.email });
+      setProfile(data);
+      setGlobalProfile(data); 
     }
     setProfileLoading(false);
   };
 
   const refreshProfile = async () => {
-    if (user) {
-      await fetchProfile(user.id);
-    }
+    if (user) await fetchProfile(user.id);
   };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
+      if (session?.user) fetchProfile(session.user.id);
       setSessionLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      addLog(`Evento de Autenticação: ${event}`, 'info');
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -101,9 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         clearGlobalProfile();
       }
 
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
-        setSessionLoading(false);
-      }
+      setSessionLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -131,8 +105,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (context === undefined) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
