@@ -5,7 +5,6 @@ import { useUserStore } from '../store/userStore';
 import { Profile } from '../types';
 
 interface AuthContextType {
-
   session: Session | null;
   user: User | null;
   profile: Profile | null;
@@ -36,8 +35,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .single();
 
     if (!error && data) {
-      setProfile(data);
-      setGlobalProfile(data); // Alimenta a Store persistente
+      // --- LÓGICA DE SELF-HEALING (Limpeza de Expiração no Login) ---
+      const now = new Date();
+      const expiresAt = data.subscription_expires_at ? new Date(data.subscription_expires_at) : null;
+      
+      if (data.subscription_status === 'active' && expiresAt && now > expiresAt) {
+        console.log("[AuthContext] Assinatura expirada detectada. Realizando limpeza...");
+        
+        // Faz o downgrade imediato no banco de dados
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            subscription_status: 'inactive',
+            current_plan_id: null,
+            subscription_expires_at: null
+          })
+          .eq('id', userId);
+
+        if (!updateError) {
+          // Recarrega os dados já "limpos"
+          const { data: cleanedData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+          
+          if (cleanedData) {
+            setProfile(cleanedData);
+            setGlobalProfile(cleanedData);
+          }
+        }
+      } else {
+        // Fluxo normal
+        setProfile(data);
+        setGlobalProfile(data); 
+      }
     }
     setProfileLoading(false);
   };
