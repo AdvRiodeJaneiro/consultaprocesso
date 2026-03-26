@@ -80,10 +80,12 @@ export function useChat() {
         const { processData } = result;
         setActiveProcess(processData);
         
-        // Incrementar uso após busca bem-sucedida
+        // O uso de 'process' agora é incrementado automaticamente pela Edge Function
+        // durante a chamada fetchProcessData em legalDataService.
         await incrementUsage('process');
 
         // 3. Gera Análise com o objeto agora "Nutrido"
+
         const fullAnalysis = await generateLegalAnalysis("Analise este processo.", processData, true);
 
         const parts = fullAnalysis.split('<<<SPLIT>>>');

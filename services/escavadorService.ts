@@ -1,96 +1,65 @@
+import { supabase } from '../integrations/supabase/client';
 import { EscavadorResponse, EscavadorInvolvedSearchResponse } from '../types';
 
-const API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiZmIxNTk1YTBlMzk5MGFhOWIwODQ0OGFhNDE4NDllODlhMDRmYTFhYzRhYmFmOTUwNmQ1Y2JhNjRkMDk4ZGM2ZGJkMmQxN2YzNTkxODY2ZjQiLCJpYXQiOjE3NjU0NjUxNDcuNTc2MzIsIm5iZiI6MTc2NTQ2NTE0Ny41NzYzMjIsImV4cCI6MjA4MDk5Nzk0Ny41NzI3OTUsInN1YiI6IjMwMTIwNjYiLCJzY29wZXMiOlsiYWNlc3Nhcl9hcGlfcGFnYSJdfQ.f4fqXec6JVx4qQKLiwmFepcd8mRCxqUzLGsddxi3B-svkzQZJjgOIQ-Q2n9HwtpbHkEpm5-QNzNWL_gGT4WpW9Kr9pE4A3JDXcgek1haEsioLpZ8_QWmhpW5vI4rBYRB8vk7VTGkTMDTz-XVgEgpFsVNrDy0rK8DPEKPSV5kXR0Zy_Tllone-FBNX8paS2JA7hk0AANLD0coI25PYWjNRMQwzApsjqA2N5mVWekCgjcZeAmPx8j8lCVKpLdv1i2GaxjK3STEMRA74Ob92n911z8XUTmdGgNzWijhBh7pjr94xycKeN0EWzjaXfdGb1xvihsSHi4rbcDe7_tEasOOS-O3xpiyYqEY2rP2p8zXL_LhbrXajqWMA6LkFrJx7aGylTOg068mnSPhn-4aQaE-KcFb65UdAA7GSADiX9oPNKDM5dU3wnAlpV00AXRyLsa9kyhA4OSkZpVxHrms3bX_LRundZugWTRFhi3wDCMayV1zf-Z1_Fdsbq5EUg4NMYJM6_j6gTsuNrQWg1vMCJecLxZABXyVcVpoNf237nmhkUwUxZrIUBMhNjhG9f58O9ZJmTE-NMVEcWZmAwAkXK9gLFiPAz5KR2pPpoF0ev5KVbhMNJzp9Qf7Red1S8UL8yatnQo34E32TfTWM-CPkF3As7Bq6gzyoxnmI6MaFcMPg14";
-const BASE_URL = "https://api.escavador.com/api/v2";
-const PROXY_URL = "https://corsproxy.io/?";
+/**
+ * Escavador Service - Centralizado no Supabase Edge Functions (Blindagem de Chave)
+ * Não há mais chaves de API ou URLs diretas aqui por segurança.
+ */
 
-const fetchWithFallback = async (endpoint: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', body?: any): Promise<any> => {
-    const headers = {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-    };
+const invokeSearch = async (type: 'process' | 'involved' | 'movements', params: any) => {
+    const { data, error } = await supabase.functions.invoke('search-legal-data', {
+        body: { type, ...params }
+    });
 
-    const doFetch = async (url: string) => {
-        const response = await fetch(url, {
-            method,
-            headers,
-            body: body ? JSON.stringify(body) : undefined
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            let errorMessage = "Erro na integração com base de dados jurídica. Contate o suporte.";
-            
-            try {
-                const errorJson = JSON.parse(errorText);
-                if (errorJson.errors) {
-                    const firstError = Object.values(errorJson.errors)[0];
-                    if (Array.isArray(firstError) && firstError[0]) {
-                        errorMessage = firstError[0];
-                    }
-                } else if (errorJson.message) {
-                    errorMessage = errorJson.message;
-                }
-            } catch (e) {
-                // Não é JSON, mantém o padrão
-            }
-
-            console.error(`[Escavador API] Erro real (${method}): ${response.status} - ${errorText}`);
-            
-            if (response.status === 404) return null;
-            throw new Error(errorMessage);
-        }
+    if (error) {
+        console.error(`[Escavador Service Error] (${type}):`, error);
         
-        if (response.status === 204) return { success: true };
-        return response.json();
-    };
+        // Se o erro for de limite, lançar erro amigável
+        if (error.message?.includes('Limit reached') || (error as any).status === 403) {
+            throw new Error("Você atingiu seu limite de buscas para este mês.");
+        }
 
-    try {
-        return await doFetch(endpoint);
-    } catch (error: any) {
-        if (error.message.includes('Erro na integração') || error.message.includes('inválido')) throw error;
-        console.error("[Escavador API] Erro de rede:", error);
-        const proxiedUrl = `${PROXY_URL}${encodeURIComponent(endpoint)}`;
-        return await doFetch(proxiedUrl);
+        throw new Error(error.message || "Erro ao consultar base jurídica.");
     }
+
+    return data;
 };
 
 export const fetchProcessData = async (processNumber: string): Promise<EscavadorResponse | null> => {
-  return fetchWithFallback(`${BASE_URL}/processos/numero_cnj/${processNumber}`);
+    return invokeSearch('process', { processNumber });
 };
 
-/**
- * Busca as movimentações (timeline) de um processo específico.
- */
 export const fetchProcessMovements = async (processNumber: string): Promise<any> => {
-    return fetchWithFallback(`${BASE_URL}/processos/numero_cnj/${processNumber}/movimentacoes`);
-};
-
-// --- FUNÇÕES DE MONITORAMENTO REAL ---
-
-export const createMonitoring = async (processNumber: string) => {
-    return fetchWithFallback(`${BASE_URL}/monitoramentos/processos`, 'POST', {
-        numero: processNumber,
-        frequencia: 'SEMANAL'
-    });
-};
-
-export const deleteMonitoring = async (monitoringId: number) => {
-    return fetchWithFallback(`${BASE_URL}/monitoramentos/processos/${monitoringId}`, 'DELETE');
+    return invokeSearch('movements', { processNumber });
 };
 
 export const fetchProcessesByInvolved = async (query: string): Promise<EscavadorInvolvedSearchResponse | null> => {
-    const digitsOnly = query.replace(/\D/g, '');
-    const isNumeric = digitsOnly.length > 0 && digitsOnly.length <= 14 && /^\d+$/.test(digitsOnly);
-    
-    let endpoint = `${BASE_URL}/envolvido/processos`;
-    if (isNumeric && (digitsOnly.length === 11 || digitsOnly.length === 14)) {
-        endpoint += `?cpf_cnpj=${digitsOnly}`;
-    } else {
-        endpoint += `?nome=${encodeURIComponent(query)}`;
+    const data = await invokeSearch('involved', { query });
+    return (data && data.items) ? data : { total_encontrados: 0, items: [] };
+};
+
+// --- MONITORAMENTO ---
+
+export const createMonitoring = async (processNumber: string, whatsappNumber: string) => {
+    const { data, error } = await supabase.functions.invoke('manage-monitoring', {
+        body: { action: 'create', processNumber, whatsappNumber }
+    });
+
+    if (error) {
+        if (error.message?.includes('Limit reached') || (error as any).status === 403) {
+            throw new Error("Você atingiu seu limite de monitoramentos.");
+        }
+        throw new Error(error.message || "Falha ao criar monitoramento.");
     }
 
-    const data = await fetchWithFallback(endpoint);
-    return (data && data.items) ? data : { total_encontrados: 0, items: [] };
+    return data;
+};
+
+export const deleteMonitoring = async (monitoringId: number) => {
+    const { data, error } = await supabase.functions.invoke('manage-monitoring', {
+        body: { action: 'delete', monitoringId }
+    });
+
+    if (error) throw new Error(error.message || "Falha ao deletar monitoramento.");
+    return data;
 };

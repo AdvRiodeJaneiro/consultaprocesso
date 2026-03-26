@@ -8,7 +8,7 @@ import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '../contexts/AuthContext';
 
 export function useMonitor() {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { query: storeQuery, results: storeResults, totalCount: storeTotal, setSearchData } = useSearchStore();
   
   // Inicializa o estado local com o que estiver na Store global
@@ -97,34 +97,24 @@ export function useMonitor() {
 
     const toastId = toast.loading("Ativando monitoramento real...");
     try {
-      // 1. CRIAR MONITORAMENTO REAL NO ESCAVADOR
-      const escavadorRes = await createMonitoring(selectedProcess.numero_cnj);
+      // 1. CRIAR MONITORAMENTO REAL NO ESCAVADOR (CENTRALIZADO EM EDGE FUNCTION)
+      // Passar também o whatsappNumber agora, pois a Edge Function lida com a gravação no banco
+      const dbData = await createMonitoring(selectedProcess.numero_cnj, profile.whatsapp);
       
-      if (!escavadorRes || !escavadorRes.id) {
-          throw new Error("Falha ao registrar monitoramento no tribunal.");
+      if (!dbData || !dbData.id) {
+          throw new Error("Falha ao registrar monitoramento no servidor.");
       }
 
-      // 2. SALVAR NO NOSSO BANCO COM O ID REAL
-      const { data, error: dbError } = await supabase
-        .from('monitored_processes')
-        .insert({
-          user_id: user.id,
-          process_number: selectedProcess.numero_cnj,
-          escavador_monitoring_id: escavadorRes.id,
-          whatsapp_number: profile.whatsapp,
-          title_polo_ativo: selectedProcess.titulo_polo_ativo,
-          title_polo_passivo: selectedProcess.titulo_polo_passivo,
-          status: escavadorRes.status || 'PENDENTE'
-        })
-        .select()
-        .single();
-
-      if (dbError) throw dbError;
-
-      addProcess(data);
+      // 2. Atualizar Store local
+      addProcess(dbData);
+      
+      // 3. Atualizar perfil (contador de monitoramentos na UI)
+      refreshProfile();
+      
       toast.success("Monitoramento real ativado!", { id: toastId });
       setIsConfirmModalOpen(false);
       setSelectedProcess(null);
+      
     } catch (err: any) {
       console.error("[Monitor Error]:", err);
       toast.error(err.message, { id: toastId });

@@ -1,0 +1,184 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
+  const supabaseAdmin = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  )
+
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+  }
+
+  const token = authHeader.replace('Bearer ', '')
+  const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
+
+  if (userError || !user) {
+    return new Response(JSON.stringify({ error: 'Invalid token' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+  }
+
+  try {
+    const { action, processNumber, whatsappNumber, monitoringId } = await req.json()
+    const ESC_API_KEY = Deno.env.get('ESCAVADOR_API_KEY')
+    const BASE_URL = "https://api.escavador.com/api/v2"
+
+    if (!ESC_API_KEY) {
+      console.error("[manage-monitoring] API Key is missing");
+      return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    if (action === 'create') {
+        // 1. Check limit
+        const { data: canMonitor, error: limitError } = await supabaseAdmin.rpc('check_monitoring_limit', {
+            target_user_id: user.id
+        })
+
+        if (limitError || !canMonitor) {
+            return new Response(JSON.stringify({ error: 'Limit reached or error checking limit' }), {
+                status: 403,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            })
+        }
+
+        // 2. Call Escavador
+        const escResponse = await fetch(`${BASE_URL}/monitoramentos/processos`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${ESC_API_KEY}`,
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                numero: processNumber,
+                frequencia: 'SEMANAL'
+            })
+        })
+
+        if (!escResponse.ok) {
+            const errorText = await escResponse.text()
+            return new Response(errorText, {
+                status: escResponse.status,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            })
+        }
+
+        const escData = await escResponse.json()
+        const escId = escData.id
+
+        // 3. Save to database
+        const { data: dbData, error: dbError } = await supabaseAdmin
+            .from('monitored_processes')
+            .insert({
+                user_id: user.id,
+                escavador_monitoring_id: escId,
+                process_number: processNumber,
+                whatsapp_number: whatsappNumber,
+                status: 'ATIVO',
+                frequency: 'SEMANAL'
+            })
+            .select()
+            .single()
+
+        if (dbError) {
+            console.error("[manage-monitoring] DB Insert Error:", dbError)
+            // Ideally we should delete from Escavador if DB fails
+            return new Response(JSON.stringify({ error: 'Error saving monitoring to database' }), {
+                status: 500,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            })
+        }
+
+        return new Response(JSON.stringify(dbData), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+
+    } else if (action === 'delete') {
+        // 1. Get escavador_monitoring_id if not provided
+        let escId = monitoringId
+        if (!escId) {
+            return new Response(JSON.stringify({ error: 'Missing monitoring ID' }), {
+                status: 400,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            })
+        }
+
+        // 2. Call Escavador
+        const escResponse = await fetch(`${BASE_URL}/monitoramentos/processos/${escId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${ESC_API_KEY}`,
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+
+        // Even if Escavador fails (e.g. 404), we should proceed with DB delete if it's our intention
+        if (!escResponse.ok && escResponse.status !== 404) {
+            const errorText = await escResponse.text()
+            return new Response(errorText, {
+                status: escResponse.status,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            })
+        }
+
+        // 3. Delete from database
+        const { error: dbError } = await supabaseAdmin
+            .from('monitored_processes')
+            .delete()
+            .eq('escavador_monitoring_id', escId)
+            .eq('user_id', user.id)
+
+        if (dbError) {
+            return new Response(JSON.stringify({ error: 'Error deleting monitoring from database' }), {
+                status: 500,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            })
+        }
+
+        return new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+
+    } else {
+        return new Response(JSON.stringify({ error: 'Invalid action' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+    }
+
+  } catch (err: any) {
+    console.error("[manage-monitoring] Unexpected error:", err)
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+  }
+})

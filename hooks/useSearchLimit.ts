@@ -4,6 +4,11 @@ import { supabase } from '../integrations/supabase/client';
 
 export type LimitType = 'search' | 'process' | 'monitoring';
 
+/**
+ * useSearchLimit - Blindagem dos limites no backend.
+ * O frontend apenas consulta os dados do perfil e os limites globais.
+ * O incremento real acontece agora via Edge Functions (Search / Analysis / Monitoring).
+ */
 export function useSearchLimit() {
   const { user, profile, refreshProfile } = useAuth();
   const [globalSettings, setGlobalSettings] = useState<any>(null);
@@ -78,7 +83,6 @@ export function useSearchLimit() {
 
   /**
    * Busca o uso atual do usuário (Banco ou LocalStorage)
-   * Agora depende de updateCounter para ser reativo a incrementos locais
    */
   const getCurrentUsage = useCallback(async (type: LimitType) => {
     // 1. Visitante (LocalStorage)
@@ -118,10 +122,10 @@ export function useSearchLimit() {
   }, [getLimitForType, getCurrentUsage]);
 
   /**
-   * Incrementa o uso após uma ação bem-sucedida
+   * Incrementa o uso (Apenas para visitantes ou para atualização de UI)
    */
   const incrementUsage = useCallback(async (type: LimitType) => {
-    // 1. Visitante
+    // 1. Visitante (LocalStorage ainda é necessário pois não há backend)
     if (!user) {
       const storageKeys: Record<LimitType, string> = {
         search: 'guest_search_count',
@@ -129,31 +133,21 @@ export function useSearchLimit() {
         monitoring: 'guest_monitoring_count'
       };
       
-      // Busca valor atual direto do localStorage para evitar delay de estado
       const stored = localStorage.getItem(storageKeys[type]);
       const current = stored ? parseInt(stored, 10) : 0;
       
       localStorage.setItem(storageKeys[type], (current + 1).toString());
-      setUpdateCounter(prev => prev + 1); // Dispara re-render em quem usa o hook
+      setUpdateCounter(prev => prev + 1);
       return;
     }
 
-    // 2. Logado
-    if (type === 'search' || type === 'process') {
-      const field = type === 'search' ? 'current_month_searches' : 'current_month_process_consults';
-      const current = (profile as any)?.[field] || 0;
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update({ [field]: current + 1 })
-        .eq('id', user.id);
-      
-      if (!error) {
-        setUpdateCounter(prev => prev + 1);
-        refreshProfile();
-      }
-    }
-  }, [user, profile, refreshProfile]);
+    // 2. Logado - Não incrementamos mais via frontend por segurança.
+    // As Edge Functions agora fazem isso no banco via security definer.
+    // Apenas solicitamos um refresh do perfil para atualizar o contador na UI.
+    refreshProfile();
+    setUpdateCounter(prev => prev + 1);
+
+  }, [user, refreshProfile]);
 
   return {
     loading,
