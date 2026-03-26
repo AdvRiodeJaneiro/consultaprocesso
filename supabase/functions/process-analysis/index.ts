@@ -23,7 +23,7 @@ serve(async (req) => {
     const GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY')
 
     if (!GEMINI_API_KEY) {
-      console.error("[process-analysis] API Key is missing");
+      console.error("[process-analysis] API Key (GOOGLE_GEMINI_API_KEY) is missing in Secrets");
       return new Response(JSON.stringify({ error: 'Server configuration error' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -128,18 +128,18 @@ serve(async (req) => {
     }
 
     const prompt = `
+      INSTRUÇÕES DE SISTEMA:
+      ${systemInstruction}
+
       DADOS DO PROCESSO (JSON):
       ${JSON.stringify(processData)}
 
       PERGUNTA DO USUÁRIO:
       "${userMessage}"
-      
-      INSTRUÇÕES DE SISTEMA:
-      ${systemInstruction}
     `;
 
-    // Utilizando gemini-2.0-flash como solicitado
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+    // Chamada oficial para Gemini 3 Flash Preview (conforme sua documentação)
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`;
     
     const response = await fetch(geminiUrl, {
       method: 'POST',
@@ -149,14 +149,19 @@ serve(async (req) => {
       body: JSON.stringify({
         contents: [{
           parts: [{ text: prompt }]
-        }]
+        }],
+        generationConfig: {
+          thinkingConfig: {
+            thinkingLevel: "high" // Ativa o raciocínio profundo conforme a documentação enviada
+          }
+        }
       })
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error("[process-analysis] Gemini API error:", error);
-      return new Response(JSON.stringify({ error: 'Gemini API error' }), {
+      const errorText = await response.text();
+      console.error("[process-analysis] Gemini API error:", errorText);
+      return new Response(JSON.stringify({ error: `Gemini API Error: ${errorText}` }), {
         status: response.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
