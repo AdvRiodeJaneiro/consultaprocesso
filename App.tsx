@@ -8,7 +8,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import WhatsappModal from './components/WhatsappModal';
 import ConfirmModal from './components/ConfirmModal';
-import AuthModal from './components/AuthModal'; // Novo Import
+import AuthModal from './components/AuthModal';
 import { ChatView } from './components/ChatView';
 import MonitorProcess from './components/MonitorProcess';
 
@@ -53,7 +53,24 @@ function AppContent() {
   } = useChat();
 
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false); // Controle do novo modal
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // --- ETAPA 4: LÓGICA DE CONTINUIDADE ---
+  useEffect(() => {
+    // Se o usuário logou e existe uma busca pendente no sessionStorage
+    if (user && sessionStorage.getItem('pending_search')) {
+      const pendingSearch = sessionStorage.getItem('pending_search');
+      if (pendingSearch) {
+        sessionStorage.removeItem('pending_search'); // Limpa para não repetir
+        
+        // Pequeno delay para garantir que o modal fechou e a UI atualizou
+        setTimeout(() => {
+            handleWelcomeSubmit(pendingSearch);
+            toast.success(`Olá ${profile?.first_name || ''}, iniciando sua consulta...`);
+        }, 500);
+      }
+    }
+  }, [user, profile, handleWelcomeSubmit]);
 
   useEffect(() => {
     if (profile?.whatsapp) {
@@ -138,10 +155,8 @@ function AppContent() {
                 debugInfo={debugInfo}
                 setDebugInfo={setDebugInfo}
                 handleWelcomeSubmit={(text) => {
-                  // Se o usuário não estiver logado, abrimos o AuthModal em vez de buscar
                   if (!user) {
                     setIsAuthModalOpen(true);
-                    // Guardamos o texto para a próxima etapa
                     sessionStorage.setItem('pending_search', text);
                   } else {
                     handleWelcomeSubmit(text);
@@ -200,7 +215,6 @@ function AppContent() {
          initialValue={whatsappNumber}
       />
 
-      {/* Novo Modal de Auth Interceptado */}
       <AuthModal 
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}

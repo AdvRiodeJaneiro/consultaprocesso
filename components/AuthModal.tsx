@@ -27,7 +27,6 @@ const AuthModal: React.FC<AuthModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          {/* Backdrop com blur conforme padrão do app */}
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -36,14 +35,12 @@ const AuthModal: React.FC<AuthModalProps> = ({
             className="absolute inset-0 bg-[#1E1B4B]/60 backdrop-blur-md"
           />
           
-          {/* Conteúdo do Modal */}
           <motion.div 
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             className="bg-white dark:bg-slate-900 rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden relative z-10 max-h-[95vh] flex flex-col"
           >
-            {/* Botão de Fechar */}
             <button 
               onClick={onClose}
               className="absolute top-6 right-6 p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-all z-20"
@@ -52,7 +49,6 @@ const AuthModal: React.FC<AuthModalProps> = ({
             </button>
 
             <div className="p-8 md:p-10 overflow-y-auto scrollbar-hide">
-              {/* Cabeçalho Visual */}
               <div className="flex flex-col items-center text-center mb-8">
                 <div className="size-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-4">
                   <Lock size={32} />
@@ -65,7 +61,6 @@ const AuthModal: React.FC<AuthModalProps> = ({
                 </p>
               </div>
 
-              {/* Seletor de Abas (Tabs) para maior clareza visual */}
               <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl mb-8">
                 <button
                   onClick={() => setMode('signup')}
@@ -93,8 +88,6 @@ const AuthModal: React.FC<AuthModalProps> = ({
                 </button>
               </div>
 
-              {/* Injeção do Formulário de Auth existente */}
-              {/* O atributo 'key' garante que o formulário resete seu estado interno ao trocar de aba */}
               <div key={mode}>
                 <AuthForm 
                   onSuccess={onClose} 
