@@ -92,10 +92,12 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
               {ADMIN_MENU.map(renderMenuItem)}
             </div>
           )}
-        </nav>
 
-        {/* Sistema de acompanhamento de limites */}
-        <SidebarUsage />
+          {/* O painel de créditos agora rola junto com o menu */}
+          <div className="mt-6">
+            <SidebarUsage />
+          </div>
+        </nav>
 
         <div className="p-4 border-t border-slate-100 dark:border-slate-800">
           {user ? (

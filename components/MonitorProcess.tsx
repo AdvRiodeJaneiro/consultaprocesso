@@ -12,7 +12,7 @@ import SearchBar from './SearchBar';
 import StepsCard from './StepsCard';
 import { HistorySidebar } from './HistorySidebar';
 import { ToastAlert } from './ui/ToastAlert';
-import { MaskedProcessNumber } from './MaskedProcessNumber'; // Novo Componente
+import { MaskedProcessNumber } from './MaskedProcessNumber';
 
 import { useMonitor } from '../hooks/useMonitor';
 import { useSearchLimit } from '../hooks/useSearchLimit';
@@ -56,21 +56,8 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState('');
 
-  // Estado para Debug Visual
-  const [debugData, setDebugData] = useState<{limit: number, current: number} | null>(null);
-
-  useEffect(() => {
-    const fetchDebug = async () => {
-        const limit = getLimitForType('search');
-        const current = await getCurrentUsage('search');
-        setDebugData({ limit, current });
-    };
-    fetchDebug();
-  }, [getLimitForType, getCurrentUsage, results, isLoading]);
-
   const monitoredNumbers = processes.map(p => p.process_number);
 
-  // Lógica de busca disparada pelo clique manual do usuário
   const onSearchSubmit = async () => {
     if (!query.trim()) return;
 
@@ -83,10 +70,8 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
     hideSteps();
     setActiveFilter(query); 
     
-    // Realiza a busca e captura o status de sucesso
     const success = await handleSearch();
     
-    // Incrementa o uso e salva no histórico APENAS se a busca foi bem-sucedida (API respondeu 200)
     if (success) {
         const type = query.replace(/[^\d]/g, '').length >= 11 ? 'cnj' : 'involved';
         addToHistory(query, type, results.length);
@@ -114,31 +99,6 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
     <div className="flex-1 bg-background dark:bg-background-dark overflow-y-auto scrollbar-hide">
       <div className="p-4 md:p-8 max-w-6xl mx-auto w-full">
         
-        {/* PAINEL DE DEBUG VISUAL */}
-        <div className="mb-6 bg-slate-900 border border-primary/20 rounded-xl p-3 flex flex-wrap gap-4 items-center shadow-lg">
-            <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-widest border-r border-white/10 pr-4">
-                <Terminal size={14} />
-                <span>Debug Limites</span>
-            </div>
-            <div className="flex gap-4 text-[11px] font-mono">
-                <div className="text-slate-400">TIPO: <span className="text-white font-bold">BUSCA</span></div>
-                <div className="text-slate-400">LIMITE: <span className="text-primary font-bold">{debugData?.limit ?? '...'}</span></div>
-                <div className="text-slate-400">USO ATUAL: <span className="text-emerald-400 font-bold">{debugData?.current ?? '...'}</span></div>
-                <div className="text-slate-400">ATINGIDO: <span className={cn("font-bold", (debugData?.current ?? 0) >= (debugData?.limit ?? 0) ? "text-red-500" : "text-emerald-500")}>
-                    {(debugData?.current ?? 0) >= (debugData?.limit ?? 0) ? 'SIM (Bloqueado)' : 'NÃO'}
-                </span></div>
-            </div>
-            <button 
-                onClick={() => {
-                    localStorage.removeItem('guest_search_count');
-                    window.location.reload();
-                }}
-                className="ml-auto text-[9px] font-black bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2 py-1 rounded transition-all uppercase"
-            >
-                Resetar LocalStorage
-            </button>
-        </div>
-
         <div className="mb-8 md:mb-10 flex flex-col md:flex-row justify-between items-start gap-4">
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-3 mb-1">
@@ -230,7 +190,6 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
                       <Gavel className="text-primary mt-1 shrink-0" size={20} />
                       <div className="min-w-0">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Número do Processo</p>
-                        {/* SUBSTITUÍDO: Agora usa o componente de proteção de dados */}
                         <MaskedProcessNumber cnj={proc.numero_cnj} />
                       </div>
                     </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchLimit, LimitType } from '../hooks/useSearchLimit';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
+import { DollarSign } from 'lucide-react';
 
 interface UsageItemProps {
   label: string;
@@ -66,11 +67,14 @@ export const SidebarUsage: React.FC = () => {
   const updateTrigger = (profile?.current_month_searches || 0) + (profile?.current_month_process_consults || 0);
 
   return (
-    <div className="px-4 py-4">
+    <div className="px-0 py-2">
       <div className="bg-[#1E1B4B] rounded-2xl p-5 space-y-5 border border-white/5 shadow-xl">
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Uso e saldo</p>
-          <div className="size-1.5 rounded-full bg-primary animate-pulse" />
+        <div className="flex items-center gap-2 mb-1">
+          <div className="size-5 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0">
+            <DollarSign size={10} strokeWidth={3} />
+          </div>
+          <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Seus Créditos</p>
+          <div className="ml-auto size-1.5 rounded-full bg-primary animate-pulse" />
         </div>
         
         <div className="space-y-5">
