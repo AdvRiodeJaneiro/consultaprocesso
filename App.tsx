@@ -11,6 +11,7 @@ import ConfirmModal from './components/ConfirmModal';
 import { ChatView } from './components/ChatView';
 import { MaintenanceView } from './components/MaintenanceView';
 import MonitorProcess from './components/MonitorProcess';
+import { DebugOverlay } from './components/DebugOverlay'; // Importando o inspetor
 
 import Auth from './pages/Auth';
 import MyProcesses from './pages/MyProcesses';
@@ -19,15 +20,14 @@ import ZApiTest from './pages/ZApiTest';
 import AdminSettings from './pages/AdminSettings';
 import UsageLimits from './pages/UsageLimits';
 import Pricing from './pages/Pricing';
-import AdminUsers from './pages/AdminUsers'; // Importando a nova página
+import AdminUsers from './pages/AdminUsers';
 
 import { useChat } from './hooks/useChat';
 import { useSearchStore } from './store/searchStore';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { supabase } from './integrations/supabase/client';
 import { toast } from 'react-hot-toast';
-import { Loader2, Settings } from 'lucide-react';
-import { Button } from './components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 function AppContent() {
   const { user, profile, refreshProfile, sessionLoading } = useAuth();
@@ -76,9 +76,8 @@ function AppContent() {
       case '/': return 'Consulta Processo';
       case '/configuracoes': return 'Gestão de Planos';
       case '/limites-de-uso': return 'Limites de Uso';
-      case '/usuarios': return 'Gestão de Usuários'; // Título da nova página
+      case '/usuarios': return 'Gestão de Usuários';
       case '/planos': return 'Assinaturas';
-
       case '/auth': return 'Autenticação';
       case '/z-api': return 'Integração WhatsApp';
       default:
@@ -156,47 +155,29 @@ function AppContent() {
               />
             } />
             <Route path="/usuarios" element={
-              profile?.is_admin ? (
-                <AdminUsers />
-              ) : (
-                <Navigate to="/" />
-              )
+              profile?.is_admin ? <AdminUsers /> : <Navigate to="/" />
             } />
             <Route path="/configuracoes" element={
-              profile?.is_admin ? (
-                <AdminSettings />
-              ) : (
-                <Navigate to="/" />
-              )
+              profile?.is_admin ? <AdminSettings /> : <Navigate to="/" />
             } />
             <Route path="/limites-de-uso" element={
-              profile?.is_admin ? (
-                <UsageLimits />
-              ) : (
-                <Navigate to="/" />
-              )
+              profile?.is_admin ? <UsageLimits /> : <Navigate to="/" />
             } />
           </Routes>
-
         </div>
       </div>
+
+      {/* Inspetor Visual posicionado na direita inferior */}
+      <DebugOverlay />
 
       <WhatsappModal
          isOpen={isWhatsappModalOpen}
          onClose={() => setIsWhatsappModalOpen(false)}
          onSave={async (phone) => {
             if (user) {
-              const { error } = await supabase
-                .from('profiles')
-                .update({ whatsapp: phone })
-                .eq('id', user.id);
-              
-              if (error) {
-                toast.error('Erro ao salvar WhatsApp no perfil');
-              } else {
-                toast.success('WhatsApp atualizado!');
-                refreshProfile();
-              }
+              const { error } = await supabase.from('profiles').update({ whatsapp: phone }).eq('id', user.id);
+              if (error) { toast.error('Erro ao salvar WhatsApp no perfil'); }
+              else { toast.success('WhatsApp atualizado!'); refreshProfile(); }
               setIsWhatsappModalOpen(false);
             } else {
               setIsWhatsappModalOpen(false);
@@ -209,10 +190,7 @@ function AppContent() {
       <ConfirmModal
         isOpen={showResetConfirm}
         onClose={() => setShowResetConfirm(false)}
-        onConfirm={() => {
-          resetSearch();
-          setShowResetConfirm(false);
-        }}
+        onConfirm={() => { resetSearch(); setShowResetConfirm(false); }}
         title="Nova consulta?"
         description="Deseja limpar essa consulta e começar outra?"
         confirmLabel="Sim, começar nova"
