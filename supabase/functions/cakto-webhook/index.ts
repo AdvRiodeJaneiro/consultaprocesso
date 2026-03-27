@@ -19,10 +19,12 @@ serve(async (req) => {
     // Mapeamento de Campos
     const event = payload.event || payload.eventType || payload.status; 
     const customerEmail = payload.data?.customerEmail || payload.data?.customer?.email || payload.customer?.email;
-    const productName = payload.data?.product?.name || payload.product?.name;
+    const productName = payload.data?.product?.name || payload.product?.name || "Plano Pro";
     const productId = payload.data?.product?.id || payload.product?.id;
+    const amount = payload.data?.amount || payload.amount || 0;
+    const paymentId = payload.data?.id || payload.id;
 
-    console.log(`[cakto-webhook] Evento: ${event} | Cliente: ${customerEmail}`);
+    console.log(`[cakto-webhook] Evento: \${event} | Cliente: \${customerEmail}`);
 
     if (!customerEmail) {
       return new Response(JSON.stringify({ status: "ignored", reason: "no email found" }), { status: 200 });
@@ -36,8 +38,8 @@ serve(async (req) => {
     // 1. Localizar o Plano
     const { data: plan } = await supabase
       .from('plans')
-      .select('id')
-      .or(`cakto_product_id.eq.${productId},name.eq."${productName}"`)
+      .select('id, name, price')
+      .or(`cakto_product_id.eq.\${productId},name.eq."\${productName}"`)
       .maybeSingle();
 
     // 2. Localizar o Usuário
@@ -48,13 +50,12 @@ serve(async (req) => {
       .maybeSingle();
 
     if (!profile) {
-      console.warn(`[cakto-webhook] Usuário ${customerEmail} não encontrado.`);
+      console.warn(`[cakto-webhook] Usuário \${customerEmail} não encontrado.`);
       return new Response(JSON.stringify({ status: "user_not_found" }), { status: 200 });
     }
 
     // --- LÓGICA DE ESTADOS DA ASSINATURA ---
 
-    // Eventos de SUCESSO (Ativa/Renova)
     const successEvents = [
       'purchase_approved', 
       'subscription_renewed', 
@@ -64,7 +65,6 @@ serve(async (req) => {
       'payment_approved'
     ];
     
-    // Eventos de FALHA ou CANCELAMENTO (Desativa imediatamente)
     const failureEvents = [
       'subscription_canceled',
       'canceled',
@@ -76,8 +76,9 @@ serve(async (req) => {
 
     if (successEvents.includes(event)) {
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 32); // Ciclo de 32 dias
+      expiresAt.setDate(expiresAt.getDate() + 32);
 
+      // Atualiza Perfil
       await supabase
         .from('profiles')
         .update({
@@ -87,10 +88,22 @@ serve(async (req) => {
         })
         .eq('id', profile.id);
 
-      console.log(`[cakto-webhook] ✅ Assinatura ATIVADA para ${customerEmail}`);
+      // REGISTRA NO HISTÓRICO (Novo)
+      await supabase
+        .from('subscription_history')
+        .insert({
+          user_id: profile.id,
+          plan_name: plan?.name || productName,
+          amount_paid: amount > 0 ? amount : (plan?.price || 0),
+          payment_status: 'approved',
+          start_date: new Date().toISOString(),
+          end_date: expiresAt.toISOString(),
+          cakto_payment_id: paymentId?.toString()
+        });
+
+      console.log(`[cakto-webhook] ✅ Assinatura ATIVADA e HISTÓRICO gerado para \${customerEmail}`);
       
     } else if (failureEvents.includes(event)) {
-      // Limpa os dados do plano imediatamente
       await supabase
         .from('profiles')
         .update({
@@ -100,7 +113,16 @@ serve(async (req) => {
         })
         .eq('id', profile.id);
 
-      console.log(`[cakto-webhook] ❌ Assinatura DESATIVADA por cancelamento/falha para ${customerEmail}`);
+      // Se for reembolso, marca no histórico se encontrar o ID
+      if (event === 'refunded' && paymentId) {
+        await supabase
+          .from('subscription_history')
+          .update({ payment_status: 'refunded' })
+          .eq('cakto_payment_id', paymentId.toString())
+          .eq('user_id', profile.id);
+      }
+
+      console.log(`[cakto-webhook] ❌ Assinatura DESATIVADA para \${customerEmail}`);
     }
 
     return new Response(JSON.stringify({ success: true, event }), { status: 200, headers: corsHeaders });
