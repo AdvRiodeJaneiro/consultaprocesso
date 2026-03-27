@@ -73,7 +73,7 @@ export const SidebarUsage: React.FC = () => {
   return (
     <div className="px-0 py-2">
       <div className="bg-[#1E1B4B] rounded-2xl p-5 border border-white/5 shadow-xl">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-5">
           <div className="size-5 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0">
             <DollarSign size={10} strokeWidth={3} />
           </div>
