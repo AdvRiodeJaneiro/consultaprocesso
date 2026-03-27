@@ -65,7 +65,14 @@ export function useSearchLimit() {
       return 0;
     }
 
-    // 2. PRO (Ativo)
+    // 2. Administrador (Prioridade Máxima)
+    if (profile?.is_admin) {
+      if (type === 'search') return globalSettings.admin_search_limit ?? 9999;
+      if (type === 'process') return globalSettings.admin_process_limit ?? 9999;
+      if (type === 'monitoring') return globalSettings.admin_monitoring_limit ?? 9999;
+    }
+
+    // 3. PRO (Ativo)
     if (profile?.subscription_status === 'active') {
       if (!planSettings) return 999;
       if (type === 'search') return planSettings.search_limit;

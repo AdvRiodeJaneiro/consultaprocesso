@@ -24,6 +24,9 @@ interface SystemSettings {
   free_search_limit: number;
   free_process_limit: number;
   free_monitoring_limit: number;
+  admin_search_limit: number;
+  admin_process_limit: number;
+  admin_monitoring_limit: number;
 }
 
 const UsageLimits: React.FC = () => {
@@ -33,7 +36,10 @@ const UsageLimits: React.FC = () => {
     guest_monitoring_limit: 0,
     free_search_limit: 5,
     free_process_limit: 1,
-    free_monitoring_limit: 0
+    free_monitoring_limit: 0,
+    admin_search_limit: 9999,
+    admin_process_limit: 9999,
+    admin_monitoring_limit: 9999
   });
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,6 +137,50 @@ const UsageLimits: React.FC = () => {
       </div>
 
       <div className="space-y-8">
+        {/* Nível: Administrador */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <ShieldCheck size={20} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-deep-indigo dark:text-white leading-none">Limites do Administrador</h3>
+              <p className="text-xs text-primary mt-1 uppercase tracking-widest font-black">Créditos para sua conta admin</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Consulta CPF/CNPJ/nome</label>
+              <input
+                type="number"
+                value={settings.admin_search_limit}
+                onChange={(e) => handleGlobalChange('admin_search_limit', parseInt(e.target.value))}
+                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Consulta n° de Processo</label>
+              <input
+                type="number"
+                value={settings.admin_process_limit}
+                onChange={(e) => handleGlobalChange('admin_process_limit', parseInt(e.target.value))}
+                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Processos Monitorados</label>
+              <input
+                type="number"
+                value={settings.admin_monitoring_limit}
+                onChange={(e) => handleGlobalChange('admin_monitoring_limit', parseInt(e.target.value))}
+                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm focus:ring-2 ring-primary/20 text-foreground"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Nível: Free (Logado sem Plano) */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
