@@ -6,7 +6,8 @@ import {
   Settings,
   ShieldCheck,
   Smartphone,
-  Users
+  Users,
+  UserCircle
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -19,29 +20,35 @@ export interface MenuItem {
 }
 
 export const MAIN_MENU: MenuItem[] = [
-  { 
-    id: 'search-number', 
-    label: 'Consulta Processo', 
-    icon: Search, 
-    path: '/' 
+  {
+    id: 'search-number',
+    label: 'Consulta Processo',
+    icon: Search,
+    path: '/'
   },
-  { 
-    id: 'monitor-new', 
-    label: 'Consulta CPF e CNPJ', 
-    icon: LayoutDashboard, 
+  {
+    id: 'monitor-new',
+    label: 'Consulta CPF e CNPJ',
+    icon: LayoutDashboard,
     path: '/monitoramento'
   },
-  { 
-    id: 'my-processes', 
-    label: 'Processos Monitorados', 
-    icon: Gavel, 
-    path: '/meus-processos' 
+  {
+    id: 'my-processes',
+    label: 'Processos Monitorados',
+    icon: Gavel,
+    path: '/meus-processos'
   },
-  { 
-    id: 'pricing', 
-    label: 'Assinar Plano', 
-    icon: Zap, 
-    path: '/planos' 
+  {
+    id: 'my-account',
+    label: 'Minha Conta',
+    icon: UserCircle,
+    path: '/minha-conta'
+  },
+  {
+    id: 'pricing',
+    label: 'Assinar Plano',
+    icon: Zap,
+    path: '/planos'
   },
 ];
 

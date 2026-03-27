@@ -20,6 +20,7 @@ import AdminSettings from './pages/AdminSettings';
 import UsageLimits from './pages/UsageLimits';
 import Pricing from './pages/Pricing';
 import AdminUsers from './pages/AdminUsers';
+import MyAccount from './pages/MyAccount';
 
 import { useChat } from './hooks/useChat';
 import { useSearchStore } from './store/searchStore';
@@ -90,6 +91,7 @@ function AppContent() {
     switch(location.pathname) {
       case '/monitoramento': return 'Monitoramento';
       case '/meus-processos': return 'Meus Processos';
+      case '/minha-conta': return 'Minha Conta';
       case '/': return 'Consulta Processo';
       case '/configuracoes': return 'Gestão de Planos';
       case '/limites-de-uso': return 'Limites de Uso';
@@ -176,6 +178,7 @@ function AppContent() {
             } />
             <Route path="/auth" element={<Auth />} />
             <Route path="/meus-processos" element={<MyProcesses />} />
+            <Route path="/minha-conta" element={<MyAccount />} />
             <Route path="/processo/:cnj" element={<ProcessTimeline />} />
             <Route path="/z-api" element={<ZApiTest />} />
             <Route path="/planos" element={<Pricing />} />
