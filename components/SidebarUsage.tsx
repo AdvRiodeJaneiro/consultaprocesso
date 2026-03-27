@@ -72,12 +72,12 @@ export const SidebarUsage: React.FC = () => {
 
   return (
     <div className="px-0 py-2">
-      <div className="bg-[#1E1B4B] rounded-2xl p-5 space-y-5 border border-white/5 shadow-xl">
+      <div className="bg-[#1E1B4B] rounded-2xl p-5 border border-white/5 shadow-xl">
         <div className="flex items-center gap-2 mb-1">
           <div className="size-5 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0">
             <DollarSign size={10} strokeWidth={3} />
           </div>
-          <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Seus Créditos</p>
+          <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Seus Créditos /mês</p>
           <div className="ml-auto size-1.5 rounded-full bg-primary animate-pulse" />
         </div>
         
@@ -98,6 +98,8 @@ export const SidebarUsage: React.FC = () => {
             updateTrigger={updateTrigger}
           />
         </div>
+
+        <p className="text-[10px] text-slate-500 font-bold text-center mt-4">Renova a cada 30 dias</p>
       </div>
     </div>
   );
