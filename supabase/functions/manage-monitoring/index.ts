@@ -41,7 +41,7 @@ serve(async (req) => {
   }
 
   try {
-    const { action, processNumber, whatsappNumber, monitoringId } = await req.json()
+    const { action, processNumber, whatsappNumber, monitoringId, title_polo_ativo, title_polo_passivo } = await req.json()
     const ESC_API_KEY = Deno.env.get('ESCAVADOR_API_KEY')
     const BASE_URL = "https://api.escavador.com/api/v2"
 
@@ -99,6 +99,8 @@ serve(async (req) => {
                 escavador_monitoring_id: escId,
                 process_number: processNumber,
                 whatsapp_number: whatsappNumber,
+                title_polo_ativo: title_polo_ativo || null,
+                title_polo_passivo: title_polo_passivo || null,
                 status: 'ATIVO',
                 frequency: 'SEMANAL'
             })

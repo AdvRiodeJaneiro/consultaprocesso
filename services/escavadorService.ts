@@ -40,9 +40,15 @@ export const fetchProcessesByInvolved = async (query: string): Promise<Escavador
 
 // --- MONITORAMENTO ---
 
-export const createMonitoring = async (processNumber: string, whatsappNumber: string) => {
+export const createMonitoring = async (processNumber: string, whatsappNumber: string, title_polo_ativo?: string, title_polo_passivo?: string) => {
     const { data, error } = await supabase.functions.invoke('manage-monitoring', {
-        body: { action: 'create', processNumber, whatsappNumber }
+        body: {
+            action: 'create',
+            processNumber,
+            whatsappNumber,
+            title_polo_ativo,
+            title_polo_passivo
+        }
     });
 
     if (error) {

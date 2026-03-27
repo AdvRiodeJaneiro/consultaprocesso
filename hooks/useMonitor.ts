@@ -98,8 +98,13 @@ export function useMonitor() {
     const toastId = toast.loading("Ativando monitoramento real...");
     try {
       // 1. CRIAR MONITORAMENTO REAL NO ESCAVADOR (CENTRALIZADO EM EDGE FUNCTION)
-      // Passar também o whatsappNumber agora, pois a Edge Function lida com a gravação no banco
-      const dbData = await createMonitoring(selectedProcess.numero_cnj, profile.whatsapp);
+      // Passar também os polos para que fiquem salvos no banco
+      const dbData = await createMonitoring(
+        selectedProcess.numero_cnj,
+        profile.whatsapp,
+        selectedProcess.titulo_polo_ativo,
+        selectedProcess.titulo_polo_passivo
+      );
       
       if (!dbData || !dbData.id) {
           throw new Error("Falha ao registrar monitoramento no servidor.");
