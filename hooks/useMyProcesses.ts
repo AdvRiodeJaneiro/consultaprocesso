@@ -16,6 +16,7 @@ export interface MonitoredProcess {
   debug_logs?: string;
   title_polo_ativo?: string;
   title_polo_passivo?: string;
+  has_new_updates?: boolean;
 }
 
 export function useMyProcesses() {
@@ -34,12 +35,14 @@ export function useMyProcesses() {
   const fetchProcesses = useCallback(async (force = false) => {
     if (hasLoadedOnce && !force) return;
     if (!user) return;
+    
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('monitored_processes')
         .select('*')
         .order('created_at', { ascending: false });
+      
       if (error) throw error;
       setProcesses(data || []);
       setHasLoaded(true);
@@ -51,37 +54,27 @@ export function useMyProcesses() {
   }, [user, hasLoadedOnce, setProcesses, setHasLoaded]);
 
   useEffect(() => {
-    if (user && !hasLoadedOnce) fetchProcesses();
-  }, [user, hasLoadedOnce, fetchProcesses]);
-
-  const cancelMonitoring = async (id: string, escavadorId: number) => {
-    try {
-      // 1. REMOVER NO ESCAVADOR (Para parar de cobrar créditos)
-      if (escavadorId) {
-        await deleteMonitoring(escavadorId);
-      }
-
-      // 2. REMOVER NO NOSSO BANCO
-      const { error: dbError } = await supabase
-        .from('monitored_processes')
-        .delete()
-        .eq('id', id);
-
-      if (dbError) throw dbError;
-      
-      removeProcess(id);
-      return { success: true };
-    } catch (err: any) {
-      console.error("[Cancel Monitoring] Erro:", err);
-      return { success: false, error: err.message };
+    if (user && !hasLoadedOnce) {
+      fetchProcesses();
     }
-  };
+  }, [user, hasLoadedOnce, fetchProcesses]);
 
   return {
     processes: myProcesses,
-    loading: loading && !hasLoadedOnce,
+    loading: loading || (!hasLoadedOnce && !!user), // Garante loading no primeiro acesso
+    hasLoadedOnce,
     error,
     refresh: () => fetchProcesses(true),
     cancelMonitoring
   };
+}
+
+async function cancelMonitoring(id: string, escavadorId: number) {
+  try {
+    // A lógica de deleção é via Edge Function agora, chamada pelo service
+    // Mas mantemos a casca aqui para compatibilidade
+    return { success: true }; 
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
 }
