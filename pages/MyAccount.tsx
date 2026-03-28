@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   User, 
   CreditCard, 
@@ -16,23 +16,39 @@ import {
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../hooks/useSubscription';
+import { useNavigate } from 'react-router-dom';
 
 const SUPPORT_NUMBER = "5524999984056";
 const SUPPORT_MESSAGE = encodeURIComponent("Olá vim através do consulta Processo e preciso de suporte");
 
 const MyAccount: React.FC = () => {
-  const { profile } = useAuth();
-  const { history, currentPlanDetails, loading } = useSubscription();
+  const { user, profile, sessionLoading } = useAuth();
+  const { history, currentPlanDetails, loading: subscriptionLoading } = useSubscription();
+  const navigate = useNavigate();
+
+  // Proteção de Rota: Se não estiver logado após o carregamento da sessão, redireciona
+  useEffect(() => {
+    if (!sessionLoading && !user) {
+      navigate('/auth', { state: { from: '/minha-conta' } });
+    }
+  }, [user, sessionLoading, navigate]);
 
   const isPro = profile?.subscription_status === 'active';
 
-  if (loading) {
+  // Enquanto verifica a sessão ou carrega os dados da assinatura
+  if (sessionLoading || (user && subscriptionLoading)) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <div className="h-full flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">Carregando Perfil...</p>
+        </div>
       </div>
     );
   }
+
+  // Se não houver usuário, não renderiza o conteúdo (o useEffect cuidará do redirect)
+  if (!user) return null;
 
   return (
     <div className="p-6 max-w-5xl mx-auto pb-24 space-y-8">
