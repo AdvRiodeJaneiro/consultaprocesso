@@ -75,25 +75,27 @@ export const SidebarUsage: React.FC = () => {
   return (
     <div className="px-0 py-2">
       <div className="bg-[#1E1B4B] rounded-2xl p-5 border border-white/5 shadow-xl">
-        <div className="flex items-start gap-2 mb-5">
-          <div className="size-5 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0 mt-0.5">
-            <DollarSign size={10} strokeWidth={3} />
+        {/* Cabeçalho Centralizado */}
+        <div className="flex flex-col items-center gap-2 mb-6">
+          <div className="flex items-center gap-2">
+            <div className="size-5 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0">
+              <DollarSign size={10} strokeWidth={3} />
+            </div>
+            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Seus Créditos /mês</p>
+            <div className="size-1.5 rounded-full bg-primary animate-pulse" />
           </div>
-          <div className="flex-1 flex flex-col items-start min-w-0">
-            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] truncate">Seus Créditos /mês</p>
-            <button 
-              onClick={() => navigate('/minha-conta')}
-              className={cn(
-                "mt-1.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border transition-all hover:bg-white/5",
-                isPro 
-                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
-                  : "bg-slate-500/10 text-slate-400 border-white/10"
-              )}
-            >
-              Plano Atual: {isPro ? 'Pro' : 'Grátis'}
-            </button>
-          </div>
-          <div className="size-1.5 rounded-full bg-primary animate-pulse mt-1.5" />
+          
+          <button 
+            onClick={() => navigate('/minha-conta')}
+            className={cn(
+              "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-wider border transition-all hover:bg-white/5",
+              isPro 
+                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                : "bg-slate-500/10 text-slate-400 border-white/10"
+            )}
+          >
+            Plano Atual: {isPro ? 'Pro' : 'Grátis'}
+          </button>
         </div>
         
         <div className="space-y-5">
@@ -114,7 +116,7 @@ export const SidebarUsage: React.FC = () => {
           />
         </div>
 
-        <p className="text-[10px] text-slate-500 font-bold text-center mt-4">Renova a cada 30 dias</p>
+        <p className="text-[10px] text-slate-500 font-bold text-center mt-4 border-t border-white/5 pt-4">Renova a cada 30 dias</p>
       </div>
     </div>
   );
