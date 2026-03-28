@@ -5,6 +5,7 @@ import { useSearchLimit, LimitType } from '../hooks/useSearchLimit';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
 import { DollarSign } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface UsageItemProps {
   label: string;
@@ -64,21 +65,35 @@ const UsageItem: React.FC<UsageItemProps> = ({ label, type, updateTrigger }) => 
 
 export const SidebarUsage: React.FC = () => {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   
-  // Se não estiver logado, não mostramos a barra de créditos (pois ele não pode usar sem logar)
   if (!user) return null;
 
+  const isPro = profile?.subscription_status === 'active';
   const updateTrigger = (profile?.current_month_searches || 0) + (profile?.current_month_process_consults || 0);
 
   return (
     <div className="px-0 py-2">
       <div className="bg-[#1E1B4B] rounded-2xl p-5 border border-white/5 shadow-xl">
-        <div className="flex items-center gap-2 mb-5">
-          <div className="size-5 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0">
+        <div className="flex items-start gap-2 mb-5">
+          <div className="size-5 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0 mt-0.5">
             <DollarSign size={10} strokeWidth={3} />
           </div>
-          <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Seus Créditos /mês</p>
-          <div className="ml-auto size-1.5 rounded-full bg-primary animate-pulse" />
+          <div className="flex-1 flex flex-col items-start min-w-0">
+            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] truncate">Seus Créditos /mês</p>
+            <button 
+              onClick={() => navigate('/minha-conta')}
+              className={cn(
+                "mt-1.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border transition-all hover:bg-white/5",
+                isPro 
+                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                  : "bg-slate-500/10 text-slate-400 border-white/10"
+              )}
+            >
+              Plano Atual: {isPro ? 'Pro' : 'Grátis'}
+            </button>
+          </div>
+          <div className="size-1.5 rounded-full bg-primary animate-pulse mt-1.5" />
         </div>
         
         <div className="space-y-5">
