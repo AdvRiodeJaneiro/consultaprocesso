@@ -51,6 +51,12 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     );
   };
 
+  // Filtra o menu principal: Remove "Minha Conta" se o usuário não estiver logado
+  const filteredMainMenu = MAIN_MENU.filter(item => {
+    if (item.id === 'my-account' && !user) return false;
+    return true;
+  });
+
   return (
     <>
       {isSidebarOpen && (
@@ -81,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 
         <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto scrollbar-hide">
           <div className="space-y-1">
-            {MAIN_MENU.map(renderMenuItem)}
+            {filteredMainMenu.map(renderMenuItem)}
           </div>
 
           {profile?.is_admin && (
