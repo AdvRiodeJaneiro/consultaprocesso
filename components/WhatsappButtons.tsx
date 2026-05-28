@@ -2,8 +2,7 @@ import React from 'react';
 import { MessageCircle } from 'lucide-react';
 
 const WHATSAPPS = [
-  { label: "Whatsapp 1", number: "5524992271965" },
-  { label: "Whatsapp 2", number: "5521972513478" },
+  { label: "Entrar em contato", number: "5521972513478" },
 ];
 
 const MESSAGE = encodeURIComponent("Olá, vim através do sistema Consulta Processo IA e gostaria de mais informações sobre meu processo");
