@@ -12,11 +12,13 @@ import {
   ShieldCheck,
   Zap,
   Globe,
-  Loader2
+  Loader2,
+  Wallet
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { toast } from 'react-hot-toast';
 import { DottedSurface } from '../components/ui/dotted-surface';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Plan {
   id: string;
@@ -25,12 +27,120 @@ interface Plan {
   benefits: string[];
   price: number;
   checkout_url: string;
+  search_limit?: number;
+  process_limit?: number;
+  monitoring_limit?: number;
 }
+
+// Subcomponente interno para a simulação animada de saldo
+const PlanSimulation: React.FC<{ plan: Plan; profile: any }> = ({ plan, profile }) => {
+  const [isSimulated, setIsSimulated] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIsSimulated((prev) => !prev);
+    }, 2000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const searchCurrent = profile?.search_credits ?? 0;
+  const processCurrent = profile?.process_credits ?? 0;
+  const monitoringCurrent = profile?.monitoring_credits ?? 0;
+
+  const searchLimit = plan.search_limit ?? 0;
+  const processLimit = plan.process_limit ?? 0;
+  const monitoringLimit = plan.monitoring_limit ?? 0;
+
+  const searchTarget = isSimulated ? searchCurrent + searchLimit : searchCurrent;
+  const processTarget = isSimulated ? processCurrent + processLimit : processCurrent;
+  const monitoringTarget = isSimulated ? monitoringCurrent + monitoringLimit : monitoringCurrent;
+
+  return (
+    <div className="bg-slate-950/40 rounded-2xl p-4 border border-white/5 mb-6 text-left">
+      {/* Cabeçalho */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-1.5">
+          <Wallet className="w-3.5 h-3.5 text-primary" />
+          <span className="text-[10px] font-black text-primary uppercase tracking-wider">Simulador de Saldo</span>
+        </div>
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={isSimulated ? "after" : "before"}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.2 }}
+            className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+              isSimulated 
+                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                : "bg-slate-500/10 text-slate-400 border-white/5"
+            }`}
+          >
+            {isSimulated ? "Saldo após a Compra" : "Saldo Atual"}
+          </motion.span>
+        </AnimatePresence>
+      </div>
+
+      <div className="space-y-3">
+        {/* Item: N° de processo */}
+        <div className="space-y-1">
+          <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-slate-400">
+            <span>N° de processo</span>
+            <span className={isSimulated && processLimit > 0 ? "text-emerald-400 font-bold" : "text-white"}>
+              {processTarget} disponíveis
+            </span>
+          </div>
+          <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+            <motion.div 
+              className={`h-full ${isSimulated && processLimit > 0 ? "bg-emerald-400" : "bg-primary"}`}
+              animate={{ width: processTarget > 0 ? "100%" : "0%" }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            />
+          </div>
+        </div>
+
+        {/* Item: CPF, CNPJ e Nome */}
+        <div className="space-y-1">
+          <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-slate-400">
+            <span>CPF, CNPJ e Nome</span>
+            <span className={isSimulated && searchLimit > 0 ? "text-emerald-400 font-bold" : "text-white"}>
+              {searchTarget} disponíveis
+            </span>
+          </div>
+          <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+            <motion.div 
+              className={`h-full ${isSimulated && searchLimit > 0 ? "bg-emerald-400" : "bg-primary"}`}
+              animate={{ width: searchTarget > 0 ? "100%" : "0%" }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            />
+          </div>
+        </div>
+
+        {/* Item: Monitoramento */}
+        <div className="space-y-1">
+          <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-slate-400">
+            <span>Slots Monitoramento</span>
+            <span className={isSimulated && monitoringLimit > 0 ? "text-emerald-400 font-bold" : "text-white"}>
+              {monitoringTarget} slots
+            </span>
+          </div>
+          <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+            <motion.div 
+              className={`h-full ${isSimulated && monitoringLimit > 0 ? "bg-emerald-400" : "bg-primary"}`}
+              animate={{ width: monitoringTarget > 0 ? "100%" : "0%" }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Pricing: React.FC = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -131,6 +241,9 @@ const Pricing: React.FC = () => {
                 ))}
               </div>
 
+              {/* Seção Dinâmica de Simulação de Saldo */}
+              {user && <PlanSimulation plan={plan} profile={profile} />}
+
               <Button 
                 onClick={() => handleSubscribe(plan.checkout_url)}
                 className={`w-full py-6 rounded-2xl text-lg font-black uppercase tracking-widest transition-all duration-300 gap-3 group ${
@@ -139,7 +252,7 @@ const Pricing: React.FC = () => {
                   : 'bg-white text-slate-950 hover:bg-slate-200'
                 }`}
               >
-                <>Adquirir Créditos <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
+                <>Adquirir <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
               </Button>
             </div>
           );
