@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchLimit, LimitType } from '../hooks/useSearchLimit';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
-import { DollarSign } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface UsageItemProps {
@@ -35,9 +35,17 @@ const UsageItem: React.FC<UsageItemProps> = ({ label, type, updateTrigger }) => 
     </div>
   );
 
-  const percentage = Math.min((current / limit) * 100, 100);
-  const remainingPercentage = 100 - percentage;
-  const isWarning = remainingPercentage < 20;
+  // No modelo de recarga:
+  // - Para buscas e consultas (consumíveis): mostramos o saldo disponível direto (limit)
+  // - Para monitoramento (slots ativos): mostramos a contagem ocupada "current de limit"
+  const isConsumable = type === 'search' || type === 'process';
+  
+  const percentage = isConsumable 
+    ? (limit > 0 ? 100 : 0) // Barra cheia se tiver saldo, vazia se zerado
+    : Math.min((current / Math.max(limit, 1)) * 100, 100);
+
+  const remainingPercentage = isConsumable ? percentage : (100 - percentage);
+  const isWarning = limit === 0 || (!isConsumable && remainingPercentage < 20);
 
   return (
     <div className="space-y-1.5">
@@ -47,16 +55,16 @@ const UsageItem: React.FC<UsageItemProps> = ({ label, type, updateTrigger }) => 
           "shrink-0",
           isWarning ? "text-red-400" : "text-white"
         )}>
-          {current} de {limit}
+          {isConsumable ? `${limit} disponíveis` : `${current} de ${limit}`}
         </span>
       </div>
       <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
         <div 
           className={cn(
             "h-full transition-all duration-500 ease-out",
-            isWarning ? "bg-red-500" : "bg-primary"
+            isWarning ? (isConsumable ? "bg-red-500/40" : "bg-red-500") : "bg-primary"
           )}
-          style={{ width: `${remainingPercentage}%` }}
+          style={{ width: `${isConsumable ? percentage : remainingPercentage}%` }}
         />
       </div>
     </div>
@@ -69,8 +77,8 @@ export const SidebarUsage: React.FC = () => {
   
   if (!user) return null;
 
-  const isPro = profile?.subscription_status === 'active';
-  const updateTrigger = (profile?.current_month_searches || 0) + (profile?.current_month_process_consults || 0);
+  const hasCredits = (profile?.search_credits || 0) > 0 || (profile?.process_credits || 0) > 0;
+  const updateTrigger = (profile?.search_credits || 0) + (profile?.process_credits || 0);
 
   return (
     <div className="px-0 py-2">
@@ -79,9 +87,9 @@ export const SidebarUsage: React.FC = () => {
         <div className="flex flex-col items-center gap-2 mb-6">
           <div className="flex items-center gap-2">
             <div className="size-5 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0">
-              <DollarSign size={10} strokeWidth={3} />
+              <Wallet size={10} strokeWidth={3} />
             </div>
-            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Seus Créditos /mês</p>
+            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Seus Créditos</p>
             <div className="size-1.5 rounded-full bg-primary animate-pulse" />
           </div>
           
@@ -89,12 +97,12 @@ export const SidebarUsage: React.FC = () => {
             onClick={() => navigate('/minha-conta')}
             className={cn(
               "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-wider border transition-all hover:bg-white/5",
-              isPro 
+              hasCredits 
                 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
                 : "bg-slate-500/10 text-slate-400 border-white/10"
             )}
           >
-            Plano Atual: {isPro ? 'Pro' : 'Grátis'}
+            Status: {hasCredits ? 'Saldo Ativo' : 'Sem Créditos'}
           </button>
         </div>
         
@@ -116,7 +124,7 @@ export const SidebarUsage: React.FC = () => {
           />
         </div>
 
-        <p className="text-[10px] text-slate-500 font-bold text-center mt-4 border-t border-white/5 pt-4">Renova a cada 30 dias</p>
+        <p className="text-[10px] text-slate-500 font-bold text-center mt-4 border-t border-white/5 pt-4">Créditos acumulativos que não expiram</p>
       </div>
     </div>
   );

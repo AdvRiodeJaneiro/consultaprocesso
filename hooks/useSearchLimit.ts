@@ -5,24 +5,20 @@ import { supabase } from '../integrations/supabase/client';
 export type LimitType = 'search' | 'process' | 'monitoring';
 
 /**
- * useSearchLimit - Blindagem dos limites no backend.
- * O frontend apenas consulta os dados do perfil e os limites globais.
- * O incremento real acontece agora via Edge Functions (Search / Analysis / Monitoring).
+ * useSearchLimit - Blindagem de créditos/limites.
+ * O frontend agora consulta diretamente o saldo de créditos (search_credits, process_credits, monitoring_credits) no perfil do usuário.
+ * O decremento do saldo acontece via banco de dados (Edge Functions).
  */
 export function useSearchLimit() {
   const { user, profile, refreshProfile } = useAuth();
   const [globalSettings, setGlobalSettings] = useState<any>(null);
-  const [planSettings, setPlanSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
-  // Estado interno para forçar a re-leitura dos limites quando algo muda
   const [updateCounter, setUpdateCounter] = useState(0);
 
-  // Fetch settings on mount
+  // Carregar configurações globais apenas para fallbacks e visitantes
   useEffect(() => {
     async function fetchSettings() {
       try {
-        // 1. Fetch Global Settings
         const { data: gData } = await supabase
           .from('system_settings')
           .select('*')
@@ -30,68 +26,48 @@ export function useSearchLimit() {
           .maybeSingle();
         
         if (gData) setGlobalSettings(gData);
-
-        // 2. Fetch Plan Settings if User is PRO
-        if (profile?.current_plan_id) {
-          const { data: pData } = await supabase
-            .from('plans')
-            .select('search_limit, process_limit, monitoring_limit')
-            .eq('id', profile.current_plan_id)
-            .maybeSingle();
-          
-          if (pData) setPlanSettings(pData);
-        }
       } catch (err) {
-        console.error("Error fetching limits:", err);
+        console.error("Error fetching global settings:", err);
       } finally {
         setLoading(false);
       }
     }
 
     fetchSettings();
-  }, [profile?.current_plan_id]);
+  }, []);
 
   /**
-   * Identifica o limite atual baseado no nível do usuário
+   * Retorna o saldo de créditos disponíveis (ou limite, no caso de visitantes)
    */
-  const getLimitForType = useCallback((type: LimitType) => {
-    if (!globalSettings) return 999;
-
+  const getLimitForType = useCallback((type: LimitType): number => {
     // 1. Visitante
     if (!user) {
-      if (type === 'search') return globalSettings.guest_search_limit || 0;
-      if (type === 'process') return globalSettings.guest_process_limit || 0;
-      if (type === 'monitoring') return globalSettings.guest_monitoring_limit || 0;
+      if (!globalSettings) return 0;
+      if (type === 'search') return globalSettings.guest_search_limit ?? 2;
+      if (type === 'process') return globalSettings.guest_process_limit ?? 0;
+      if (type === 'monitoring') return globalSettings.guest_monitoring_limit ?? 0;
       return 0;
     }
 
-    // 2. Administrador (Prioridade Máxima)
+    // 2. Administrador (Acesso ilimitado)
     if (profile?.is_admin) {
-      if (type === 'search') return globalSettings.admin_search_limit ?? 9999;
-      if (type === 'process') return globalSettings.admin_process_limit ?? 9999;
-      if (type === 'monitoring') return globalSettings.admin_monitoring_limit ?? 9999;
+      return 9999;
     }
 
-    // 3. PRO (Ativo)
-    if (profile?.subscription_status === 'active') {
-      if (!planSettings) return 999;
-      if (type === 'search') return planSettings.search_limit;
-      if (type === 'process') return planSettings.process_limit;
-      if (type === 'monitoring') return planSettings.monitoring_limit;
-    }
-
-    // 3. FREE (Logado s/ Plano)
-    if (type === 'search') return globalSettings.free_search_limit;
-    if (type === 'process') return globalSettings.free_process_limit;
-    if (type === 'monitoring') return globalSettings.free_monitoring_limit;
+    // 3. Usuário Logado (Lógica de Carteira/Saldo)
+    if (type === 'search') return profile?.search_credits ?? 0;
+    if (type === 'process') return profile?.process_credits ?? 0;
+    if (type === 'monitoring') return profile?.monitoring_credits ?? 0;
 
     return 0;
-  }, [globalSettings, planSettings, user, profile]);
+  }, [globalSettings, user, profile]);
 
   /**
-   * Busca o uso atual do usuário (Banco ou LocalStorage)
+   * Retorna o consumo do usuário
+   * No modelo de carteira, buscas e consultas consomem saldo, então o "uso" para a checagem é 0 (pois o saldo já é o valor líquido restante).
+   * Para monitoramento, conta os processos atualmente monitorados na tabela.
    */
-  const getCurrentUsage = useCallback(async (type: LimitType) => {
+  const getCurrentUsage = useCallback(async (type: LimitType): Promise<number> => {
     // 1. Visitante (LocalStorage)
     if (!user) {
       const storageKeys: Record<LimitType, string> = {
@@ -104,35 +80,42 @@ export function useSearchLimit() {
       return stored ? parseInt(stored, 10) : 0;
     }
 
-    // 2. Logado (Banco)
-    if (type === 'search') return profile?.current_month_searches || 0;
-    if (type === 'process') return profile?.current_month_process_consults || 0;
-    
+    // 2. Administrador
+    if (profile?.is_admin) return 0;
+
+    // 3. Usuário Logado
     if (type === 'monitoring') {
-      const { count } = await supabase
+      const { count, error } = await supabase
         .from('monitored_processes')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
+      
+      if (error) {
+        console.error("Error counting monitored processes:", error);
+        return 0;
+      }
       return count || 0;
     }
 
+    // Para consumos do tipo saldo, retornamos 0, pois a validação de limite 'current < limit'
+    // se torna '0 < saldo_disponivel', que funciona perfeitamente.
     return 0;
-  }, [user, profile, updateCounter]); 
+  }, [user, profile, updateCounter]);
 
   /**
-   * Verifica se o limite foi atingido antes de permitir a ação
+   * Verifica se o usuário tem créditos ou limite para realizar a ação
    */
-  const checkLimit = useCallback(async (type: LimitType) => {
+  const checkLimit = useCallback(async (type: LimitType): Promise<boolean> => {
     const limit = getLimitForType(type);
     const current = await getCurrentUsage(type);
     return current < limit;
   }, [getLimitForType, getCurrentUsage]);
 
   /**
-   * Incrementa o uso (Apenas para visitantes ou para atualização de UI)
+   * Solicita atualização de UI chamando o refresh do perfil
    */
   const incrementUsage = useCallback(async (type: LimitType) => {
-    // 1. Visitante (LocalStorage ainda é necessário pois não há backend)
+    // 1. Visitante (LocalStorage)
     if (!user) {
       const storageKeys: Record<LimitType, string> = {
         search: 'guest_search_count',
@@ -148,12 +131,9 @@ export function useSearchLimit() {
       return;
     }
 
-    // 2. Logado - Não incrementamos mais via frontend por segurança.
-    // As Edge Functions agora fazem isso no banco via security definer.
-    // Apenas solicitamos um refresh do perfil para atualizar o contador na UI.
-    refreshProfile();
+    // 2. Usuário Logado: Recarrega dados do perfil
+    await refreshProfile();
     setUpdateCounter(prev => prev + 1);
-
   }, [user, refreshProfile]);
 
   return {

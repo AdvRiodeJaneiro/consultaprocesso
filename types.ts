@@ -91,4 +91,7 @@ export interface Profile {
   current_plan_id?: string;
   subscription_expires_at?: string;
   updated_at: string;
+  search_credits?: number;
+  process_credits?: number;
+  monitoring_credits?: number;
 }

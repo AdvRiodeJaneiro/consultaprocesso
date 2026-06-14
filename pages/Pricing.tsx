@@ -30,7 +30,7 @@ interface Plan {
 const Pricing: React.FC = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,7 +45,7 @@ const Pricing: React.FC = () => {
       .order('price', { ascending: true });
     
     if (error) {
-      toast.error('Erro ao carregar planos');
+      toast.error('Erro ao carregar pacotes');
       console.error(error);
     } else {
       setPlans(data || []);
@@ -80,13 +80,13 @@ const Pricing: React.FC = () => {
       <div className="text-center relative z-10 mb-16 max-w-2xl">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-bold uppercase tracking-widest mb-6 animate-pulse">
           <Sparkles className="w-4 h-4" />
-          Planos e Assinaturas
+          Pacotes de Créditos
         </div>
         <h1 className="text-4xl md:text-6xl font-black mb-6 bg-gradient-to-r from-white via-primary to-emerald-400 bg-clip-text text-transparent">
-          Planos de Monitoramento
+          Recarga de Consultas
         </h1>
         <p className="text-slate-400 text-lg font-medium">
-          Acompanhe seus processos em tempo real com IA e receba atualizações no WhatsApp.
+          Adquira créditos acumulativos para realizar suas consultas de processos e nomes. Seus créditos não expiram.
         </p>
       </div>
 
@@ -94,11 +94,9 @@ const Pricing: React.FC = () => {
         {plans.length === 0 ? (
           <div className="col-span-full text-center py-20 bg-slate-900/50 rounded-3xl border border-slate-800">
              <CreditCard className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-             <p className="text-slate-500 font-bold">Nenhum plano disponível no momento.</p>
+             <p className="text-slate-500 font-bold">Nenhum pacote de créditos disponível no momento.</p>
           </div>
         ) : plans.map((plan) => {
-          const isCurrentPlan = profile?.current_plan_id === plan.id;
-          
           return (
             <div 
               key={plan.id}
@@ -118,7 +116,7 @@ const Pricing: React.FC = () => {
                 <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-black">R$ {plan.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                  <span className="text-slate-500 font-medium text-sm">/mês</span>
+                  <span className="text-slate-500 font-medium text-sm">/único</span>
                 </div>
               </div>
 
@@ -135,18 +133,13 @@ const Pricing: React.FC = () => {
 
               <Button 
                 onClick={() => handleSubscribe(plan.checkout_url)}
-                disabled={isCurrentPlan}
                 className={`w-full py-6 rounded-2xl text-lg font-black uppercase tracking-widest transition-all duration-300 gap-3 group ${
                   plan.badge 
                   ? 'bg-primary text-deep-indigo hover:shadow-[0_0_20px_rgba(223,184,42,0.4)]' 
                   : 'bg-white text-slate-950 hover:bg-slate-200'
                 }`}
               >
-                {isCurrentPlan ? (
-                  <>Seu Plano Atual <ShieldCheck className="w-5 h-5" /></>
-                ) : (
-                  <>Assinar Agora <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
-                )}
+                <>Adquirir Créditos <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
               </Button>
             </div>
           );
@@ -162,12 +155,12 @@ const Pricing: React.FC = () => {
         <div className="flex flex-col items-center">
           <Zap className="w-8 h-8 text-emerald-400 mb-3" />
           <h4 className="font-bold text-sm uppercase tracking-widest mb-1">Acesso Imediato</h4>
-          <p className="text-xs text-slate-500">Liberação após aprovação</p>
+          <p className="text-xs text-slate-500">Liberação automática do saldo</p>
         </div>
         <div className="flex flex-col items-center">
           <Globe className="w-8 h-8 text-indigo-400 mb-3" />
-          <h4 className="font-bold text-sm uppercase tracking-widest mb-1">Sincronização 24/7</h4>
-          <p className="text-xs text-slate-500">Tribunais ativos o tempo todo</p>
+          <h4 className="font-bold text-sm uppercase tracking-widest mb-1">Sem Fidelidade</h4>
+          <p className="text-xs text-slate-500">Use os créditos quando quiser</p>
         </div>
       </div>
     </div>

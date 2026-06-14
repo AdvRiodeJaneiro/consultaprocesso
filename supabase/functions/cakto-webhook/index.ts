@@ -24,7 +24,7 @@ serve(async (req) => {
     const amount = payload.data?.amount || payload.amount || 0;
     const paymentId = payload.data?.id || payload.id;
 
-    console.log(`[cakto-webhook] Evento: \${event} | Cliente: \${customerEmail}`);
+    console.log(`[cakto-webhook] Evento: ${event} | Cliente: ${customerEmail}`);
 
     if (!customerEmail) {
       return new Response(JSON.stringify({ status: "ignored", reason: "no email found" }), { status: 200 });
@@ -35,26 +35,26 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // 1. Localizar o Plano
+    // 1. Localizar o Plano / Pacote de Créditos
     const { data: plan } = await supabase
       .from('plans')
-      .select('id, name, price')
-      .or(`cakto_product_id.eq.\${productId},name.eq."\${productName}"`)
+      .select('id, name, price, search_limit, process_limit, monitoring_limit')
+      .or(`cakto_product_id.eq.${productId},name.eq."${productName}"`)
       .maybeSingle();
 
     // 2. Localizar o Usuário
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, search_credits, process_credits, monitoring_credits')
       .eq('email', customerEmail)
       .maybeSingle();
 
     if (!profile) {
-      console.warn(`[cakto-webhook] Usuário \${customerEmail} não encontrado.`);
+      console.warn(`[cakto-webhook] Usuário ${customerEmail} não encontrado.`);
       return new Response(JSON.stringify({ status: "user_not_found" }), { status: 200 });
     }
 
-    // --- LÓGICA DE ESTADOS DA ASSINATURA ---
+    // --- LÓGICA DE ESTADOS DA RECARGA DE CRÉDITOS ---
 
     const successEvents = [
       'purchase_approved', 
@@ -66,29 +66,30 @@ serve(async (req) => {
     ];
     
     const failureEvents = [
-      'subscription_canceled',
-      'canceled',
-      'payment_failed',
       'refunded',
       'chargeback',
       'dispute'
     ];
 
     if (successEvents.includes(event)) {
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 32);
+      // 1. Soma os novos créditos ao saldo existente do usuário
+      const searchToAdd = plan?.search_limit || 0;
+      const processToAdd = plan?.process_limit || 0;
+      const monitoringToAdd = plan?.monitoring_limit || 0;
 
-      // Atualiza Perfil
       await supabase
         .from('profiles')
         .update({
           subscription_status: 'active',
           current_plan_id: plan?.id || null,
-          subscription_expires_at: expiresAt.toISOString()
+          subscription_expires_at: null, // Créditos avulsos não possuem expiração temporal de 30 dias
+          search_credits: (profile.search_credits || 0) + searchToAdd,
+          process_credits: (profile.process_credits || 0) + processToAdd,
+          monitoring_credits: (profile.monitoring_credits || 0) + monitoringToAdd
         })
         .eq('id', profile.id);
 
-      // REGISTRA NO HISTÓRICO (Novo)
+      // 2. Registra no Histórico de compras
       await supabase
         .from('subscription_history')
         .insert({
@@ -97,24 +98,31 @@ serve(async (req) => {
           amount_paid: amount > 0 ? amount : (plan?.price || 0),
           payment_status: 'approved',
           start_date: new Date().toISOString(),
-          end_date: expiresAt.toISOString(),
+          end_date: null, // Sem data de término
           cakto_payment_id: paymentId?.toString()
         });
 
-      console.log(`[cakto-webhook] ✅ Assinatura ATIVADA e HISTÓRICO gerado para \${customerEmail}`);
+      console.log(`[cakto-webhook] ✅ Créditos adicionados com sucesso para ${customerEmail}. (+${searchToAdd} buscas, +${processToAdd} consultas de processo)`);
       
     } else if (failureEvents.includes(event)) {
-      await supabase
-        .from('profiles')
-        .update({
-          subscription_status: 'inactive',
-          current_plan_id: null,
-          subscription_expires_at: null
-        })
-        .eq('id', profile.id);
+      // Se for reembolso ou contestação (chargeback/dispute), estorna os créditos caso o plano correspondente seja localizado
+      if (plan) {
+        const searchToSubtract = plan.search_limit || 0;
+        const processToSubtract = plan.process_limit || 0;
+        const monitoringToSubtract = plan.monitoring_limit || 0;
 
-      // Se for reembolso, marca no histórico se encontrar o ID
-      if (event === 'refunded' && paymentId) {
+        await supabase
+          .from('profiles')
+          .update({
+            search_credits: Math.max((profile.search_credits || 0) - searchToSubtract, 0),
+            process_credits: Math.max((profile.process_credits || 0) - processToSubtract, 0),
+            monitoring_credits: Math.max((profile.monitoring_credits || 0) - monitoringToSubtract, 0)
+          })
+          .eq('id', profile.id);
+      }
+
+      // Se encontrar o ID do pagamento, atualiza histórico para reembolsado
+      if (paymentId) {
         await supabase
           .from('subscription_history')
           .update({ payment_status: 'refunded' })
@@ -122,7 +130,7 @@ serve(async (req) => {
           .eq('user_id', profile.id);
       }
 
-      console.log(`[cakto-webhook] ❌ Assinatura DESATIVADA para \${customerEmail}`);
+      console.log(`[cakto-webhook] ❌ Compra estornada/reembolsada. Créditos removidos para ${customerEmail}`);
     }
 
     return new Response(JSON.stringify({ success: true, event }), { status: 200, headers: corsHeaders });
