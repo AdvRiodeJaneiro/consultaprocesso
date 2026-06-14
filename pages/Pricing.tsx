@@ -58,11 +58,7 @@ const PlanSimulation: React.FC<{ plan: Plan; profile: any }> = ({ plan, profile 
   return (
     <div className="bg-slate-950/40 rounded-2xl p-4 border border-white/5 mb-6 text-left">
       {/* Cabeçalho */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-1.5">
-          <Wallet className="w-3.5 h-3.5 text-primary" />
-          <span className="text-[10px] font-black text-primary uppercase tracking-wider">Simulador de Saldo</span>
-        </div>
+      <div className="flex items-center justify-center mb-4">
         <AnimatePresence mode="wait">
           <motion.span
             key={isSimulated ? "after" : "before"}
@@ -70,9 +66,9 @@ const PlanSimulation: React.FC<{ plan: Plan; profile: any }> = ({ plan, profile 
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.2 }}
-            className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
-              isSimulated 
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+            className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${
+              isSimulated
+                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                 : "bg-slate-500/10 text-slate-400 border-white/5"
             }`}
           >
