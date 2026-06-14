@@ -14,7 +14,7 @@ import {
   Globe,
   Loader2,
   Wallet
-} from 'lucide-react';
+} from '../components/ui/button'; // Note: uses generic buttons but we import lucide icons
 import { Button } from '../components/ui/button';
 import { toast } from 'react-hot-toast';
 import { DottedSurface } from '../components/ui/dotted-surface';
@@ -39,7 +39,7 @@ const PlanSimulation: React.FC<{ plan: Plan; profile: any }> = ({ plan, profile 
   useEffect(() => {
     const timer = setInterval(() => {
       setIsSimulated((prev) => !prev);
-    }, 2000);
+    }, 3000); // Alterado para 3 segundos conforme solicitado
     return () => clearInterval(timer);
   }, []);
 
