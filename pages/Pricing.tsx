@@ -14,7 +14,7 @@ import {
   Globe,
   Loader2,
   Wallet
-} from '../components/ui/button'; // Note: uses generic buttons but we import lucide icons
+} from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { toast } from 'react-hot-toast';
 import { DottedSurface } from '../components/ui/dotted-surface';
