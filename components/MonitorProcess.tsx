@@ -102,7 +102,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
         <div className="mb-8 md:mb-10 flex flex-col md:flex-row justify-between items-start gap-4">
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-3 mb-1">
-              <h2 className="text-2xl md:text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Monitoramento de Processo</h2>
+              <h2 className="text-2xl md:text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Consulte processos e Monitore o andamento</h2>
               <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-primary text-deep-indigo uppercase tracking-wider shadow-sm">
                 Consulta CPF, CNPJ e Nome
               </span>
