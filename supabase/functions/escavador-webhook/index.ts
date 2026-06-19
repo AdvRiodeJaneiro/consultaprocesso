@@ -28,6 +28,15 @@ serve(async (req) => {
 
     if (!proc) return new Response("OK", { status: 200 });
 
+    // Buscar e-mail de login/cadastro do usuário para as notificações por e-mail
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', proc.user_id)
+      .maybeSingle();
+
+    const userEmail = userProfile?.email;
+
     // Se recebermos QUALQUER evento e o processo estiver PENDENTE, significa que ele foi "achado"
     const isFirstTime = proc.status === 'PENDENTE';
 
@@ -64,25 +73,87 @@ serve(async (req) => {
         movement_date: dataMov
       });
 
-      // 2. DISPARO WHATSAPP (Z-API)
-      const zInstance = Deno.env.get('ZAPI_INSTANCE_ID');
-      const zToken = Deno.env.get('ZAPI_TOKEN');
-      const zClientToken = Deno.env.get('ZAPI_CLIENT_TOKEN');
+      // 2. DISPARO DE E-MAIL (RESEND)
+      const resendApiKey = Deno.env.get('RESEND_API_KEY');
+      if (resendApiKey && userEmail) {
+        const header = isFirstTime ? "✅ Processo Localizado!" : "🔔 Nova Atualização";
+        const emailHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <title>${header}</title>
+            <style>
+              body { font-family: sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }
+              .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
+              .header { background-color: #4f46e5; color: #ffffff; padding: 24px; text-align: center; }
+              .header h1 { margin: 0; font-size: 20px; font-weight: bold; }
+              .content { padding: 32px; background-color: #ffffff; }
+              .process-card { background-color: #f1f5f9; border-radius: 12px; padding: 16px; margin-bottom: 24px; border: 1px solid #cbd5e1; }
+              .process-label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; margin: 0 0 4px 0; }
+              .process-value { font-size: 16px; color: #0f172a; font-weight: bold; margin: 0; }
+              .summary-title { font-size: 14px; font-weight: bold; color: #4f46e5; margin: 0 0 8px 0; }
+              .summary-text { font-size: 14px; color: #334155; line-height: 1.6; margin: 0; }
+              .footer { text-align: center; padding: 24px; font-size: 12px; color: #94a3b8; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>${header}</h1>
+              </div>
+              <div class="content">
+                <div class="process-card">
+                  <p class="process-label">Número do Processo (CNJ)</p>
+                  <p class="process-value">${cnj}</p>
+                  <p class="process-label" style="margin-top: 12px;">Data da Movimentação</p>
+                  <p class="process-value" style="font-size: 14px; font-weight: normal;">${dataMov}</p>
+                </div>
+                
+                <h3 class="summary-title">Resumo Simplificado (Inteligência Artificial)</h3>
+                <p class="summary-text">${resumoSimples}</p>
+                
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+                
+                <p style="font-size: 12px; color: #64748b; text-align: center; margin: 0;">
+                  Para acompanhar todos os seus processos, acesse o painel da sua conta.
+                </p>
+              </div>
+              <div class="footer">
+                <p>&copy; ${new Date().getFullYear()} Consulta Processo IA. Todos os direitos reservados.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `;
 
-      if (zInstance && zToken && proc.whatsapp_number) {
-        const header = isFirstTime ? "✅ *Processo Localizado!*" : "🔔 *Nova Atualização*";
-        const msg = `${header}\n\n⚖️ *CNJ:* ${cnj}\n📅 *Data:* ${dataMov}\n\n📝 *Resumo:* ${resumoSimples}\n\n_Para detalhes, acesse seu painel._`;
-        
         try {
-          const waRes = await fetch(`https://api.z-api.io/instances/${zInstance}/token/${zToken}/send-text`, {
+          console.log("[escavador-webhook] Enviando e-mail de atualização para:", userEmail);
+          const emailRes = await fetch('https://api.resend.com/emails', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'client-token': zClientToken || "" },
-            body: JSON.stringify({ phone: proc.whatsapp_number.replace(/\D/g, ''), message: msg })
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${resendApiKey}`
+            },
+            body: JSON.stringify({
+              from: 'Consulta Processo <consultaprocesso@advogadoriodejaneiro.com>',
+              to: [userEmail],
+              subject: `${isFirstTime ? '✅ Processo Localizado' : '🔔 Nova Atualização'} - CNJ: ${cnj}`,
+              html: emailHtml
+            })
           });
-          if (!waRes.ok) console.error("[escavador-webhook] Erro na integração da API do Whatsapp.");
+
+          if (!emailRes.ok) {
+            const errData = await emailRes.json();
+            console.error("[escavador-webhook] Erro ao disparar e-mail via Resend:", errData);
+          } else {
+            console.log("[escavador-webhook] E-mail de notificação enviado com sucesso!");
+          }
         } catch (e) {
-          console.error("[escavador-webhook] Erro técnico Z-API:", e);
+          console.error("[escavador-webhook] Erro técnico Resend:", e);
         }
+      } else {
+        console.warn("[escavador-webhook] Disparo de e-mail pulado: RESEND_API_KEY ou e-mail de usuário ausente.", { hasKey: !!resendApiKey, userEmail });
       }
 
       // 3. ATUALIZAR STATUS

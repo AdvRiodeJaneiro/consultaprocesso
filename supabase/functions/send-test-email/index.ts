@@ -31,7 +31,7 @@ serve(async (req) => {
     }
 
     const emailPayload = {
-      from: from || "onboarding@resend.dev",
+      from: from || "consultaprocesso@advogadoriodejaneiro.com",
       to: Array.isArray(to) ? to : [to],
       subject: subject,
       html: html,

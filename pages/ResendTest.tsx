@@ -16,7 +16,7 @@ import { toast } from 'react-hot-toast';
 
 export default function ResendTest() {
   const { profile } = useAuth();
-  const [fromEmail, setFromEmail] = useState("onboarding@resend.dev");
+  const [fromEmail, setFromEmail] = useState("consultaprocesso@advogadoriodejaneiro.com");
   const [toEmail, setToEmail] = useState("advriodejaneiro@saltonaweb.sh27.com.br");
   const [subject, setSubject] = useState("Hello World");
   const [htmlContent, setHtmlContent] = useState("<p>Congrats on sending your <strong>first email</strong>!</p>");
@@ -126,13 +126,13 @@ export default function ResendTest() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Remetente (De)</label>
-                    <input 
+                    <input
                       value={fromEmail}
                       onChange={(e) => setFromEmail(e.target.value)}
-                      placeholder="onboarding@resend.dev"
+                      placeholder="consultaprocesso@advogadoriodejaneiro.com"
                       className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none text-sm focus:ring-2 focus:ring-primary/20 transition-all text-foreground"
                     />
-                    <span className="text-[10px] text-slate-400 ml-1">Usar "onboarding@resend.dev" enquanto estiver em modo de testes.</span>
+                    <span className="text-[10px] text-slate-400 ml-1">Usar o e-mail oficial do domínio verificado no Resend.</span>
                   </div>
 
                   <div className="space-y-1.5">
