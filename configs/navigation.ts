@@ -75,6 +75,13 @@ export const ADMIN_MENU: MenuItem[] = [
     adminOnly: true
   },
   {
+    id: 'resend-test',
+    label: 'Teste E-mail',
+    icon: Zap,
+    path: '/resend-test',
+    adminOnly: true
+  },
+  {
     id: 'z-api',
     label: 'Integração WhatsApp',
     icon: Smartphone,

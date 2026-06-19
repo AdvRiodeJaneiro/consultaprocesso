@@ -16,6 +16,7 @@ import Auth from './pages/Auth';
 import MyProcesses from './pages/MyProcesses';
 import ProcessTimeline from './pages/ProcessTimeline';
 import ZApiTest from './pages/ZApiTest';
+import ResendTest from './pages/ResendTest';
 import AdminSettings from './pages/AdminSettings';
 import UsageLimits from './pages/UsageLimits';
 import Pricing from './pages/Pricing';
@@ -99,6 +100,7 @@ function AppContent() {
       case '/planos': return 'Assinaturas';
       case '/auth': return 'Autenticação';
       case '/z-api': return 'Integração WhatsApp';
+      case '/resend-test': return 'Teste de E-mail';
       default:
         if (location.pathname.startsWith('/processo/')) {
             return isMobile ? 'Andamento' : 'Andamento do Processo';
@@ -181,6 +183,9 @@ function AppContent() {
             <Route path="/minha-conta" element={<MyAccount />} />
             <Route path="/processo/:cnj" element={<ProcessTimeline />} />
             <Route path="/z-api" element={<ZApiTest />} />
+            <Route path="/resend-test" element={
+              profile?.is_admin ? <ResendTest /> : <Navigate to="/" />
+            } />
             <Route path="/planos" element={<Pricing />} />
             <Route path="/monitoramento" element={
               <MonitorProcess 
