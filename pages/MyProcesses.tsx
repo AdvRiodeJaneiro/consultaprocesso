@@ -65,8 +65,8 @@ const MyProcesses: React.FC = () => {
   if (!user) {
     return (
       <div className="flex-1 bg-background dark:bg-background-dark p-8 flex flex-col items-center min-h-[calc(100vh-80px)]">
-        <EmptyStateAnimation 
-          title="Monitore o andamento do seu processo e receba a atualização no seu Whatsapp."
+        <EmptyStateAnimation
+          title="Monitore o andamento do seu processo e receba a atualização no seu e-mail."
           description="Faça login para gerenciar seus processos monitorados."
           buttonText="Fazer Login"
           onButtonClick={() => navigate('/auth', { state: { from: '/meus-processos' } })}
@@ -95,7 +95,7 @@ const MyProcesses: React.FC = () => {
       <div className="max-w-6xl mx-auto w-full flex-1 flex flex-col">
         <div className="mb-10">
           <h2 className="text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Meus Processos</h2>
-          <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg font-medium">Processos monitorados com alertas via WhatsApp</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg font-medium">Processos monitorados com alertas via e-mail</p>
         </div>
 
         {/* Barra de Busca */}

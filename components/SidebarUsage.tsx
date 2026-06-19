@@ -117,9 +117,9 @@ export const SidebarUsage: React.FC = () => {
             type="search" 
             updateTrigger={updateTrigger}
           />
-          <UsageItem 
-            label="Monitoramento Whatsapp" 
-            type="monitoring" 
+          <UsageItem
+            label="Monitoramento E-mail"
+            type="monitoring"
             updateTrigger={updateTrigger}
           />
         </div>

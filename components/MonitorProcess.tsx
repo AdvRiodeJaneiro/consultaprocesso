@@ -107,7 +107,7 @@ const MonitorProcess: React.FC<MonitorProcessProps> = () => {
                 Consulta CPF, CNPJ e Nome
               </span>
             </div>
-            <p className="text-slate-500 dark:text-slate-400 text-sm md:text-lg font-medium">Busque e escolha o processo para receber atualizações no Whatsapp</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm md:text-lg font-medium">Busque e escolha o processo para receber atualizações por e-mail</p>
           </div>
           <button 
             onClick={() => setIsHistoryOpen(true)}

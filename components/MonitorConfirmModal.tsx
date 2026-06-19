@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { X, MessageCircle, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
+import { X, FileText, CheckCircle2, ArrowRight, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EscavadorProcesso } from '../types';
 
@@ -60,10 +60,10 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
 
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full px-16">
                   <div className="h-[2px] w-full border-t-2 border-dashed border-gray-200 relative">
-                    <motion.div 
+                    <motion.div
                       animate={{ x: ['-10%', '110%'], opacity: [0, 1, 0] }}
                       transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                      className="absolute top-1/2 -translate-y-1/2 text-[#25D366]"
+                      className="absolute top-1/2 -translate-y-1/2 text-indigo-600"
                     >
                       <ArrowRight size={24} />
                     </motion.div>
@@ -87,9 +87,9 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: [0, 1.1, 1], opacity: 1 }}
                         transition={{ repeat: Infinity, duration: 3, times: [0, 0.2, 0.3] }}
-                        className="bg-[#25D366] text-white p-1 rounded-lg w-full flex items-center justify-center shadow-md shadow-green-900/50"
+                        className="bg-indigo-600 text-white p-1 rounded-lg w-full flex items-center justify-center shadow-md shadow-indigo-900/50"
                        >
-                        <MessageCircle size={14} fill="white" />
+                        <Mail size={14} />
                        </motion.div>
                        <motion.div
                          animate={{ opacity: [0.3, 0.6, 0.3] }}
@@ -103,12 +103,12 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
                        />
                     </motion.div>
                   </div>
-                  <motion.div 
+                  <motion.div
                     animate={{ y: [0, -5, 0] }}
                     transition={{ repeat: Infinity, duration: 2 }}
                     className="absolute -top-3 -right-3 bg-white p-1.5 rounded-full shadow-lg border border-gray-50"
                   >
-                    <MessageCircle size={20} className="text-[#25D366]" fill="#25D366" />
+                    <Mail size={20} className="text-indigo-600" />
                   </motion.div>
                 </motion.div>
               </div>
@@ -119,7 +119,7 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
                 Monitore esse processo
               </h3>
               <p className="text-gray-500 leading-relaxed mb-4 text-sm">
-                Pronto, agora você pode ficar tranquilo, sempre que uma atualização chegar sobre esse processo você receberá em seu <span className="text-[#25D366] font-bold">WhatsApp</span>.
+                Pronto, agora você pode ficar tranquilo: sempre que uma atualização chegar sobre esse processo, você a receberá em seu <span className="text-indigo-600 font-bold">E-mail de Cadastro</span>.
               </p>
               
               <div className="bg-gray-50 rounded-xl p-3 mb-8 border border-gray-100">

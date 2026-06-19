@@ -39,17 +39,7 @@ const Header: React.FC<HeaderProps> = ({ viewTitle, onWhatsappClick, onNewSearch
       </div>
       
       <div className="flex items-center gap-2 md:gap-4 flex-1 justify-end">
-        <button 
-          onClick={onWhatsappClick}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 md:px-5 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-bold transition-all shadow-sm whitespace-nowrap"
-        >
-          <MessageSquare size={16} className="md:w-[18px] md:h-[18px]" />
-          <span>
-            {isHome ? 'Monitorar processo Whatsapp' : 'Configurar WhatsApp'}
-          </span>
-        </button>
-        
-        <button 
+        <button
           onClick={isHome ? onNewSearchClick : undefined}
           className="size-9 md:size-10 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 shrink-0"
           title={isHome ? "Nova Consulta" : "Notificações"}
