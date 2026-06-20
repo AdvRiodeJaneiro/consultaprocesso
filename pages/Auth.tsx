@@ -10,6 +10,14 @@ export default function Auth() {
   // Verifica se deve iniciar no modo cadastro (ex: vindo do modal de monitoramento ou whatsapp)
   const isSignupMode = location.state?.mode === 'signup';
   const initialWhatsapp = location.state?.whatsapp || '';
+  const isResetMode = location.search.includes('reset=true') || location.hash.includes('type=recovery');
+
+  const getSubTitle = () => {
+    if (isResetMode) {
+      return "Defina uma nova senha para restabelecer o acesso à sua conta";
+    }
+    return "Acesse sua conta para monitorar andamentos do seu processo por e-mail";
+  };
 
   const handleBack = () => {
     // Se houver histórico de navegação, volta. Senão vai para a home.
@@ -43,7 +51,7 @@ export default function Auth() {
           </div>
           <h1 className="text-3xl font-bold text-deep-indigo dark:text-white">Consulta Processo</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2">
-            Acesse sua conta para monitorar andamentos do seu processo via Whatsapp
+            {getSubTitle()}
           </p>
         </div>
 
