@@ -116,6 +116,87 @@ serve(async (req) => {
             })
         }
 
+        // 4. Send Confirmation Email (Resend)
+        const resendApiKey = Deno.env.get('RESEND_API_KEY');
+        if (resendApiKey) {
+          try {
+            // Fetch profile details
+            const { data: profile } = await supabaseAdmin
+              .from('profiles')
+              .select('email, first_name')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            const userEmail = profile?.email;
+            const userName = profile?.first_name || "Doutor(a)";
+
+            if (userEmail) {
+              let finalSubject = `🔍 Monitoramento Ativo - Processo CNJ: ${processNumber}`;
+              let emailHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <meta charset="utf-8">
+                  <title>Monitoramento Ativo</title>
+                </head>
+                <body>
+                  <h2>Monitoramento Ativo</h2>
+                  <p>Olá, <strong>${userName}</strong>,</p>
+                  <p>Seu processo de número <strong>${processNumber}</strong> está sendo monitorado com sucesso.</p>
+                </body>
+                </html>
+              `;
+
+              // Load template from DB
+              const { data: templateData } = await supabaseAdmin
+                .from('email_templates')
+                .select('subject, body_html')
+                .eq('slug', 'monitoring_confirmation')
+                .maybeSingle();
+
+              if (templateData) {
+                const linkPainel = `https://consulta.advogadoriodejaneiro.com/processo/${processNumber}`;
+
+                let body = templateData.body_html;
+                body = body.replace(/\{\{nome_usuario\}\}/g, userName);
+                body = body.replace(/\{\{numero_processo\}\}/g, processNumber);
+                body = body.replace(/\{\{link_painel\}\}/g, linkPainel);
+
+                emailHtml = body;
+
+                let subj = templateData.subject;
+                subj = subj.replace(/\{\{nome_usuario\}\}/g, userName);
+                subj = subj.replace(/\{\{numero_processo\}\}/g, processNumber);
+                finalSubject = subj;
+              }
+
+              console.log("[manage-monitoring] Enviando e-mail de confirmação para:", userEmail);
+              const emailRes = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${resendApiKey}`
+                },
+                body: JSON.stringify({
+                  from: 'Consulta Processo <consultaprocesso@advogadoriodejaneiro.com>',
+                  to: [userEmail],
+                  subject: finalSubject,
+                  html: emailHtml
+                })
+              });
+
+              if (!emailRes.ok) {
+                const errData = await emailRes.json();
+                console.error("[manage-monitoring] Erro ao enviar e-mail via Resend:", errData);
+              } else {
+                console.log("[manage-monitoring] E-mail de confirmação enviado com sucesso!");
+              }
+            }
+          } catch (emailErr) {
+            console.error("[manage-monitoring] Erro no envio do e-mail de confirmação:", emailErr);
+          }
+        }
+
         return new Response(JSON.stringify(dbData), {
             status: 200,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }

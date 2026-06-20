@@ -17,6 +17,7 @@ import MyProcesses from './pages/MyProcesses';
 import ProcessTimeline from './pages/ProcessTimeline';
 import ZApiTest from './pages/ZApiTest';
 import ResendTest from './pages/ResendTest';
+import EmailTemplates from './pages/EmailTemplates';
 import AdminSettings from './pages/AdminSettings';
 import UsageLimits from './pages/UsageLimits';
 import Pricing from './pages/Pricing';
@@ -101,6 +102,7 @@ function AppContent() {
       case '/auth': return 'Autenticação';
       case '/z-api': return 'Integração WhatsApp';
       case '/resend-test': return 'Teste de E-mail';
+      case '/email-templates': return 'Modelos de E-mail';
       default:
         if (location.pathname.startsWith('/processo/')) {
             return isMobile ? 'Andamento' : 'Andamento do Processo';
@@ -185,6 +187,9 @@ function AppContent() {
             <Route path="/z-api" element={<ZApiTest />} />
             <Route path="/resend-test" element={
               profile?.is_admin ? <ResendTest /> : <Navigate to="/" />
+            } />
+            <Route path="/email-templates" element={
+              profile?.is_admin ? <EmailTemplates /> : <Navigate to="/" />
             } />
             <Route path="/planos" element={<Pricing />} />
             <Route path="/monitoramento" element={

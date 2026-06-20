@@ -7,7 +7,8 @@ import {
   ShieldCheck,
   Smartphone,
   Users,
-  UserCircle
+  UserCircle,
+  Mail
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -72,6 +73,13 @@ export const ADMIN_MENU: MenuItem[] = [
     label: 'Limites de Uso',
     icon: ShieldCheck,
     path: '/limites-de-uso',
+    adminOnly: true
+  },
+  {
+    id: 'email-templates',
+    label: 'Modelos de E-mail',
+    icon: Mail,
+    path: '/email-templates',
     adminOnly: true
   },
   {

@@ -77,7 +77,10 @@ serve(async (req) => {
       const resendApiKey = Deno.env.get('RESEND_API_KEY');
       if (resendApiKey && userEmail) {
         const header = isFirstTime ? "✅ Processo Localizado!" : "🔔 Nova Atualização";
-        const emailHtml = `
+        let finalSubject = `${isFirstTime ? '✅ Processo Localizado' : '🔔 Nova Atualização'} - CNJ: ${cnj}`;
+        
+        // Template padrão em caso de falha de carregamento
+        let emailHtml = `
           <!DOCTYPE html>
           <html>
           <head>
@@ -128,6 +131,35 @@ serve(async (req) => {
         `;
 
         try {
+          const { data: templateData } = await supabase
+            .from('email_templates')
+            .select('subject, body_html')
+            .eq('slug', 'process_update')
+            .maybeSingle();
+
+          if (templateData) {
+            const userName = userProfile?.first_name || "Doutor(a)";
+            const linkPainel = `https://consulta.advogadoriodejaneiro.com/processo/${cnj}`;
+
+            let body = templateData.body_html;
+            body = body.replace(/\{\{nome_usuario\}\}/g, userName);
+            body = body.replace(/\{\{numero_processo\}\}/g, cnj);
+            body = body.replace(/\{\{resumo_ia\}\}/g, resumoSimples);
+            body = body.replace(/\{\{link_painel\}\}/g, linkPainel);
+            
+            emailHtml = body;
+
+            let subj = templateData.subject;
+            subj = subj.replace(/\{\{nome_usuario\}\}/g, userName);
+            subj = subj.replace(/\{\{numero_processo\}\}/g, cnj);
+            subj = subj.replace(/\{\{resumo_ia\}\}/g, resumoSimples);
+            finalSubject = subj;
+          }
+        } catch (templateErr) {
+          console.error("[escavador-webhook] Erro ao buscar template no banco de dados:", templateErr);
+        }
+
+        try {
           console.log("[escavador-webhook] Enviando e-mail de atualização para:", userEmail);
           const emailRes = await fetch('https://api.resend.com/emails', {
             method: 'POST',
@@ -138,7 +170,7 @@ serve(async (req) => {
             body: JSON.stringify({
               from: 'Consulta Processo <consultaprocesso@advogadoriodejaneiro.com>',
               to: [userEmail],
-              subject: `${isFirstTime ? '✅ Processo Localizado' : '🔔 Nova Atualização'} - CNJ: ${cnj}`,
+              subject: finalSubject,
               html: emailHtml
             })
           });
