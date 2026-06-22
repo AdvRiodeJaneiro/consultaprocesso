@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,10 +7,12 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
+  // 1. AUTENTICAÇÃO SEGURA NO SERVIDOR
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -18,10 +21,47 @@ serve(async (req) => {
     })
   }
 
+  const supabaseAdmin = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  )
+
+  const token = authHeader.replace('Bearer ', '')
+  const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
+
+  if (userError || !user) {
+    return new Response(JSON.stringify({ error: 'Invalid token' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+  }
+
   try {
     const { userMessage, processData, isFirstInteraction } = await req.json()
-    const GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY')
 
+    // 2. VERIFICAÇÃO BLINDADA DE CRÉDITOS NO BACKEND
+    const { data: hasLimit, error: limitError } = await supabaseAdmin.rpc('check_user_usage_limit', {
+        target_user_id: user.id,
+        usage_type: 'process'
+    })
+
+    if (limitError) {
+        console.error("[process-analysis] Erro ao checar limite no banco:", limitError)
+    } else if (hasLimit === false) {
+        console.warn(`[process-analysis] Usuário ${user.id} tentou acessar IA sem créditos.`);
+        return new Response(JSON.stringify({ error: 'Limit reached' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+    }
+
+    const GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY')
     if (!GEMINI_API_KEY) {
       console.error("[process-analysis] API Key (GOOGLE_GEMINI_API_KEY) is missing in Secrets");
       return new Response(JSON.stringify({ error: 'Server configuration error' }), {
@@ -169,6 +209,18 @@ serve(async (req) => {
 
     const result = await response.json();
     const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Não consegui gerar uma resposta.";
+
+    // 3. COBRANÇA ATÔMICA APÓS SUCESSO DO RETORNO DO GEMINI
+    const { error: incrementError } = await supabaseAdmin.rpc('increment_user_usage', {
+        target_user_id: user.id,
+        usage_type: 'process'
+    });
+
+    if (incrementError) {
+        console.error("[process-analysis] Erro ao debitar 1 crédito do usuário no banco:", incrementError);
+    } else {
+        console.log(`[process-analysis] 1 Crédito de IA debitado com sucesso do usuário: ${user.id}`);
+    }
 
     return new Response(JSON.stringify({ text }), {
       status: 200,

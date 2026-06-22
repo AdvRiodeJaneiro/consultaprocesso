@@ -115,11 +115,19 @@ export function useChat() {
 
     } catch (error: any) {
       console.error(error);
+      const isLimitError = error.message?.includes('Limit reached') || error.status === 403 || error.context?.status === 403;
+      
       setMessages(prev => prev.map(m => m.id === loadingId ? {
         ...m,
         isLoading: false,
-        content: "⚠️ Não foi possível carregar a tradução com IA neste momento. Caso precise de esclarecimentos rápidos, fale com um de nossos advogados."
+        content: isLimitError
+          ? "⚠️ Você atingiu seu limite de créditos de IA para este processo. Faça um upgrade de plano no menu para continuar."
+          : "⚠️ Não foi possível carregar a tradução com IA neste momento. Caso precise de esclarecimentos rápidos, fale com um de nossos advogados."
       } : m));
+
+      if (isLimitError) {
+        toast.error("Limite de créditos de IA atingido.");
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -244,13 +252,30 @@ ${movesList}
           isLoading: true
         }]);
 
-        const answer = await generateLegalAnalysis(userText, activeProcess, false);
+        try {
+          const answer = await generateLegalAnalysis(userText, activeProcess, false);
 
-        setMessages(prev => prev.map(m => m.id === loadingId ? {
-          ...m,
-          isLoading: false,
-          content: answer
-        } : m));
+          setMessages(prev => prev.map(m => m.id === loadingId ? {
+            ...m,
+            isLoading: false,
+            content: answer
+          } : m));
+        } catch (error: any) {
+          console.error(error);
+          const isLimitError = error.message?.includes('Limit reached') || error.status === 403 || error.context?.status === 403;
+          
+          setMessages(prev => prev.map(m => m.id === loadingId ? {
+            ...m,
+            isLoading: false,
+            content: isLimitError
+              ? "⚠️ Limite de créditos de IA atingido. Faça um upgrade de plano para continuar perguntando à IA."
+              : "⚠️ Não foi possível obter a resposta jurídica neste momento."
+          } : m));
+
+          if (isLimitError) {
+            toast.error("Limite de créditos de IA atingido.");
+          }
+        }
       }
 
     } catch (error: any) {

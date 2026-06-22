@@ -7,25 +7,19 @@ import { EscavadorProcesso } from '../types';
  */
 
 export const generateLegalAnalysis = async (
-  userMessage: string, 
+  userMessage: string,
   processData: EscavadorProcesso,
   isFirstInteraction: boolean
 ): Promise<string> => {
-  
-  try {
-    const { data, error } = await supabase.functions.invoke('process-analysis', {
-      body: { userMessage, processData, isFirstInteraction }
-    });
+  const { data, error } = await supabase.functions.invoke('process-analysis', {
+    body: { userMessage, processData, isFirstInteraction }
+  });
 
-    if (error) {
-      console.error("[Gemini Analysis Error]:", error);
-      throw new Error(error.message || "Não foi possível gerar a análise jurídica.");
-    }
-
-    return data?.text || "Não consegui gerar uma resposta.";
-
-  } catch (error: any) {
-    console.error("Gemini Error:", error);
-    return "Desculpe, tive um problema ao processar sua solicitação no servidor. Tente novamente.";
+  if (error) {
+    console.error("[Gemini Analysis Error]:", error);
+    // Propaga o erro real para o chamador tratar (por exemplo, limite excedido)
+    throw error;
   }
+
+  return data?.text || "Não consegui gerar uma resposta.";
 };
