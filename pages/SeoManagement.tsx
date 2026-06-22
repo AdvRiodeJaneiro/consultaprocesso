@@ -269,21 +269,6 @@ export default function SeoManagement() {
                 </div>
               </div>
 
-              {/* Dicas de compartilhamento (Open Graph) */}
-              <div className="bg-white dark:bg-slate-900 rounded-[24px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
-                <div className="flex items-center gap-2">
-                  <HelpCircle size={16} className="text-slate-400" />
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none">Vercel & Open Graph</h4>
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed space-y-3">
-                  <p>
-                    ⚡ <strong>Vercel Middleware Ativo:</strong> Ao salvar, estas meta-tags são gravadas no banco e o <strong>Vercel Edge Middleware</strong> as injeta dinamicamente na raiz do seu site.
-                  </p>
-                  <p>
-                    💬 <strong>Compartilhamentos Ricos:</strong> Graças à injeção no servidor, o WhatsApp, Facebook e LinkedIn conseguirão extrair o título e descrição atualizados perfeitamente para exibir um card rico ao compartilhar o link.
-                  </p>
-                </div>
-              </div>
 
             </div>
 
