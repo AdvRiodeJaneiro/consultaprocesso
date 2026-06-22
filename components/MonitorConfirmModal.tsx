@@ -4,6 +4,7 @@ import React from 'react';
 import { X, FileText, CheckCircle2, ArrowRight, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EscavadorProcesso } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 interface MonitorConfirmModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface MonitorConfirmModalProps {
 }
 
 const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClose, onConfirm, process }) => {
+  const { user } = useAuth();
   if (!process) return null;
 
   return (
@@ -119,7 +121,7 @@ const MonitorConfirmModal: React.FC<MonitorConfirmModalProps> = ({ isOpen, onClo
                 Monitore esse processo
               </h3>
               <p className="text-gray-500 leading-relaxed mb-4 text-sm">
-                Pronto, agora você pode ficar tranquilo: sempre que uma atualização chegar sobre esse processo, você a receberá em seu <span className="text-indigo-600 font-bold">E-mail de Cadastro</span>.
+                Pronto, agora você pode ficar tranquilo: sempre que uma atualização chegar sobre esse processo, você a receberá em seu e-mail: <span className="text-indigo-600 font-bold">{user?.email || 'Cadastro'}</span>.
               </p>
               
               <div className="bg-gray-50 rounded-xl p-3 mb-8 border border-gray-100">

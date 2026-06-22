@@ -95,7 +95,9 @@ const MyProcesses: React.FC = () => {
       <div className="max-w-6xl mx-auto w-full flex-1 flex flex-col">
         <div className="mb-10">
           <h2 className="text-3xl font-black text-deep-indigo dark:text-white tracking-tight">Meus Processos</h2>
-          <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg font-medium">Processos monitorados com alertas via e-mail</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg font-medium">
+            Processos monitorados com alertas via e-mail: <span className="text-primary font-bold">{user?.email}</span>
+          </p>
         </div>
 
         {/* Barra de Busca */}
