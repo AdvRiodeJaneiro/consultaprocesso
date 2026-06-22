@@ -34,13 +34,22 @@ export function useChat() {
     // Remove o balão de sugestão de IA para não poluir o chat
     setMessages(prev => prev.filter(m => !m.isExplainAi));
 
-    setMessages(prev => [...prev, {
-      id: loadingId,
-      role: 'assistant',
-      content: 'Traduzindo os termos jurídicos e analisando o processo com a nossa Inteligência Artificial... Isso pode levar alguns segundos.',
-      timestamp: new Date(),
-      isLoading: true
-    }]);
+    setMessages(prev => [
+      ...prev,
+      {
+        id: 'divider-' + Date.now(),
+        role: 'system',
+        content: 'Explicação IA Jurídica',
+        timestamp: new Date()
+      },
+      {
+        id: loadingId,
+        role: 'assistant',
+        content: 'Traduzindo os termos jurídicos e analisando o processo com a nossa Inteligência Artificial... Isso pode levar alguns segundos.',
+        timestamp: new Date(),
+        isLoading: true
+      }
+    ]);
 
     try {
       const fullAnalysis = await generateLegalAnalysis("Analise este processo.", activeProcess, true);
