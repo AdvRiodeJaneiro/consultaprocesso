@@ -2,14 +2,15 @@ import React from 'react';
 import { Message } from '../types';
 import { ShiningText } from './ui/shining-text';
 import { WhatsappButtons } from './WhatsappButtons';
-import { Bell, ArrowRight } from 'lucide-react';
+import { Bell, ArrowRight, Sparkles } from 'lucide-react';
 
 interface ChatBubbleProps {
   message: Message;
   onMonitorClick?: () => void;
+  onExplainClick?: () => void;
 }
 
-export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onMonitorClick }) => {
+export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onMonitorClick, onExplainClick }) => {
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
 
@@ -18,6 +19,39 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onMonitorClick 
       <div className="flex justify-center my-4">
         <div className="bg-card text-primary text-xs px-3 py-1 rounded-full border border-border">
           {message.content}
+        </div>
+      </div>
+    );
+  }
+
+  // Handle Explain with AI Suggestion Card
+  if (message.isExplainAi) {
+    return (
+      <div className="flex w-full mb-6 justify-start">
+        <div className="max-w-[85%] md:max-w-[75%] rounded-2xl p-6 shadow-xl bg-gradient-to-br from-slate-900 via-indigo-950/40 to-slate-900 border border-purple-500/30 rounded-bl-none overflow-hidden relative group">
+           {/* Animated Background Effect */}
+           <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-purple-500/20 transition-all duration-700" />
+           
+           <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                 <div className="size-10 rounded-xl bg-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-900/50">
+                    <Sparkles size={20} className="animate-pulse" />
+                 </div>
+                 <h4 className="text-white font-black text-lg leading-tight">Traduzir com IA</h4>
+              </div>
+              
+              <p className="text-slate-300 text-sm mb-6 leading-relaxed font-medium">
+                {message.content}
+              </p>
+              
+              <button
+                onClick={onExplainClick}
+                className="w-full bg-purple-600 hover:bg-purple-500 text-white font-black py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-purple-900/40"
+              >
+                <span>Explicar com IA Jurídica</span>
+                <Sparkles size={18} />
+              </button>
+           </div>
         </div>
       </div>
     );
@@ -43,7 +77,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onMonitorClick 
                 {message.content}
               </p>
               
-              <button 
+              <button
                 onClick={onMonitorClick}
                 className="w-full bg-primary hover:bg-primary/90 text-deep-indigo font-black py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-primary/20"
               >

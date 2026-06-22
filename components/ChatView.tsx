@@ -17,6 +17,7 @@ interface ChatViewProps {
   handleSend: () => void;
   handleKeyDown: (e: React.KeyboardEvent) => void;
   handleTransitionToMonitor: () => void;
+  handleExplainAi?: () => void;
 }
 
 export function ChatView({
@@ -30,7 +31,8 @@ export function ChatView({
   handleWelcomeSubmit,
   handleSend,
   handleKeyDown,
-  handleTransitionToMonitor
+  handleTransitionToMonitor,
+  handleExplainAi
 }: ChatViewProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -61,10 +63,11 @@ export function ChatView({
           )}
 
           {messages.map((msg) => (
-            <ChatBubble 
-              key={msg.id} 
-              message={msg} 
+            <ChatBubble
+              key={msg.id}
+              message={msg}
               onMonitorClick={handleTransitionToMonitor}
+              onExplainClick={handleExplainAi}
             />
           ))}
           <div ref={messagesEndRef} />

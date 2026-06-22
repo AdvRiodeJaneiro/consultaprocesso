@@ -7,6 +7,7 @@ export interface Message {
   isError?: boolean;
   isContact?: boolean;
   isMonitorSuggestion?: boolean;
+  isExplainAi?: boolean;
 }
 
 export interface CNJParts {

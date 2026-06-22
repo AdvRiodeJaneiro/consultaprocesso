@@ -53,7 +53,8 @@ function AppContent() {
     setIsWhatsappModalOpen,
     resetSearch,
     handleWelcomeSubmit,
-    handleSend
+    handleSend,
+    handleExplainAi
   } = useChat();
 
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -180,6 +181,7 @@ function AppContent() {
                 }}
                 handleKeyDown={handleKeyDown}
                 handleTransitionToMonitor={handleTransitionToMonitor}
+                handleExplainAi={handleExplainAi}
               />
             } />
             <Route path="/auth" element={<Auth />} />

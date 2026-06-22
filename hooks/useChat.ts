@@ -25,6 +25,97 @@ export function useChat() {
     setShowWelcome(true);
   }, []);
 
+  const handleExplainAi = useCallback(async () => {
+    if (!activeProcess || isProcessing) return;
+    setIsProcessing(true);
+
+    const loadingId = 'loading-' + Date.now();
+    
+    // Remove o balão de sugestão de IA para não poluir o chat
+    setMessages(prev => prev.filter(m => !m.isExplainAi));
+
+    setMessages(prev => [...prev, {
+      id: loadingId,
+      role: 'assistant',
+      content: 'Traduzindo os termos jurídicos e analisando o processo com a nossa Inteligência Artificial... Isso pode levar alguns segundos.',
+      timestamp: new Date(),
+      isLoading: true
+    }]);
+
+    try {
+      const fullAnalysis = await generateLegalAnalysis("Analise este processo.", activeProcess, true);
+
+      const parts = fullAnalysis.split('<<<SPLIT>>>');
+      const summaryPart = parts[0] || "Resumo indisponível.";
+      const latestMovePart = parts[1] || "";
+      const historyPart = parts[2] || "";
+
+      setMessages(prev => prev.map(m => m.id === loadingId ? {
+        ...m,
+        isLoading: false,
+        content: summaryPart.trim()
+      } : m));
+
+      let delay = 600;
+
+      if (latestMovePart.trim().length > 5) {
+        setTimeout(() => {
+          setMessages(prev => [...prev, {
+            id: Date.now().toString() + '-latest',
+            role: 'assistant',
+            content: `### 🚨 Movimentação Mais Recente\n\n${latestMovePart.trim()}`,
+            timestamp: new Date()
+          }]);
+        }, delay);
+        delay += 800; 
+      }
+
+      if (historyPart.trim().length > 5 && !historyPart.includes("Sem mais movimentações")) {
+        setTimeout(() => {
+          setMessages(prev => [...prev, {
+            id: Date.now().toString() + '-history',
+            role: 'assistant',
+            content: `### 📜 Histórico Anterior\n\n${historyPart.trim()}`,
+            timestamp: new Date()
+          }]);
+        }, delay);
+        delay += 800;
+      }
+
+      // Sugestão de Monitoramento
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: Date.now().toString() + '-monitor-suggest',
+          role: 'assistant',
+          content: "Deseja monitorar esse processo e receber os andamentos sobre ele direto no seu Whatsapp?",
+          timestamp: new Date(),
+          isMonitorSuggestion: true
+        }]);
+      }, delay);
+      delay += 600;
+
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: Date.now().toString() + '-contact',
+          role: 'assistant',
+          content: "Dúvidas, fale com um advogado de nossa equipe:",
+          timestamp: new Date(),
+          isContact: true
+        }]);
+      }, delay);
+
+    } catch (error: any) {
+      console.error(error);
+      setMessages(prev => prev.map(m => m.id === loadingId ? {
+        ...m,
+        isLoading: false,
+        content: "⚠️ Não foi possível carregar a tradução com IA neste momento. Caso precise de esclarecimentos rápidos, fale com um de nossos advogados."
+      } : m));
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [activeProcess, isProcessing]);
+
   const processInput = useCallback(async (userText: string) => {
     if (!userText.trim() || isProcessing) return;
     
@@ -63,8 +154,7 @@ export function useChat() {
         const result = await legalDataService.fetchAndNutritiveProcess(userText);
 
         if (!result) {
-          // Se não retornou resultado, pode ser que o CNJ seja inválido ou não encontrado
-          const isInvalidCNJ = userText.length < 11; // Simples check para exemplo
+          const isInvalidCNJ = userText.length < 11;
           
           setMessages(prev => prev.map(m => m.id === loadingId ? {
             ...m,
@@ -80,72 +170,35 @@ export function useChat() {
         const { processData } = result;
         setActiveProcess(processData);
         
-        // O uso de 'process' agora é incrementado automaticamente pela Edge Function
-        // durante a chamada fetchProcessData em legalDataService.
         await incrementUsage('process');
 
-        // 3. Gera Análise com o objeto agora "Nutrido"
+        // Retorna os dados BRUTOS do processo na tela primeiro (Sem acionar IA)
+        const rawMessageContent = `### 🔍 Processo Localizado!
 
-        const fullAnalysis = await generateLegalAnalysis("Analise este processo.", processData, true);
+**⚖️ Número CNJ:** ${processData.numero_cnj}
+**👷🏻‍♂️ Autor:** ${processData.titulo_polo_ativo || "Não informado"}
+**🏬 Réu:** ${processData.titulo_polo_passivo || "Não informado"}
+**📅 Última Movimentação:** ${processData.data_ultima_movimentacao || "Não informada"}
 
-        const parts = fullAnalysis.split('<<<SPLIT>>>');
-        const summaryPart = parts[0] || "Resumo indisponível.";
-        const latestMovePart = parts[1] || "";
-        const historyPart = parts[2] || "";
+**📄 Última Etapa do Tribunal:**
+${processData.movimentacoes?.[0] ? `- **Tipo:** ${processData.movimentacoes[0].tipo}\n- **Conteúdo:** ${processData.movimentacoes[0].conteudo}` : "Aguardando novas movimentações do tribunal."}`;
 
         setMessages(prev => prev.map(m => m.id === loadingId ? {
           ...m,
           isLoading: false,
-          content: summaryPart.trim()
+          content: rawMessageContent
         } : m));
 
-        let delay = 600;
-
-        if (latestMovePart.trim().length > 5) {
-          setTimeout(() => {
-            setMessages(prev => [...prev, {
-              id: Date.now().toString() + '-latest',
-              role: 'assistant',
-              content: `### 🚨 Movimentação Mais Recente\n\n${latestMovePart.trim()}`,
-              timestamp: new Date()
-            }]);
-          }, delay);
-          delay += 800; 
-        }
-
-        if (historyPart.trim().length > 5 && !historyPart.includes("Sem mais movimentações")) {
-          setTimeout(() => {
-            setMessages(prev => [...prev, {
-              id: Date.now().toString() + '-history',
-              role: 'assistant',
-              content: `### 📜 Histórico Anterior\n\n${historyPart.trim()}`,
-              timestamp: new Date()
-            }]);
-          }, delay);
-          delay += 800;
-        }
-
-        // Sugestão de Monitoramento
+        // Adiciona a oferta para tradução com IA
         setTimeout(() => {
           setMessages(prev => [...prev, {
-            id: Date.now().toString() + '-monitor-suggest',
+            id: Date.now().toString() + '-explain-suggest',
             role: 'assistant',
-            content: "Deseja monitorar esse processo e receber os andamentos sobre ele direto no seu Whatsapp?",
+            content: "Os dados técnicos acima podem parecer complexos. Gostaria de traduzir os termos técnicos do processo e as movimentações judiciais para uma linguagem simples e clara?",
             timestamp: new Date(),
-            isMonitorSuggestion: true
+            isExplainAi: true
           }]);
-        }, delay);
-        delay += 600;
-
-        setTimeout(() => {
-          setMessages(prev => [...prev, {
-            id: Date.now().toString() + '-contact',
-            role: 'assistant',
-            content: "Dúvidas, fale com um advogado de nossa equipe:",
-            timestamp: new Date(),
-            isContact: true
-          }]);
-        }, delay);
+        }, 600);
 
       } else {
         const loadingId = 'loading-' + Date.now();
@@ -225,6 +278,7 @@ export function useChat() {
     setIsWhatsappModalOpen,
     resetSearch,
     handleWelcomeSubmit,
-    handleSend
+    handleSend,
+    handleExplainAi
   };
 }
