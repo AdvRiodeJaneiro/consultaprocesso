@@ -139,7 +139,7 @@ serve(async (req) => {
 
           if (templateData) {
             const userName = userProfile?.first_name || "Doutor(a)";
-            const linkPainel = `https://consulta.advogadoriodejaneiro.com/processo/${cnj}`;
+            const linkPainel = `https://consultaprocesso.advogadoriodejaneiro.com/meus-processos`;
 
             let body = templateData.body_html;
             body = body.replace(/\{\{nome_usuario\}\}/g, userName);

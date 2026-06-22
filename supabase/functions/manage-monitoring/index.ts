@@ -155,7 +155,7 @@ serve(async (req) => {
                 .maybeSingle();
 
               if (templateData) {
-                const linkPainel = `https://consulta.advogadoriodejaneiro.com/processo/${processNumber}`;
+                const linkPainel = `https://consultaprocesso.advogadoriodejaneiro.com/meus-processos`;
 
                 let body = templateData.body_html;
                 body = body.replace(/\{\{nome_usuario\}\}/g, userName);
