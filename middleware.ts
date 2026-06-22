@@ -27,7 +27,7 @@ export default async function middleware(req: Request) {
     });
     clearTimeout(timeoutId);
 
-    let seoTitle = "Consulta Processo IA";
+    let seoTitle = "Advogado Rio de Janeiro | Consulta Processo - Consulta Processual";
     let seoDescription = "Monitore seus processos jurídicos com inteligência artificial.";
     let seoKeywords = "advogado, processo, cnj, tribunal";
 
