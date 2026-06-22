@@ -18,6 +18,7 @@ import ProcessTimeline from './pages/ProcessTimeline';
 import ZApiTest from './pages/ZApiTest';
 import ResendTest from './pages/ResendTest';
 import EmailTemplates from './pages/EmailTemplates';
+import SeoManagement from './pages/SeoManagement';
 import AdminSettings from './pages/AdminSettings';
 import UsageLimits from './pages/UsageLimits';
 import Pricing from './pages/Pricing';
@@ -103,6 +104,7 @@ function AppContent() {
       case '/z-api': return 'Integração WhatsApp';
       case '/resend-test': return 'Teste de E-mail';
       case '/email-templates': return 'Modelos de E-mail';
+      case '/adm/seo': return 'SEO Google';
       default:
         if (location.pathname.startsWith('/processo/')) {
             return isMobile ? 'Andamento' : 'Andamento do Processo';
@@ -190,6 +192,9 @@ function AppContent() {
             } />
             <Route path="/email-templates" element={
               profile?.is_admin ? <EmailTemplates /> : <Navigate to="/" />
+            } />
+            <Route path="/adm/seo" element={
+              profile?.is_admin ? <SeoManagement /> : <Navigate to="/" />
             } />
             <Route path="/planos" element={<Pricing />} />
             <Route path="/monitoramento" element={

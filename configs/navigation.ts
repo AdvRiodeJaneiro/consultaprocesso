@@ -8,7 +8,8 @@ import {
   Smartphone,
   Users,
   UserCircle,
-  Mail
+  Mail,
+  Globe
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -80,6 +81,13 @@ export const ADMIN_MENU: MenuItem[] = [
     label: 'Modelos de E-mail',
     icon: Mail,
     path: '/email-templates',
+    adminOnly: true
+  },
+  {
+    id: 'seo-management',
+    label: 'SEO Google',
+    icon: Globe,
+    path: '/adm/seo',
     adminOnly: true
   },
   {

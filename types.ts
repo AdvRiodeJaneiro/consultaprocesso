@@ -95,3 +95,18 @@ export interface Profile {
   process_credits?: number;
   monitoring_credits?: number;
 }
+
+export interface AdminSettings {
+  guest_search_limit?: number;
+  guest_process_limit?: number;
+  guest_monitoring_limit?: number;
+  free_search_limit?: number;
+  free_process_limit?: number;
+  free_monitoring_limit?: number;
+  admin_search_limit?: number;
+  admin_process_limit?: number;
+  admin_monitoring_limit?: number;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
+}
