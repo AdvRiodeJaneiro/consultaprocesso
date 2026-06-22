@@ -3,6 +3,7 @@ import { Message, EscavadorProcesso } from '../types';
 import { legalDataService } from '../services/legalDataService';
 import { generateLegalAnalysis } from '../services/geminiService';
 import { useSearchLimit } from './useSearchLimit';
+import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 
 export function useChat() {
@@ -17,6 +18,7 @@ export function useChat() {
   const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
   
   const { checkLimit, incrementUsage } = useSearchLimit();
+  const { refreshProfile } = useAuth();
 
   const resetSearch = useCallback(() => {
     setActiveProcess(null);
@@ -53,6 +55,9 @@ export function useChat() {
 
     try {
       const fullAnalysis = await generateLegalAnalysis("Analise este processo.", activeProcess, true);
+      
+      // Atualiza o perfil e os créditos imediatamente na interface do usuário
+      refreshProfile().catch(err => console.error("Erro ao atualizar perfil:", err));
 
       const parts = fullAnalysis.split('<<<SPLIT>>>');
       const summaryPart = parts[0] || "Resumo indisponível.";
@@ -254,6 +259,9 @@ ${movesList}
 
         try {
           const answer = await generateLegalAnalysis(userText, activeProcess, false);
+          
+          // Atualiza o perfil e os créditos imediatamente na interface do usuário
+          refreshProfile().catch(err => console.error("Erro ao atualizar perfil:", err));
 
           setMessages(prev => prev.map(m => m.id === loadingId ? {
             ...m,
