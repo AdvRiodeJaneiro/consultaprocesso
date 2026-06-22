@@ -101,7 +101,7 @@ export function useChat() {
         setMessages(prev => [...prev, {
           id: Date.now().toString() + '-monitor-suggest',
           role: 'assistant',
-          content: "Deseja monitorar esse processo e receber os andamentos sobre ele direto no seu Whatsapp?",
+          content: "Deseja monitorar esse processo e receber os andamentos sobre ele direto no seu E-mail?",
           timestamp: new Date(),
           isMonitorSuggestion: true
         }]);
