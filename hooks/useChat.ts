@@ -172,16 +172,41 @@ export function useChat() {
         
         await incrementUsage('process');
 
-        // Retorna os dados BRUTOS do processo na tela primeiro (Sem acionar IA)
+        const mainFonte = processData.fontes?.[0];
+        const capa = mainFonte?.capa;
+        const valorCausa = capa?.valor_causa?.valor_formatado || "Não informado";
+        
+        // Formata os envolvidos
+        const envolvidosList = mainFonte?.envolvidos?.map(env => {
+          const oabs = env.oabs?.map(o => `${o.uf}-${o.numero}`).join(', ') || '';
+          return `- **${env.nome}** (${env.polo})${oabs ? ` - OAB: ${oabs}` : ''}`;
+        }).join('\n') || '- Não informados';
+
+        // Lista as últimas 5 movimentações brutas de forma clara
+        const movesList = processData.movimentacoes?.slice(0, 5).map(m => {
+          return `📅 **${m.data}** - *${m.tipo}*\n${m.conteudo}\n`;
+        }).join('\n') || 'Nenhuma movimentação listada.';
+
+        // Retorna os dados BRUTOS detalhados do processo na tela primeiro (Sem acionar IA)
         const rawMessageContent = `### 🔍 Processo Localizado!
 
 **⚖️ Número CNJ:** ${processData.numero_cnj}
-**👷🏻‍♂️ Autor:** ${processData.titulo_polo_ativo || "Não informado"}
-**🏬 Réu:** ${processData.titulo_polo_passivo || "Não informado"}
-**📅 Última Movimentação:** ${processData.data_ultima_movimentacao || "Não informada"}
+**📅 Início:** ${processData.data_inicio || "Não informado"}
+** Última Movimentação:** ${processData.data_ultima_movimentacao || "Não informada"}
 
-**📄 Última Etapa do Tribunal:**
-${processData.movimentacoes?.[0] ? `- **Tipo:** ${processData.movimentacoes[0].tipo}\n- **Conteúdo:** ${processData.movimentacoes[0].conteudo}` : "Aguardando novas movimentações do tribunal."}`;
+#### 🏬 Capa do Processo:
+- **Assunto:** ${capa?.assunto || "Não informado"}
+- **Classe:** ${capa?.classe || "Não informado"}
+- **Área:** ${capa?.area || "Não informada"}
+- **Órgão Julgador:** ${capa?.orgao_julgador || "Não informado"}
+- **Valor da Causa:** ${valorCausa}
+
+#### 👥 Partes do Processo:
+${envolvidosList}
+
+#### 📄 Últimas Movimentações no Tribunal (Bruto):
+${movesList}
+`;
 
         setMessages(prev => prev.map(m => m.id === loadingId ? {
           ...m,
