@@ -1,0 +1,283 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
+  console.log("[cron-process-monitoring] Iniciando execução do monitoramento...");
+
+  const supabaseAdmin = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  )
+
+  try {
+    let processesToCheck = [];
+    let isTest = false;
+    let testUserId = null;
+
+    // Tentar ler o corpo da requisição para verificar se é um teste
+    try {
+      const body = await req.json();
+      if (body && body.test_process_number) {
+        isTest = true;
+        testUserId = body.test_user_id;
+        console.log(`[cron-process-monitoring] Executando em modo de TESTE para o processo: ${body.test_process_number}`);
+
+        const { data: existingProc } = await supabaseAdmin
+          .from('monitored_processes')
+          .select('*')
+          .eq('process_number', body.test_process_number)
+          .maybeSingle();
+
+        if (existingProc) {
+          processesToCheck = [existingProc];
+        } else {
+          processesToCheck = [{
+            id: "00000000-0000-0000-0000-000000000000",
+            user_id: testUserId,
+            process_number: body.test_process_number,
+            status: 'ATIVO',
+            last_movement_date: null
+          }];
+        }
+      }
+    } catch (e) {
+      // Sem corpo JSON ou erro ao ler, segue fluxo normal do cron
+    }
+
+    if (!isTest) {
+      const { data: processes, error: procError } = await supabaseAdmin
+        .from('monitored_processes')
+        .select('*')
+        .eq('status', 'ATIVO');
+
+      if (procError) {
+        console.error("[cron-process-monitoring] Erro ao buscar processos ativos:", procError);
+        return new Response(JSON.stringify({ error: 'Erro ao buscar processos ativos' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      processesToCheck = processes || [];
+    }
+
+    console.log(`[cron-process-monitoring] Encontrados ${processesToCheck.length} processos para verificar.`);
+
+    const ESC_API_KEY = Deno.env.get('ESCAVADOR_API_KEY')
+    const BASE_URL = "https://api.escavador.com/api/v2"
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+
+    if (!ESC_API_KEY) {
+      console.error("[cron-process-monitoring] API Key do Escavador ausente.");
+      return new Response(JSON.stringify({ error: 'Configuração do servidor ausente' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const results = [];
+
+    for (let i = 0; i < processesToCheck.length; i++) {
+      const proc = processesToCheck[i];
+      console.log(`[cron-process-monitoring] Processando (${i + 1}/${processesToCheck.length}): ${proc.process_number}`);
+
+      if (i > 0) {
+        console.log("[cron-process-monitoring] Aguardando 5 segundos antes da próxima busca...");
+        await delay(5000);
+      }
+
+      try {
+        // A. Buscar dados da capa do processo no Escavador
+        const escResponse = await fetch(`${BASE_URL}/processos/numero_cnj/${proc.process_number}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${ESC_API_KEY}`,
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        if (!escResponse.ok) {
+          console.error(`[cron-process-monitoring] Erro ao buscar capa do processo ${proc.process_number}:`, escResponse.status);
+          results.push({ process_number: proc.process_number, success: false, error: `Erro na capa: ${escResponse.status}` });
+          continue;
+        }
+
+        const processData = await escResponse.json();
+
+        // B. Buscar movimentações detalhadas no Escavador
+        const movementsResponse = await fetch(`${BASE_URL}/processos/numero_cnj/${proc.process_number}/movimentacoes`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${ESC_API_KEY}`,
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        if (movementsResponse.ok) {
+          const movementsData = await movementsResponse.json();
+          if (movementsData && movementsData.items) {
+            processData.movimentacoes = movementsData.items;
+          }
+        } else {
+          console.warn(`[cron-process-monitoring] Erro ao buscar movimentações do processo ${proc.process_number}:`, movementsResponse.status);
+        }
+
+        // C. Determinar a data da última movimentação
+        const latestMoveDate = processData.movimentacoes?.[0]?.data || processData.data_ultima_movimentacao || "";
+        const latestMoveContent = processData.movimentacoes?.[0]?.conteudo || "Nenhuma movimentação detalhada listada.";
+
+        // D. Comparar com a última data conhecida
+        const hasProgress = proc.last_movement_date ? (latestMoveDate > proc.last_movement_date) : true;
+        console.log(`[cron-process-monitoring] Processo ${proc.process_number}: Data anterior: ${proc.last_movement_date} | Nova data: ${latestMoveDate} | Tem progresso: ${hasProgress}`);
+
+        // E. Salvar no histórico de monitoramento (apenas se não for um mock de teste)
+        if (proc.id !== "00000000-0000-0000-0000-000000000000") {
+          const { error: histError } = await supabaseAdmin
+            .from('monitored_process_history')
+            .insert({
+              monitored_process_id: proc.id,
+              user_id: proc.user_id,
+              raw_data: processData,
+              last_movement_date: latestMoveDate,
+              has_progress: hasProgress,
+              email_sent: true
+            });
+
+          if (histError) {
+            console.error(`[cron-process-monitoring] Erro ao salvar histórico do processo ${proc.process_number}:`, histError);
+          }
+
+          // F. Atualizar o processo monitorado
+          const { error: updateError } = await supabaseAdmin
+            .from('monitored_processes')
+            .update({
+              last_movement_date: latestMoveDate,
+              last_movement_summary: latestMoveContent,
+              last_checked_at: new Date().toISOString(),
+              has_new_updates: hasProgress
+            })
+            .eq('id', proc.id);
+
+          if (updateError) {
+            console.error(`[cron-process-monitoring] Erro ao atualizar processo monitorado ${proc.process_number}:`, updateError);
+          }
+        }
+
+        // G. Debitar 1 crédito de monitoramento do perfil do usuário (apenas se não for teste)
+        const { data: profile, error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .select('email, first_name, monitoring_credits')
+          .eq('id', proc.user_id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error(`[cron-process-monitoring] Erro ao buscar perfil do usuário ${proc.user_id}:`, profileError);
+        } else if (profile) {
+          if (!isTest && proc.id !== "00000000-0000-0000-0000-000000000000") {
+            const currentCredits = profile.monitoring_credits || 0;
+            const newCredits = Math.max(currentCredits - 1, 0);
+
+            const { error: creditError } = await supabaseAdmin
+              .from('profiles')
+              .update({ monitoring_credits: newCredits })
+              .eq('id', proc.user_id);
+
+            if (creditError) {
+              console.error(`[cron-process-monitoring] Erro ao debitar crédito do usuário ${proc.user_id}:`, creditError);
+            } else {
+              console.log(`[cron-process-monitoring] Debitado 1 crédito de monitoramento do usuário ${proc.user_id}. Novo saldo: ${newCredits}`);
+            }
+          }
+
+          // H. Disparar e-mail via Resend
+          if (resendApiKey && profile.email) {
+            const templateSlug = hasProgress ? 'monitoring_report_with_progress' : 'monitoring_report_no_progress';
+            
+            const { data: templateData } = await supabaseAdmin
+              .from('email_templates')
+              .select('subject, body_html')
+              .eq('slug', templateSlug)
+              .maybeSingle();
+
+            if (templateData) {
+              const userName = profile.first_name || "Doutor(a)";
+              const linkPainel = `https://consultaprocesso.advogadoriodejaneiro.com/meus-processos`;
+              const linkExplicacaoIa = `https://consultaprocesso.advogadoriodejaneiro.com/?processo=${encodeURIComponent(proc.process_number)}&action=explain_ai`;
+
+              let body = templateData.body_html;
+              body = body.replace(/\{\{nome_usuario\}\}/g, userName);
+              body = body.replace(/\{\{numero_processo\}\}/g, proc.process_number);
+              body = body.replace(/\{\{link_painel\}\}/g, linkPainel);
+              body = body.replace(/\{\{link_explicacao_ia\}\}/g, linkExplicacaoIa);
+              body = body.replace(/\{\{data_movimentacao\}\}/g, latestMoveDate);
+              body = body.replace(/\{\{conteudo_movimentacao\}\}/g, latestMoveContent);
+
+              let subject = templateData.subject;
+              subject = subject.replace(/\{\{numero_processo\}\}/g, proc.process_number);
+
+              console.log(`[cron-process-monitoring] Enviando e-mail (${templateSlug}) para:`, profile.email);
+              const emailRes = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${resendApiKey}`
+                },
+                body: JSON.stringify({
+                  from: 'Consulta Processo <consultaprocesso@advogadoriodejaneiro.com>',
+                  to: [profile.email],
+                  subject: subject,
+                  html: body
+                })
+              });
+
+              if (!emailRes.ok) {
+                const errData = await emailRes.json();
+                console.error("[cron-process-monitoring] Erro ao enviar e-mail via Resend:", errData);
+              } else {
+                console.log("[cron-process-monitoring] E-mail enviado com sucesso!");
+              }
+            } else {
+              console.error(`[cron-process-monitoring] Template de e-mail não encontrado: ${templateSlug}`);
+            }
+          }
+        }
+
+        results.push({ process_number: proc.process_number, success: true, has_progress: hasProgress });
+
+      } catch (err: any) {
+        console.error(`[cron-process-monitoring] Erro inesperado ao processar ${proc.process_number}:`, err);
+        results.push({ process_number: proc.process_number, success: false, error: err.message });
+      }
+    }
+
+    return new Response(JSON.stringify({ success: true, processed: results.length, results }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+
+  } catch (err: any) {
+    console.error("[cron-process-monitoring] Erro geral na execução:", err);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+})

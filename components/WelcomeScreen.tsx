@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { cn } from "../lib/utils";
@@ -46,8 +47,15 @@ interface WelcomeScreenProps {
 }
 
 export default function WelcomeScreen({ onSubmit }: WelcomeScreenProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryParams = new URLSearchParams(location.search);
+  const urlProcess = queryParams.get('processo');
+  const urlAction = queryParams.get('action');
+
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [showUrlBox, setShowUrlBox] = useState(!!urlProcess);
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 48,
     maxHeight: 150,
@@ -98,6 +106,40 @@ export default function WelcomeScreen({ onSubmit }: WelcomeScreenProps) {
 
       {/* Input Box Section */}
       <div className="w-full max-w-3xl mb-12 px-4 pb-8 z-10 flex flex-col gap-8">
+        {showUrlBox && urlProcess && (
+          <div className="w-full p-6 rounded-2xl bg-gradient-to-r from-indigo-950 to-slate-900 border border-primary/30 shadow-2xl shadow-primary/10 backdrop-blur-md flex flex-col md:flex-row items-center justify-between gap-4 animate-pulse">
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                ✨ Atualização de Processo Detectada
+              </h3>
+              <p className="text-slate-300 text-sm mt-1">
+                Olá! Vimos que você recebeu um e-mail sobre a atualização do seu processo nº <strong className="text-primary">{urlProcess}</strong>. Quer que nossa Inteligência Artificial explique o que mudou em linguagem simples?
+              </p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <Button
+                onClick={() => {
+                  if (urlAction === 'explain_ai') {
+                    sessionStorage.setItem('auto_explain', 'true');
+                  }
+                  onSubmit(urlProcess);
+                  navigate('/', { replace: true });
+                }}
+                className="bg-primary text-secondary hover:bg-primary/90 font-bold"
+              >
+                Sim, eu quero!
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setShowUrlBox(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                Ignorar
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div>
             <div className={cn(
                 "relative bg-black/60 backdrop-blur-md rounded-xl border transition-colors shadow-xl",

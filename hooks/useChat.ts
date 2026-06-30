@@ -27,8 +27,9 @@ export function useChat() {
     setShowWelcome(true);
   }, []);
 
-  const handleExplainAi = useCallback(async () => {
-    if (!activeProcess || isProcessing) return;
+  const handleExplainAi = useCallback(async (processToExplain?: EscavadorProcesso) => {
+    const targetProcess = processToExplain || activeProcess;
+    if (!targetProcess || isProcessing) return;
     setIsProcessing(true);
 
     const loadingId = 'loading-' + Date.now();
@@ -54,7 +55,7 @@ export function useChat() {
     ]);
 
     try {
-      const fullAnalysis = await generateLegalAnalysis("Analise este processo.", activeProcess, true);
+      const fullAnalysis = await generateLegalAnalysis("Analise este processo.", targetProcess, true);
       
       // Atualiza o perfil e os créditos imediatamente na interface do usuário
       refreshProfile().catch(err => console.error("Erro ao atualizar perfil:", err));
@@ -236,16 +237,24 @@ ${movesList}
           content: rawMessageContent
         } : m));
 
-        // Adiciona a oferta para tradução com IA
-        setTimeout(() => {
-          setMessages(prev => [...prev, {
-            id: Date.now().toString() + '-explain-suggest',
-            role: 'assistant',
-            content: "Os dados técnicos acima podem parecer complexos. Gostaria de traduzir os termos técnicos do processo e as movimentações judiciais para uma linguagem simples e clara?",
-            timestamp: new Date(),
-            isExplainAi: true
-          }]);
-        }, 600);
+        const isAutoExplain = sessionStorage.getItem('auto_explain') === 'true';
+        if (isAutoExplain) {
+          sessionStorage.removeItem('auto_explain');
+          setTimeout(() => {
+            handleExplainAi(processData);
+          }, 1000);
+        } else {
+          // Adiciona a oferta para tradução com IA
+          setTimeout(() => {
+            setMessages(prev => [...prev, {
+              id: Date.now().toString() + '-explain-suggest',
+              role: 'assistant',
+              content: "Os dados técnicos acima podem parecer complexos. Gostaria de traduzir os termos técnicos do processo e as movimentações judiciais para uma linguagem simples e clara?",
+              timestamp: new Date(),
+              isExplainAi: true
+            }]);
+          }, 600);
+        }
 
       } else {
         const loadingId = 'loading-' + Date.now();

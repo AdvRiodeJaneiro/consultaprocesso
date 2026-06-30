@@ -66,57 +66,95 @@ serve(async (req) => {
             })
         }
 
-        // 2. Call Escavador
-        const escResponse = await fetch(`${BASE_URL}/monitoramentos/processos`, {
-            method: 'POST',
+        // 2. Call Escavador to search for the process (Capa)
+        console.log(`[manage-monitoring] Buscando capa do processo ${processNumber} no Escavador...`);
+        const escResponse = await fetch(`${BASE_URL}/processos/numero_cnj/${processNumber}`, {
+            method: 'GET',
             headers: {
                 'Authorization': `Bearer ${ESC_API_KEY}`,
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({
-                numero: processNumber,
-                frequencia: 'SEMANAL'
-            })
+            }
         })
 
         if (!escResponse.ok) {
             const errorText = await escResponse.text()
+            console.error(`[manage-monitoring] Erro ao buscar capa do processo ${processNumber}:`, errorText);
             return new Response(errorText, {
                 status: escResponse.status,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             })
         }
 
-        const escData = await escResponse.json()
-        const escId = escData.id
+        const processData = await escResponse.json()
 
-        // 3. Save to database
+        // 3. Call Escavador to search for movements
+        console.log(`[manage-monitoring] Buscando movimentações do processo ${processNumber} no Escavador...`);
+        const movementsResponse = await fetch(`${BASE_URL}/processos/numero_cnj/${processNumber}/movimentacoes`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${ESC_API_KEY}`,
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+
+        if (movementsResponse.ok) {
+            const movementsData = await movementsResponse.json()
+            if (movementsData && movementsData.items) {
+                processData.movimentacoes = movementsData.items
+            }
+        } else {
+            console.warn(`[manage-monitoring] Erro ao buscar movimentações do processo ${processNumber}:`, movementsResponse.status);
+        }
+
+        const latestMoveDate = processData.movimentacoes?.[0]?.data || processData.data_ultima_movimentacao || "";
+        const latestMoveContent = processData.movimentacoes?.[0]?.conteudo || "Processo localizado e agora está sendo monitorado.";
+
+        // 4. Save to database (monitored_processes)
         const { data: dbData, error: dbError } = await supabaseAdmin
             .from('monitored_processes')
             .insert({
                 user_id: user.id,
-                escavador_monitoring_id: escId,
+                escavador_monitoring_id: null, // Não usamos mais o robô do Escavador
                 process_number: processNumber,
                 whatsapp_number: whatsappNumber,
                 title_polo_ativo: title_polo_ativo || null,
                 title_polo_passivo: title_polo_passivo || null,
                 status: 'ATIVO',
-                frequency: 'SEMANAL'
+                frequency: 'SEMANAL',
+                last_movement_date: latestMoveDate,
+                last_movement_summary: latestMoveContent,
+                last_checked_at: new Date().toISOString()
             })
             .select()
             .single()
 
         if (dbError) {
             console.error("[manage-monitoring] DB Insert Error:", dbError)
-            // Ideally we should delete from Escavador if DB fails
             return new Response(JSON.stringify({ error: 'Error saving monitoring to database' }), {
                 status: 500,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             })
         }
 
-        // 4. Send Confirmation Email (Resend)
+        // 5. Save initial history record
+        const { error: histError } = await supabaseAdmin
+            .from('monitored_process_history')
+            .insert({
+                monitored_process_id: dbData.id,
+                user_id: user.id,
+                raw_data: processData,
+                last_movement_date: latestMoveDate,
+                has_progress: true,
+                email_sent: false // Enviamos e-mail de confirmação em vez de relatório
+            })
+
+        if (histError) {
+            console.error("[manage-monitoring] DB History Insert Error:", histError)
+        }
+
+        // 6. Send Confirmation Email (Resend)
         const resendApiKey = Deno.env.get('RESEND_API_KEY');
         if (resendApiKey) {
           try {
@@ -203,42 +241,35 @@ serve(async (req) => {
         })
 
     } else if (action === 'delete') {
-        // 1. Get escavador_monitoring_id if not provided
         let escId = monitoringId
-        if (!escId) {
-            return new Response(JSON.stringify({ error: 'Missing monitoring ID' }), {
-                status: 400,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        
+        // Se tiver escavador_monitoring_id (processo antigo), deleta no Escavador
+        if (escId) {
+            console.log(`[manage-monitoring] Deletando monitoramento antigo ${escId} no Escavador...`);
+            const escResponse = await fetch(`${BASE_URL}/monitoramentos/processos/${escId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${ESC_API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
             })
-        }
 
-        // 2. Call Escavador
-        const escResponse = await fetch(`${BASE_URL}/monitoramentos/processos/${escId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${ESC_API_KEY}`,
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
+            if (!escResponse.ok && escResponse.status !== 404) {
+                const errorText = await escResponse.text()
+                console.error(`[manage-monitoring] Erro ao deletar no Escavador:`, errorText);
             }
-        })
-
-        // Even if Escavador fails (e.g. 404), we should proceed with DB delete if it's our intention
-        if (!escResponse.ok && escResponse.status !== 404) {
-            const errorText = await escResponse.text()
-            return new Response(errorText, {
-                status: escResponse.status,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
         }
 
-        // 3. Delete from database
+        // Deleta do banco de dados
         const { error: dbError } = await supabaseAdmin
             .from('monitored_processes')
             .delete()
-            .eq('escavador_monitoring_id', escId)
             .eq('user_id', user.id)
+            .or(`escavador_monitoring_id.eq.${escId || 0},process_number.eq.${processNumber || ''}`)
 
         if (dbError) {
+            console.error("[manage-monitoring] DB Delete Error:", dbError)
             return new Response(JSON.stringify({ error: 'Error deleting monitoring from database' }), {
                 status: 500,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }

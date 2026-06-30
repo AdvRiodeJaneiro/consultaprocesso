@@ -2,15 +2,16 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../integrations/supabase/client';
-import { 
-  Mail, 
-  Save, 
-  Bold, 
-  Italic, 
-  Underline, 
-  Strikethrough, 
-  Heading1, 
-  Heading2, 
+import { useAuth } from '../contexts/AuthContext';
+import {
+  Mail,
+  Save,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  Heading1,
+  Heading2,
   Type,
   Code,
   Sparkles,
@@ -18,7 +19,8 @@ import {
   CheckCircle,
   HelpCircle,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Send
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -31,6 +33,7 @@ interface EmailTemplate {
 }
 
 export default function EmailTemplates() {
+  const { user } = useAuth();
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [subject, setSubject] = useState('');
@@ -39,8 +42,54 @@ export default function EmailTemplates() {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Test dispatch states
+  const [testProcessNumber, setTestProcessNumber] = useState('');
+  const [isTestingDispatch, setIsTestingDispatch] = useState(false);
 
   const editorRef = useRef<HTMLDivElement>(null);
+
+  const handleTestDispatch = async () => {
+    if (!testProcessNumber.trim()) {
+      toast.error("Por favor, informe um número de processo válido.");
+      return;
+    }
+    if (!user) {
+      toast.error("Usuário não autenticado.");
+      return;
+    }
+
+    setIsTestingDispatch(true);
+    const loadingToast = toast.loading("Executando teste de monitoramento (Escavador + Banco + E-mail)...");
+
+    try {
+      const { data, error } = await supabase.functions.invoke('cron-process-monitoring', {
+        body: {
+          test_process_number: testProcessNumber.trim(),
+          test_user_id: user.id
+        }
+      });
+
+      if (error) throw error;
+
+      if (data && data.success) {
+        const result = data.results?.[0];
+        if (result && result.success) {
+          toast.success(`Teste concluído com sucesso! E-mail enviado para ${user.email}.`, { id: loadingToast });
+          setTestProcessNumber('');
+        } else {
+          toast.error(`Erro no processamento: ${result?.error || "Erro desconhecido"}`, { id: loadingToast });
+        }
+      } else {
+        toast.error("Falha ao executar o teste de monitoramento.", { id: loadingToast });
+      }
+    } catch (err: any) {
+      console.error("[EmailTemplates] Erro no teste de disparo:", err);
+      toast.error(`Erro técnico: ${err.message || "Erro ao invocar função"}`, { id: loadingToast });
+    } finally {
+      setIsTestingDispatch(false);
+    }
+  };
 
   // Fetch templates from the database
   const fetchTemplates = async () => {
@@ -338,6 +387,47 @@ export default function EmailTemplates() {
             >
               <Save size={14} />
               {isSaving ? "Salvando..." : "Salvar Alterações"}
+            </button>
+          </div>
+        </div>
+
+        {/* Test Dispatch System */}
+        <div className="bg-white dark:bg-slate-900 rounded-[24px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+              <Send size={20} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-deep-indigo dark:text-white">Teste de Disparo de Monitoramento</h3>
+              <p className="text-xs text-slate-400">Simule o fluxo completo de monitoramento (busca no Escavador, salvamento no banco e disparo de e-mail) para qualquer processo.</p>
+            </div>
+          </div>
+          <div className="flex flex-col md:flex-row gap-3 items-end">
+            <div className="flex-1 space-y-1.5 w-full">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Número do Processo (CNJ)</label>
+              <input
+                value={testProcessNumber}
+                onChange={(e) => setTestProcessNumber(e.target.value)}
+                placeholder="Ex: 5008720-53.2026.8.08.0035"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none text-sm focus:ring-2 focus:ring-primary/20 transition-all text-foreground font-semibold"
+              />
+            </div>
+            <button
+              onClick={handleTestDispatch}
+              disabled={isTestingDispatch || !testProcessNumber.trim()}
+              className="px-6 py-3 rounded-xl bg-primary hover:opacity-90 text-deep-indigo font-bold text-sm shadow-md shadow-primary/20 transition-all flex items-center gap-2 shrink-0 w-full md:w-auto justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isTestingDispatch ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Disparando...
+                </>
+              ) : (
+                <>
+                  <Send size={16} />
+                  Disparar Teste de Monitoramento
+                </>
+              )}
             </button>
           </div>
         </div>
