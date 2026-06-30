@@ -292,6 +292,37 @@ serve(async (req) => {
             const linkPainel = `https://consultaprocesso.advogadoriodejaneiro.com/meus-processos`;
             const linkExplicacaoIa = `https://consultaprocesso.advogadoriodejaneiro.com/?processo=${encodeURIComponent(proc.process_number)}&action=explain_ai`;
 
+            // 1. Formatar Capa do Processo em HTML
+            const mainFonte = processData.fontes?.[0];
+            const capa = mainFonte?.capa;
+            const valorCausa = capa?.valor_causa?.valor_formatado || "Não informado";
+            const capaHtml = `
+              <ul style="list-style-type: none; padding-left: 0; margin: 0; font-size: 14px; color: #334155; line-height: 1.6;">
+                <li><strong>Assunto:</strong> ${capa?.assunto || "Não informado"}</li>
+                <li><strong>Classe:</strong> ${capa?.classe || "Não informado"}</li>
+                <li><strong>Área:</strong> ${capa?.area || "Não informado"}</li>
+                <li><strong>Órgão Julgador:</strong> ${capa?.orgao_julgador || "Não informado"}</li>
+                <li><strong>Valor da Causa:</strong> ${valorCausa}</li>
+              </ul>
+            `;
+
+            // 2. Formatar Partes do Processo em HTML
+            const partesHtml = mainFonte?.envolvidos?.map(env => {
+              const oabs = env.oabs?.map(o => `${o.uf}-${o.numero}`).join(', ') || '';
+              return `<li style="margin-bottom: 6px; font-size: 14px; color: #334155;"><strong>${env.nome}</strong> (${env.polo})${oabs ? ` - OAB: ${oabs}` : ''}</li>`;
+            }).join('\n') || '<li style="font-size: 14px; color: #334155;">Não informados</li>';
+            const partesListHtml = `<ul style="padding-left: 20px; margin: 0; line-height: 1.6;">${partesHtml}</ul>`;
+
+            // 3. Formatar as últimas 5 movimentações em HTML
+            const movesHtml = processData.movimentacoes?.slice(0, 5).map(m => {
+              return `
+                <div style="margin-bottom: 16px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 12px;">
+                  <p style="margin: 0 0 4px 0; font-size: 13px; color: #64748b; font-weight: bold;">📅 ${m.data} - ${m.tipo || 'ANDAMENTO'}</p>
+                  <p style="margin: 0; font-size: 14px; color: #334155; line-height: 1.5;">${m.conteudo}</p>
+                </div>
+              `;
+            }).join('\n') || '<p style="font-size: 14px; color: #64748b; margin: 0;">Nenhuma movimentação listada.</p>';
+
             let body = templateData.body_html;
             body = body.replace(/\{\{nome_usuario\}\}/g, userName);
             body = body.replace(/\{\{numero_processo\}\}/g, proc.process_number);
@@ -299,6 +330,11 @@ serve(async (req) => {
             body = body.replace(/\{\{link_explicacao_ia\}\}/g, linkExplicacaoIa);
             body = body.replace(/\{\{data_movimentacao\}\}/g, latestMoveDate);
             body = body.replace(/\{\{conteudo_movimentacao\}\}/g, latestMoveContent);
+            
+            // Injetar os blocos HTML completos
+            body = body.replace(/\{\{capa_processo\}\}/g, capaHtml);
+            body = body.replace(/\{\{partes_processo\}\}/g, partesListHtml);
+            body = body.replace(/\{\{ultimas_movimentacoes\}\}/g, movesHtml);
 
             let subject = templateData.subject;
             subject = subject.replace(/\{\{numero_processo\}\}/g, proc.process_number);

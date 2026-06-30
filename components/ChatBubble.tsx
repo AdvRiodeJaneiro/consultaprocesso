@@ -78,7 +78,6 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onMonitorClick,
                   <g clipPath="url(#clip0_3261_13817_custom)">
                     <path d="M19.34 19.23L18.11 19.51C17.23 19.71 16.54 20.4 16.34 21.28L16.06 22.51C16.03 22.64 15.84 22.64 15.81 22.51L15.53 21.28C15.33 20.4 14.64 19.71 13.76 19.51L12.53 19.23C12.4 19.2 12.4 19.01 12.53 18.98L13.76 18.7C14.64 18.5 15.33 17.81 15.53 16.93L15.81 15.7C15.84 15.57 16.03 15.57 16.06 15.7L16.34 16.93C16.54 17.81 17.23 18.5 18.11 18.7L19.34 18.98C19.47 19.01 19.47 19.2 19.34 19.23Z" stroke="#fff" strokeWidth="1.5" strokeMiterlimit="10" />
                     <path d="M10.66 21.4001C9.69999 21.2601 8.77999 20.9801 7.91999 20.5801C7.62999 20.4401 7.15999 20.3801 6.84999 20.4501C6.18999 20.6101 5.07999 20.8801 4.13999 21.1001C3.23999 21.3201 2.67999 20.7601 2.89999 19.8601L3.54999 17.1601C3.62999 16.8501 3.54999 16.3701 3.41999 16.0801C2.61999 14.4001 2.29999 12.4501 2.62999 10.4001C3.26999 6.46005 6.44999 3.27005 10.39 2.62005C16.89 1.57005 22.43 7.11005 21.37 13.6101C21.21 14.5701 20.92 15.4801 20.51 16.3101" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M14.09 6.58008C15.63 7.18008 16.85 8.41008 17.43 9.96008" stroke="#fff" strokeWidth="1.5" stroke-linecap="round" stroke-linejoin="round" />
                   </g>
                   <defs>
                     <clipPath id="clip0_3261_13817_custom">
@@ -86,6 +85,38 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onMonitorClick,
                     </clipPath>
                   </defs>
                 </svg>
+              </button>
+           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle URL Explain Suggestion Card
+  if (message.isUrlExplainSuggestion) {
+    return (
+      <div className="flex w-full mb-6 justify-start">
+        <div className="max-w-[85%] md:max-w-[75%] rounded-2xl p-6 shadow-xl bg-gradient-to-br from-slate-900 via-indigo-950/40 to-slate-900 border border-purple-500/30 rounded-bl-none overflow-hidden relative group">
+           <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-purple-500/20 transition-all duration-700" />
+           
+           <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                 <div className="size-10 rounded-xl bg-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-900/50">
+                    <Sparkles size={20} />
+                 </div>
+                 <h4 className="text-white font-black text-lg leading-tight">Explicação com IA</h4>
+              </div>
+              
+              <p className="text-slate-300 text-sm mb-6 leading-relaxed font-medium">
+                {message.content}
+              </p>
+              
+              <button
+                onClick={onExplainClick}
+                className="w-full bg-purple-600 hover:bg-purple-500 text-white font-black py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-purple-900/40"
+              >
+                <span>Sim, quero a explicação com IA</span>
+                <Sparkles size={18} />
               </button>
            </div>
         </div>

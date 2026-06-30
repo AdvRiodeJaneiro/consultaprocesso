@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Message, EscavadorProcesso } from '../types';
 import { legalDataService } from '../services/legalDataService';
 import { generateLegalAnalysis } from '../services/geminiService';
@@ -19,6 +19,31 @@ export function useChat() {
   
   const { checkLimit, incrementUsage } = useSearchLimit();
   const { refreshProfile } = useAuth();
+
+  // Capturar parâmetros de URL para abrir o chat direto com a sugestão de IA
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const urlProcess = queryParams.get('processo');
+    const urlAction = queryParams.get('action');
+
+    if (urlProcess && urlAction === 'explain_ai') {
+      console.log("[useChat] Parâmetros de URL detectados:", { urlProcess, urlAction });
+      // 1. Pula a tela de boas-vindas
+      setShowWelcome(false);
+      
+      // 2. Insere a mensagem personalizada do assistente no chat
+      setMessages([
+        {
+          id: 'url-welcome-' + Date.now(),
+          role: 'assistant',
+          content: `Olá! Vi que você recebeu um e-mail sobre a atualização do seu processo nº **${urlProcess}**. Gostaria que nossa Inteligência Artificial explicasse detalhadamente o que essa atualização significa em linguagem simples?`,
+          timestamp: new Date(),
+          isUrlExplainSuggestion: true,
+          processNumber: urlProcess
+        }
+      ]);
+    }
+  }, []);
 
   const resetSearch = useCallback(() => {
     setActiveProcess(null);

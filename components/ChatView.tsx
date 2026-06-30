@@ -67,7 +67,14 @@ export function ChatView({
               key={msg.id}
               message={msg}
               onMonitorClick={handleTransitionToMonitor}
-              onExplainClick={handleExplainAi}
+              onExplainClick={() => {
+                if (msg.isUrlExplainSuggestion) {
+                  sessionStorage.setItem('auto_explain', 'true');
+                  handleWelcomeSubmit(msg.processNumber);
+                } else if (handleExplainAi) {
+                  handleExplainAi();
+                }
+              }}
             />
           ))}
           <div ref={messagesEndRef} />
