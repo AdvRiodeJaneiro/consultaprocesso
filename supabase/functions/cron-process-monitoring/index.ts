@@ -97,6 +97,86 @@ serve(async (req) => {
       const proc = processesToCheck[i];
       console.log(`[cron-process-monitoring] Processando (${i + 1}/${processesToCheck.length}): ${proc.process_number}`);
 
+      // 1. Buscar perfil do usuário para verificar créditos antes de qualquer chamada paga
+      const { data: profile, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('email, first_name, monitoring_credits')
+        .eq('id', proc.user_id)
+        .maybeSingle();
+
+      if (profileError || !profile) {
+        console.error(`[cron-process-monitoring] Erro ao buscar perfil do usuário ${proc.user_id}:`, profileError);
+        results.push({ process_number: proc.process_number, success: false, error: 'Perfil não encontrado' });
+        continue;
+      }
+
+      // 2. Verificação de saldo de créditos
+      const currentCredits = profile.monitoring_credits || 0;
+      if (currentCredits <= 0 && !isTest) {
+        console.log(`[cron-process-monitoring] Usuário ${proc.user_id} está sem créditos de monitoramento (${currentCredits}).`);
+        
+        if (proc.last_movement_summary !== 'AVISO_SALDO_ESGOTADO') {
+          // Enviar e-mail de aviso de saldo esgotado
+          if (resendApiKey && profile.email) {
+            const { data: templateData } = await supabaseAdmin
+              .from('email_templates')
+              .select('subject, body_html')
+              .eq('slug', 'monitoring_paused_no_credits')
+              .maybeSingle();
+
+            if (templateData) {
+              const userName = profile.first_name || "Doutor(a)";
+              const linkPainel = `https://consultaprocesso.advogadoriodejaneiro.com/planos`;
+
+              let body = templateData.body_html;
+              body = body.replace(/\{\{nome_usuario\}\}/g, userName);
+              body = body.replace(/\{\{numero_processo\}\}/g, proc.process_number);
+              body = body.replace(/\{\{link_painel\}\}/g, linkPainel);
+
+              let subject = templateData.subject;
+              subject = subject.replace(/\{\{numero_processo\}\}/g, proc.process_number);
+
+              console.log(`[cron-process-monitoring] Enviando e-mail de saldo esgotado para:`, profile.email);
+              const emailRes = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${resendApiKey}`
+                },
+                body: JSON.stringify({
+                  from: 'Consulta Processo <consultaprocesso@advogadoriodejaneiro.com>',
+                  to: [profile.email],
+                  subject: subject,
+                  html: body
+                })
+              });
+
+              if (!emailRes.ok) {
+                const errData = await emailRes.json();
+                console.error("[cron-process-monitoring] Erro ao enviar e-mail de saldo esgotado:", errData);
+              }
+            }
+          }
+
+          // Atualizar o processo para marcar que o aviso foi enviado
+          if (proc.id !== "00000000-0000-0000-0000-000000000000") {
+            await supabaseAdmin
+              .from('monitored_processes')
+              .update({
+                last_movement_summary: 'AVISO_SALDO_ESGOTADO',
+                last_checked_at: new Date().toISOString()
+              })
+              .eq('id', proc.id);
+          }
+        } else {
+          console.log(`[cron-process-monitoring] Aviso de saldo esgotado já enviado anteriormente para o processo ${proc.process_number}. Pulando.`);
+        }
+
+        results.push({ process_number: proc.process_number, success: true, error: 'Sem créditos' });
+        continue;
+      }
+
+      // Se for um teste ou tiver créditos, aguardar 5 segundos antes da busca (exceto na primeira iteração)
       if (i > 0) {
         console.log("[cron-process-monitoring] Aguardando 5 segundos antes da próxima busca...");
         await delay(5000);
@@ -182,81 +262,70 @@ serve(async (req) => {
         }
 
         // G. Debitar 1 crédito de monitoramento do perfil do usuário (apenas se não for teste)
-        const { data: profile, error: profileError } = await supabaseAdmin
-          .from('profiles')
-          .select('email, first_name, monitoring_credits')
-          .eq('id', proc.user_id)
-          .maybeSingle();
+        if (!isTest && proc.id !== "00000000-0000-0000-0000-000000000000") {
+          const newCredits = Math.max(currentCredits - 1, 0);
 
-        if (profileError) {
-          console.error(`[cron-process-monitoring] Erro ao buscar perfil do usuário ${proc.user_id}:`, profileError);
-        } else if (profile) {
-          if (!isTest && proc.id !== "00000000-0000-0000-0000-000000000000") {
-            const currentCredits = profile.monitoring_credits || 0;
-            const newCredits = Math.max(currentCredits - 1, 0);
+          const { error: creditError } = await supabaseAdmin
+            .from('profiles')
+            .update({ monitoring_credits: newCredits })
+            .eq('id', proc.user_id);
 
-            const { error: creditError } = await supabaseAdmin
-              .from('profiles')
-              .update({ monitoring_credits: newCredits })
-              .eq('id', proc.user_id);
-
-            if (creditError) {
-              console.error(`[cron-process-monitoring] Erro ao debitar crédito do usuário ${proc.user_id}:`, creditError);
-            } else {
-              console.log(`[cron-process-monitoring] Debitado 1 crédito de monitoramento do usuário ${proc.user_id}. Novo saldo: ${newCredits}`);
-            }
+          if (creditError) {
+            console.error(`[cron-process-monitoring] Erro ao debitar crédito do usuário ${proc.user_id}:`, creditError);
+          } else {
+            console.log(`[cron-process-monitoring] Debitado 1 crédito de monitoramento do usuário ${proc.user_id}. Novo saldo: ${newCredits}`);
           }
+        }
 
-          // H. Disparar e-mail via Resend
-          if (resendApiKey && profile.email) {
-            const templateSlug = hasProgress ? 'monitoring_report_with_progress' : 'monitoring_report_no_progress';
-            
-            const { data: templateData } = await supabaseAdmin
-              .from('email_templates')
-              .select('subject, body_html')
-              .eq('slug', templateSlug)
-              .maybeSingle();
+        // H. Disparar e-mail via Resend
+        if (resendApiKey && profile.email) {
+          const templateSlug = hasProgress ? 'monitoring_report_with_progress' : 'monitoring_report_no_progress';
+          
+          const { data: templateData } = await supabaseAdmin
+            .from('email_templates')
+            .select('subject, body_html')
+            .eq('slug', templateSlug)
+            .maybeSingle();
 
-            if (templateData) {
-              const userName = profile.first_name || "Doutor(a)";
-              const linkPainel = `https://consultaprocesso.advogadoriodejaneiro.com/meus-processos`;
-              const linkExplicacaoIa = `https://consultaprocesso.advogadoriodejaneiro.com/?processo=${encodeURIComponent(proc.process_number)}&action=explain_ai`;
+          if (templateData) {
+            const userName = profile.first_name || "Doutor(a)";
+            const linkPainel = `https://consultaprocesso.advogadoriodejaneiro.com/meus-processos`;
+            const linkExplicacaoIa = `https://consultaprocesso.advogadoriodejaneiro.com/?processo=${encodeURIComponent(proc.process_number)}&action=explain_ai`;
 
-              let body = templateData.body_html;
-              body = body.replace(/\{\{nome_usuario\}\}/g, userName);
-              body = body.replace(/\{\{numero_processo\}\}/g, proc.process_number);
-              body = body.replace(/\{\{link_painel\}\}/g, linkPainel);
-              body = body.replace(/\{\{link_explicacao_ia\}\}/g, linkExplicacaoIa);
-              body = body.replace(/\{\{data_movimentacao\}\}/g, latestMoveDate);
-              body = body.replace(/\{\{conteudo_movimentacao\}\}/g, latestMoveContent);
+            let body = templateData.body_html;
+            body = body.replace(/\{\{nome_usuario\}\}/g, userName);
+            body = body.replace(/\{\{numero_processo\}\}/g, proc.process_number);
+            body = body.replace(/\{\{link_painel\}\}/g, linkPainel);
+            body = body.replace(/\{\{link_explicacao_ia\}\}/g, linkExplicacaoIa);
+            body = body.replace(/\{\{data_movimentacao\}\}/g, latestMoveDate);
+            body = body.replace(/\{\{conteudo_movimentacao\}\}/g, latestMoveContent);
 
-              let subject = templateData.subject;
-              subject = subject.replace(/\{\{numero_processo\}\}/g, proc.process_number);
+            let subject = templateData.subject;
+            subject = subject.replace(/\{\{numero_processo\}\}/g, proc.process_number);
 
-              console.log(`[cron-process-monitoring] Enviando e-mail (${templateSlug}) para:`, profile.email);
-              const emailRes = await fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${resendApiKey}`
-                },
-                body: JSON.stringify({
-                  from: 'Consulta Processo <consultaprocesso@advogadoriodejaneiro.com>',
-                  to: [profile.email],
-                  subject: subject,
-                  html: body
-                })
-              });
+            console.log(`[cron-process-monitoring] Enviando e-mail (${templateSlug}) para:`, profile.email);
+            const emailRes = await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${resendApiKey}`
+              },
+              body: JSON.stringify({
+                from: 'Consulta Processo <consultaprocesso@advogadoriodejaneiro.com>',
+                to: [profile.email],
+                subject: subject,
+                html: body
+              })
+            });
 
-              if (!emailRes.ok) {
-                const errData = await emailRes.json();
-                console.error("[cron-process-monitoring] Erro ao enviar e-mail via Resend:", errData);
-              } else {
-                console.log("[cron-process-monitoring] E-mail enviado com sucesso!");
-              }
+            if (!emailRes.ok) {
+              const errData = await emailRes.json();
+              console.error("[cron-process-monitoring] Erro ao enviar e-mail via Resend:", errData);
             } else {
-              console.error(`[cron-process-monitoring] Template de e-mail não encontrado: ${templateSlug}`);
+              console.log("[cron-process-monitoring] E-mail enviado com sucesso!");
             }
+          } else {
+            console.error(`[cron-process-monitoring] Template de e-mail não encontrado: ${templateSlug}`);
           }
         }
 

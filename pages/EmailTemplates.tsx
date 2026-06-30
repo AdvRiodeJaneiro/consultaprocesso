@@ -225,13 +225,13 @@ export default function EmailTemplates() {
   </div>
 </body>
 </html>`;
-      } else if (selectedTemplate.slug === 'process_update') {
-        defaultSubject = '🔔 Nova Atualização - Processo CNJ: {{numero_processo}}';
+      } else if (selectedTemplate.slug === 'monitoring_report_no_progress') {
+        defaultSubject = '🔍 Relatório Quinzenal: Sem novas movimentações - Processo CNJ: {{numero_processo}}';
         defaultHtml = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Atualização de Processo</title>
+  <title>Relatório Quinzenal - Sem Avanço</title>
   <style>
     body { font-family: sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }
     .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
@@ -241,32 +241,144 @@ export default function EmailTemplates() {
     .process-card { background-color: #f1f5f9; border-radius: 12px; padding: 16px; margin-bottom: 24px; border: 1px solid #cbd5e1; }
     .process-label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; margin: 0 0 4px 0; }
     .process-value { font-size: 16px; color: #0f172a; font-weight: bold; margin: 0; }
-    .summary-title { font-size: 14px; font-weight: bold; color: #4f46e5; margin: 0 0 8px 0; }
-    .summary-text { font-size: 14px; color: #334155; line-height: 1.6; margin: 0; }
     .footer { text-align: center; padding: 24px; font-size: 12px; color: #94a3b8; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>🔔 Nova Atualização</h1>
+      <h1>🔍 Relatório Quinzenal</h1>
     </div>
     <div class="content">
       <p>Olá, <strong>{{nome_usuario}}</strong>,</p>
-      <p>Identificamos uma nova movimentação no seu processo monitorado:</p>
+      <p>Nosso robô de busca realizou a verificação periódica do seu processo monitorado:</p>
       
       <div class="process-card">
         <p class="process-label">Número do Processo (CNJ)</p>
         <p class="process-value">{{numero_processo}}</p>
       </div>
       
-      <h3 class="summary-title">Resumo Simplificado (Inteligência Artificial)</h3>
-      <p class="summary-text">{{resumo_ia}}</p>
+      <p><strong>Resultado da verificação:</strong> Não foram encontradas novas movimentações ou avanços no tribunal desde a última verificação.</p>
+      <p>Fique tranquilo(a), continuaremos acompanhando de perto e avisaremos assim que houver qualquer novidade.</p>
       
       <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
       
       <p style="font-size: 12px; color: #64748b; text-align: center; margin: 0;">
-        Para ver o histórico completo e todos os andamentos do seu processo, acesse o seu <a href="{{link_painel}}" style="color: #4f46e5; text-decoration: none; font-weight: bold;">Painel de Processos</a>.
+        Para ver o histórico completo do seu processo, acesse o seu <a href="{{link_painel}}" style="color: #4f46e5; text-decoration: none; font-weight: bold;">Painel de Processos</a>.
+      </p>
+    </div>
+    <div class="footer">
+      <p>&copy; 2026 Consulta Processo IA. Todos os direitos reservados.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+      } else if (selectedTemplate.slug === 'monitoring_report_with_progress') {
+        defaultSubject = '🔔 Relatório Quinzenal: Nova movimentação detectada! - Processo CNJ: {{numero_processo}}';
+        defaultHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Relatório Quinzenal - Nova Movimentação</title>
+  <style>
+    body { font-family: sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .header { background-color: #4f46e5; color: #ffffff; padding: 24px; text-align: center; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: bold; }
+    .content { padding: 32px; background-color: #ffffff; }
+    .process-card { background-color: #f1f5f9; border-radius: 12px; padding: 16px; margin-bottom: 24px; border: 1px solid #cbd5e1; }
+    .process-label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; margin: 0 0 4px 0; }
+    .process-value { font-size: 16px; color: #0f172a; font-weight: bold; margin: 0; }
+    .movement-card { background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin-bottom: 24px; border-radius: 0 8px 8px 0; }
+    .movement-title { font-size: 14px; font-weight: bold; color: #b45309; margin: 0 0 8px 0; }
+    .movement-text { font-size: 14px; color: #78350f; line-height: 1.6; margin: 0; }
+    .btn-container { text-align: center; margin: 32px 0; }
+    .btn-ia { background-color: #4f46e5; color: #ffffff !important; padding: 14px 28px; font-size: 16px; font-weight: bold; text-decoration: none; border-radius: 8px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2); }
+    .footer { text-align: center; padding: 24px; font-size: 12px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔔 Relatório Quinzenal</h1>
+    </div>
+    <div class="content">
+      <p>Olá, <strong>{{nome_usuario}}</strong>,</p>
+      <p>Nosso robô de busca identificou um **novo avanço** no seu processo monitorado:</p>
+      
+      <div class="process-card">
+        <p class="process-label">Número do Processo (CNJ)</p>
+        <p class="process-value">{{numero_processo}}</p>
+      </div>
+      
+      <div class="movement-card">
+        <p class="movement-title">📅 Nova Movimentação Detectada ({{data_movimentacao}})</p>
+        <p class="movement-text">{{conteudo_movimentacao}}</p>
+      </div>
+      
+      <p>Os termos jurídicos acima podem ser complexos. Gostaria que nossa Inteligência Artificial traduzisse e explicasse detalhadamente o que essa atualização significa para você?</p>
+      
+      <div class="btn-container">
+        <a href="{{link_explicacao_ia}}" class="btn-ia">✨ Gerar explicação com IA</a>
+      </div>
+      
+      <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+      
+      <p style="font-size: 12px; color: #64748b; text-align: center; margin: 0;">
+        Para ver o histórico completo do seu processo, acesse o seu <a href="{{link_painel}}" style="color: #4f46e5; text-decoration: none; font-weight: bold;">Painel de Processos</a>.
+      </p>
+    </div>
+    <div class="footer">
+      <p>&copy; 2026 Consulta Processo IA. Todos os direitos reservados.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+      } else if (selectedTemplate.slug === 'monitoring_paused_no_credits') {
+        defaultSubject = '⚠️ Seu monitoramento de processos foi pausado - Saldo Esgotado';
+        defaultHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Monitoramento Pausado - Saldo Esgotado</title>
+  <style>
+    body { font-family: sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .header { background-color: #dc2626; color: #ffffff; padding: 24px; text-align: center; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: bold; }
+    .content { padding: 32px; background-color: #ffffff; }
+    .process-card { background-color: #f1f5f9; border-radius: 12px; padding: 16px; margin-bottom: 24px; border: 1px solid #cbd5e1; }
+    .process-label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; margin: 0 0 4px 0; }
+    .process-value { font-size: 16px; color: #0f172a; font-weight: bold; margin: 0; }
+    .btn-container { text-align: center; margin: 32px 0; }
+    .btn-recharge { background-color: #dc2626; color: #ffffff !important; padding: 14px 28px; font-size: 16px; font-weight: bold; text-decoration: none; border-radius: 8px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2); }
+    .footer { text-align: center; padding: 24px; font-size: 12px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⚠️ Monitoramento Pausado</h1>
+    </div>
+    <div class="content">
+      <p>Olá, <strong>{{nome_usuario}}</strong>,</p>
+      <p>Identificamos que você possui processos ativos em seu painel de monitoramento, mas o seu **saldo de créditos de monitoramento chegou ao fim**.</p>
+      
+      <div class="process-card">
+        <p class="process-label">Processo Afetado (CNJ)</p>
+        <p class="process-value">{{numero_processo}}</p>
+      </div>
+      
+      <p>Para garantir que você continue recebendo as atualizações automáticas e relatórios quinzenais do seu processo, adicione mais saldo à sua conta agora mesmo.</p>
+      
+      <div class="btn-container">
+        <a href="{{link_painel}}" class="btn-recharge">💳 Adicionar Créditos</a>
+      </div>
+      
+      <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+      
+      <p style="font-size: 12px; color: #64748b; text-align: center; margin: 0;">
+        Acesse o seu <a href="{{link_painel}}" style="color: #dc2626; text-decoration: none; font-weight: bold;">Painel de Controle</a> para gerenciar seus planos e créditos.
       </p>
     </div>
     <div class="footer">
