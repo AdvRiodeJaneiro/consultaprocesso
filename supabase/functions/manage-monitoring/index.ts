@@ -281,6 +281,118 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
 
+    } else if (action === 'clean_all') {
+        // Check if user is admin
+        const { data: profile, error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single()
+
+        if (profileError || !profile?.is_admin) {
+          return new Response(JSON.stringify({ error: 'Forbidden: Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+
+        console.log("[manage-monitoring] Admin solicitou limpeza de todos os monitoramentos no Escavador...");
+
+        // 1. Buscar monitoramentos de processos
+        const escResponse = await fetch(`${BASE_URL}/monitoramentos/processos`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${ESC_API_KEY}`,
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+
+        let listaProcessos = []
+        if (escResponse.ok) {
+            const escData = await escResponse.json()
+            listaProcessos = escData.data || []
+        } else {
+            const errText = await escResponse.text()
+            console.error(`[manage-monitoring] Erro ao buscar processos:`, errText)
+        }
+
+        // 2. Buscar monitoramentos de novos-processos
+        const escResponseNovos = await fetch(`${BASE_URL}/monitoramentos/novos-processos`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${ESC_API_KEY}`,
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+
+        let listaNovos = []
+        if (escResponseNovos.ok) {
+            const escDataNovos = await escResponseNovos.json()
+            listaNovos = escDataNovos.data || []
+        } else {
+            const errText = await escResponseNovos.text()
+            console.error(`[manage-monitoring] Erro ao buscar novos-processos:`, errText)
+        }
+
+        console.log(`[manage-monitoring] Encontrados ${listaProcessos.length} processos e ${listaNovos.length} novos-processos.`);
+
+        let deletedCount = 0
+        let errorCount = 0
+
+        // Deletar processos
+        for (const item of listaProcessos) {
+            console.log(`[manage-monitoring] Deletando processo ${item.id} no Escavador...`);
+            const delResponse = await fetch(`${BASE_URL}/monitoramentos/processos/${item.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${ESC_API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            if (delResponse.ok || delResponse.status === 404) {
+                deletedCount++
+            } else {
+                errorCount++
+                const errText = await delResponse.text()
+                console.error(`[manage-monitoring] Erro ao deletar processo ID ${item.id}:`, errText);
+            }
+            await new Promise(resolve => setTimeout(resolve, 500))
+        }
+
+        // Deletar novos-processos
+        for (const item of listaNovos) {
+            console.log(`[manage-monitoring] Deletando novos-processos ${item.id} no Escavador...`);
+            const delResponse = await fetch(`${BASE_URL}/monitoramentos/novos-processos/${item.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${ESC_API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            if (delResponse.ok || delResponse.status === 404) {
+                deletedCount++
+            } else {
+                errorCount++
+                const errText = await delResponse.text()
+                console.error(`[manage-monitoring] Erro ao deletar novos-processos ID ${item.id}:`, errText);
+            }
+            await new Promise(resolve => setTimeout(resolve, 500))
+        }
+
+        return new Response(JSON.stringify({
+            success: true,
+            found: listaProcessos.length + listaNovos.length,
+            deleted: deletedCount,
+            errors: errorCount
+        }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+
     } else {
         return new Response(JSON.stringify({ error: 'Invalid action' }), {
             status: 400,

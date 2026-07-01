@@ -20,7 +20,8 @@ import {
   HelpCircle,
   AlertTriangle,
   RefreshCw,
-  Send
+  Send,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -46,6 +47,34 @@ export default function EmailTemplates() {
   // Test dispatch states
   const [testProcessNumber, setTestProcessNumber] = useState('');
   const [isTestingDispatch, setIsTestingDispatch] = useState(false);
+
+  // Clean Escavador monitorings states
+  const [isCleaningMonitorings, setIsCleaningMonitorings] = useState(false);
+
+  const handleCleanMonitorings = async () => {
+    if (!window.confirm("Deseja realmente remover TODOS os monitoramentos ativos diretamente na API do Escavador? Esta ação usará a chave de API mestre do servidor e não pode ser desfeita.")) {
+      return;
+    }
+
+    setIsCleaningMonitorings(true);
+    const loadingToast = toast.loading("Limpando monitoramentos no Escavador...");
+
+    try {
+      const { cleanAllEscavadorMonitorings } = await import('../services/escavadorService');
+      const result = await cleanAllEscavadorMonitorings();
+      
+      if (result && result.success) {
+        toast.success(`Limpeza concluída! Encontrados: ${result.found}, Deletados: ${result.deleted}, Erros: ${result.errors}`, { id: loadingToast, duration: 6000 });
+      } else {
+        toast.error("Falha ao limpar monitoramentos.", { id: loadingToast });
+      }
+    } catch (err: any) {
+      console.error("[EmailTemplates] Erro ao limpar monitoramentos:", err);
+      toast.error(`Erro técnico: ${err.message || "Erro ao invocar função"}`, { id: loadingToast });
+    } finally {
+      setIsCleaningMonitorings(false);
+    }
+  };
 
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -538,6 +567,41 @@ export default function EmailTemplates() {
                 <>
                   <Send size={16} />
                   Disparar Teste de Monitoramento
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Clean Escavador Monitorings System */}
+        <div className="bg-white dark:bg-slate-900 rounded-[24px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center text-red-500">
+              <Trash2 size={20} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-deep-indigo dark:text-white">Limpeza de Monitoramentos do Escavador</h3>
+              <p className="text-xs text-slate-400">Remova todos os monitoramentos ativos diretamente na API do Escavador usando a chave de API mestre do servidor.</p>
+            </div>
+          </div>
+          <div className="flex flex-col md:flex-row gap-3 items-end">
+            <div className="flex-1 text-sm text-slate-500 dark:text-slate-400 font-medium">
+              Esta ação irá consultar a API do Escavador (tanto para monitoramentos de processos quanto de novos processos) e remover todos os robôs ativos vinculados à chave de API configurada no servidor. Isso interromperá cobranças indesejadas imediatamente.
+            </div>
+            <button
+              onClick={handleCleanMonitorings}
+              disabled={isCleaningMonitorings}
+              className="px-6 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm shadow-md shadow-red-200 dark:shadow-none transition-all flex items-center gap-2 shrink-0 w-full md:w-auto justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCleaningMonitorings ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Limpando...
+                </>
+              ) : (
+                <>
+                  <Trash2 size={16} />
+                  Limpar Todos os Monitoramentos
                 </>
               )}
             </button>
