@@ -69,21 +69,3 @@ export const deleteMonitoring = async (monitoringId: number) => {
     if (error) throw new Error(error.message || "Falha ao deletar monitoramento.");
     return data;
 };
-
-export const cleanAllEscavadorMonitorings = async () => {
-    const { data, error } = await supabase.functions.invoke('manage-monitoring', {
-        body: { action: 'clean_all' }
-    });
-
-    if (error) throw new Error(error.message || "Falha ao limpar monitoramentos.");
-    return data;
-};
-
-export const listEscavadorMonitorings = async () => {
-    const { data, error } = await supabase.functions.invoke('manage-monitoring', {
-        body: { action: 'list_escavador' }
-    });
-
-    if (error) throw new Error(error.message || "Falha ao listar monitoramentos.");
-    return data;
-};

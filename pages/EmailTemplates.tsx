@@ -20,8 +20,7 @@ import {
   HelpCircle,
   AlertTriangle,
   RefreshCw,
-  Send,
-  Trash2
+  Send
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -48,66 +47,6 @@ export default function EmailTemplates() {
   const [testProcessNumber, setTestProcessNumber] = useState('');
   const [isTestingDispatch, setIsTestingDispatch] = useState(false);
 
-  // Clean Escavador monitorings states
-  const [isCleaningMonitorings, setIsCleaningMonitorings] = useState(false);
-  const [isVerifyingMonitorings, setIsVerifyingMonitorings] = useState(false);
-  const [verificationResult, setVerificationResult] = useState<{
-    success: boolean;
-    key_prefix: string;
-    processos: Array<{ id: number; numero: string; status: string }>;
-    novos_processos: Array<{ id: number; termo: string; status: string }>;
-    errors: { processos: string | null; novos: string | null };
-  } | null>(null);
-
-  const handleVerifyMonitorings = async () => {
-    setIsVerifyingMonitorings(true);
-    const loadingToast = toast.loading("Verificando monitoramentos no Escavador...");
-
-    try {
-      const { listEscavadorMonitorings } = await import('../services/escavadorService');
-      const result = await listEscavadorMonitorings();
-      
-      if (result && result.success) {
-        setVerificationResult(result);
-        const total = result.processos.length + result.novos_processos.length;
-        toast.success(`Verificação concluída! Encontrados ${total} monitoramentos ativos.`, { id: loadingToast });
-      } else {
-        toast.error("Falha ao verificar monitoramentos.", { id: loadingToast });
-      }
-    } catch (err: any) {
-      console.error("[EmailTemplates] Erro ao verificar monitoramentos:", err);
-      toast.error(`Erro técnico: ${err.message || "Erro ao invocar função"}`, { id: loadingToast });
-    } finally {
-      setIsVerifyingMonitorings(false);
-    }
-  };
-
-  const handleCleanMonitorings = async () => {
-    if (!window.confirm("Deseja realmente remover TODOS os monitoramentos ativos diretamente na API do Escavador? Esta ação usará a chave de API mestre do servidor e não pode ser desfeita.")) {
-      return;
-    }
-
-    setIsCleaningMonitorings(true);
-    const loadingToast = toast.loading("Limpando monitoramentos no Escavador...");
-
-    try {
-      const { cleanAllEscavadorMonitorings } = await import('../services/escavadorService');
-      const result = await cleanAllEscavadorMonitorings();
-      
-      if (result && result.success) {
-        toast.success(`Limpeza concluída! Encontrados: ${result.found}, Deletados: ${result.deleted}, Erros: ${result.errors}`, { id: loadingToast, duration: 6000 });
-        // Atualiza a verificação após limpar
-        handleVerifyMonitorings();
-      } else {
-        toast.error("Falha ao limpar monitoramentos.", { id: loadingToast });
-      }
-    } catch (err: any) {
-      console.error("[EmailTemplates] Erro ao limpar monitoramentos:", err);
-      toast.error(`Erro técnico: ${err.message || "Erro ao invocar função"}`, { id: loadingToast });
-    } finally {
-      setIsCleaningMonitorings(false);
-    }
-  };
 
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -606,113 +545,6 @@ export default function EmailTemplates() {
           </div>
         </div>
 
-        {/* Clean Escavador Monitorings System */}
-        <div className="bg-white dark:bg-slate-900 rounded-[24px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center text-red-500">
-              <Trash2 size={20} />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-deep-indigo dark:text-white">Limpeza de Monitoramentos do Escavador</h3>
-              <p className="text-xs text-slate-400">Verifique e remova todos os monitoramentos ativos diretamente na API do Escavador usando a chave de API mestre do servidor.</p>
-            </div>
-          </div>
-          
-          <div className="text-sm text-slate-500 dark:text-slate-400 font-medium space-y-2">
-            <p>
-              Esta ferramenta permite que você consulte a API do Escavador usando a chave de API configurada no servidor para verificar se existem monitoramentos ativos e removê-los. Isso interromperá cobranças indesejadas imediatamente.
-            </p>
-          </div>
-
-          {/* Verification Results Display */}
-          {verificationResult && (
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 space-y-3">
-              <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
-                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Chave de API Utilizada:</span>
-                <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded">{verificationResult.key_prefix}</span>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Monitoramentos de Processos ({verificationResult.processos.length})</h4>
-                  {verificationResult.processos.length > 0 ? (
-                    <div className="max-h-40 overflow-y-auto space-y-1.5 pr-2">
-                      {verificationResult.processos.map((p) => (
-                        <div key={p.id} className="flex justify-between items-center text-xs bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
-                          <span className="font-bold text-slate-700 dark:text-slate-300">{p.numero}</span>
-                          <span className="text-[10px] font-black text-primary uppercase">{p.status}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-400 italic">Nenhum monitoramento de processo encontrado.</p>
-                  )}
-                </div>
-
-                <div>
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Monitoramentos de Novos Processos ({verificationResult.novos_processos.length})</h4>
-                  {verificationResult.novos_processos.length > 0 ? (
-                    <div className="max-h-40 overflow-y-auto space-y-1.5 pr-2">
-                      {verificationResult.novos_processos.map((p) => (
-                        <div key={p.id} className="flex justify-between items-center text-xs bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
-                          <span className="font-bold text-slate-700 dark:text-slate-300">{p.termo}</span>
-                          <span className="text-[10px] font-black text-primary uppercase">{p.status}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-400 italic">Nenhum monitoramento de novos processos encontrado.</p>
-                  )}
-                </div>
-              </div>
-
-              {verificationResult.errors.processos && (
-                <p className="text-xs text-red-500 font-semibold">Erro ao buscar processos: {verificationResult.errors.processos}</p>
-              )}
-              {verificationResult.errors.novos && (
-                <p className="text-xs text-red-500 font-semibold">Erro ao buscar novos processos: {verificationResult.errors.novos}</p>
-              )}
-            </div>
-          )}
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2">
-            <button
-              onClick={handleVerifyMonitorings}
-              disabled={isVerifyingMonitorings || isCleaningMonitorings}
-              className="px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-sm transition-all flex items-center gap-2 justify-center disabled:opacity-50"
-            >
-              {isVerifyingMonitorings ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Verificando...
-                </>
-              ) : (
-                <>
-                  <RefreshCw size={16} />
-                  Verificar Monitoramentos Ativos
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={handleCleanMonitorings}
-              disabled={isCleaningMonitorings || isVerifyingMonitorings || (verificationResult && (verificationResult.processos.length + verificationResult.novos_processos.length === 0))}
-              className="px-6 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm shadow-md shadow-red-200 dark:shadow-none transition-all flex items-center gap-2 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isCleaningMonitorings ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Limpando...
-                </>
-              ) : (
-                <>
-                  <Trash2 size={16} />
-                  Limpar Todos os Monitoramentos
-                </>
-              )}
-            </button>
-          </div>
-        </div>
 
         {/* Template Selector Tabs */}
         <div className="flex border-b border-slate-200 dark:border-slate-800 gap-1 overflow-x-auto scrollbar-hide">
