@@ -11,13 +11,16 @@ import { motion } from 'framer-motion';
 import { useProcessStore } from '../store/processStore';
 import { supabase } from '../integrations/supabase/client';
 import { cn } from '../lib/utils';
+import ConfirmModal from '../components/ConfirmModal';
 
 const MyProcesses: React.FC = () => {
-  const { processes, loading, hasLoadedOnce, cancelMonitoring } = useMyProcesses();
+  const { processes, loading, hasLoadedOnce } = useMyProcesses();
   const updateProcessInStore = useProcessStore(state => state.updateProcess);
-  const { user, sessionLoading } = useAuth();
+  const removeProcessFromStore = useProcessStore(state => state.removeProcess);
+  const { user, sessionLoading, refreshProfile } = useAuth();
   const [search, setSearch] = useState('');
   const [isCancelling, setIsCancelling] = useState<string | null>(null);
+  const [processToCancel, setProcessToCancel] = useState<MonitoredProcess | null>(null);
   const navigate = useNavigate();
 
   const filteredProcesses = processes.filter(p =>
@@ -35,20 +38,35 @@ const MyProcesses: React.FC = () => {
     navigate(`/processo/${proc.process_number}`);
   };
 
-  const handleCancel = async (process: MonitoredProcess) => {
-    if (window.confirm(`Deseja realmente cancelar o monitoramento do processo ${process.process_number}?`)) {
-      setIsCancelling(process.id);
-      // Aqui usamos a função correta do hook ou service
-      // Para manter a simplicidade e foco no erro de UI, assumimos sucesso no mock ou chamamos o hook
-      const { data, error } = await supabase.from('monitored_processes').delete().eq('id', process.id);
+  const handleCancelClick = (process: MonitoredProcess) => {
+    setProcessToCancel(process);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!processToCancel) return;
+
+    setIsCancelling(processToCancel.id);
+    const toastId = toast.loading('Cancelando monitoramento...');
+
+    try {
+      const { error } = await supabase
+        .from('monitored_processes')
+        .delete()
+        .eq('id', processToCancel.id);
       
       if (!error) {
-        toast.success('Monitoramento removido');
-        window.location.reload(); // Refresh simples para atualizar a lista
+        removeProcessFromStore(processToCancel.id);
+        toast.success('Monitoramento removido com sucesso!', { id: toastId });
+        refreshProfile().catch(err => console.error("Erro ao atualizar perfil:", err));
       } else {
-        toast.error('Erro ao remover');
+        throw error;
       }
+    } catch (err: any) {
+      console.error("Erro ao remover monitoramento:", err);
+      toast.error('Erro ao remover monitoramento.', { id: toastId });
+    } finally {
       setIsCancelling(null);
+      setProcessToCancel(null);
     }
   };
 
@@ -81,7 +99,7 @@ const MyProcesses: React.FC = () => {
       <div className="flex-1 bg-background dark:bg-background-dark p-8 flex flex-col items-center min-h-[calc(100vh-80px)]">
         <EmptyStateAnimation 
           title="Deseja monitorar seu processo?"
-          description="Você ainda não tem processos monitorados. Faça uma busca para começar a receber atualizações."
+          description="Você ainda não tem processos monitorados. Faça uma busca para começar a receber updates."
           buttonText="Buscar Processo"
           onButtonClick={() => navigate('/monitoramento')}
         />
