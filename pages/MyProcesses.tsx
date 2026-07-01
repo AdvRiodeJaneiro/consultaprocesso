@@ -185,8 +185,8 @@ const MyProcesses: React.FC = () => {
                   </div>
 
                   <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-50 dark:border-slate-800">
-                    <button 
-                      onClick={() => handleCancel(proc)}
+                    <button
+                      onClick={() => handleCancelClick(proc)}
                       disabled={isCancelling === proc.id}
                       className="flex items-center gap-2 text-slate-400 hover:text-red-500 transition-colors px-3 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 text-xs font-bold disabled:opacity-50"
                     >
@@ -194,7 +194,7 @@ const MyProcesses: React.FC = () => {
                       <span className="hidden sm:inline">Cancelar</span>
                     </button>
 
-                    <button 
+                    <button
                       onClick={() => handleDetailsClick(proc)}
                       className="flex items-center gap-2 bg-primary text-deep-indigo px-5 py-2.5 rounded-xl text-sm font-black shadow-lg shadow-primary/20 hover:scale-105 transition-all"
                     >
@@ -213,6 +213,16 @@ const MyProcesses: React.FC = () => {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={processToCancel !== null}
+        onClose={() => setProcessToCancel(null)}
+        onConfirm={handleConfirmCancel}
+        title="Cancelar Monitoramento?"
+        description={`Deseja realmente parar de monitorar o processo ${processToCancel?.process_number}? Você deixará de receber alertas por e-mail.`}
+        confirmLabel="Sim, cancelar"
+        variant="danger"
+      />
     </div>
   );
 };
