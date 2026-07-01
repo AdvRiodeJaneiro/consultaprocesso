@@ -281,6 +281,76 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
 
+    } else if (action === 'list_escavador') {
+        // Check if user is admin
+        const { data: profile, error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single()
+
+        if (profileError || !profile?.is_admin) {
+          return new Response(JSON.stringify({ error: 'Forbidden: Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+
+        console.log("[manage-monitoring] Admin solicitou listagem de monitoramentos no Escavador...");
+
+        // 1. Buscar monitoramentos de processos
+        const escResponse = await fetch(`${BASE_URL}/monitoramentos/processos`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${ESC_API_KEY}`,
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+
+        let listaProcessos = []
+        let processosError = null
+        if (escResponse.ok) {
+            const escData = await escResponse.json()
+            listaProcessos = escData.data || []
+        } else {
+            processosError = await escResponse.text()
+            console.error(`[manage-monitoring] Erro ao buscar processos:`, processosError)
+        }
+
+        // 2. Buscar monitoramentos de novos-processos
+        const escResponseNovos = await fetch(`${BASE_URL}/monitoramentos/novos-processos`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${ESC_API_KEY}`,
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+
+        let listaNovos = []
+        let novosError = null
+        if (escResponseNovos.ok) {
+            const escDataNovos = await escResponseNovos.json()
+            listaNovos = escDataNovos.data || []
+        } else {
+            novosError = await escResponseNovos.text()
+            console.error(`[manage-monitoring] Erro ao buscar novos-processos:`, novosError)
+        }
+
+        const keyPrefix = ESC_API_KEY ? `${ESC_API_KEY.substring(0, 6)}...` : "NÃO CONFIGURADA"
+
+        return new Response(JSON.stringify({
+            success: true,
+            key_prefix: keyPrefix,
+            processos: listaProcessos.map((p: any) => ({ id: p.id, numero: p.processo?.numero_cnj || "N/A", status: p.status })),
+            novos_processos: listaNovos.map((p: any) => ({ id: p.id, termo: p.termo || "N/A", status: p.status })),
+            errors: { processos: processosError, novos: novosError }
+        }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+
     } else if (action === 'clean_all') {
         // Check if user is admin
         const { data: profile, error: profileError } = await supabaseAdmin
