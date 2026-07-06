@@ -31,7 +31,7 @@ serve(async (req) => {
     // Buscar e-mail de login/cadastro do usuário para as notificações por e-mail
     const { data: userProfile } = await supabase
       .from('profiles')
-      .select('email')
+      .select('email, first_name')
       .eq('id', proc.user_id)
       .maybeSingle();
 
@@ -44,24 +44,40 @@ serve(async (req) => {
       const conteudoBruto = payload.data?.conteudo || payload.movimentacao?.conteudo || "Processo localizado e agora está sendo monitorado.";
       const dataMov = payload.data?.data || payload.movimentacao?.data || new Date().toLocaleDateString('pt-BR');
 
-      // Tradução IA
+      // Tradução IA - Migrado para DeepSeek V4
       let resumoSimples = conteudoBruto;
-      const geminiKey = Deno.env.get('GEMINI_API_KEY');
+      const deepseekKey = Deno.env.get('DEEPSEEK_API_KEY');
       
-      if (geminiKey) {
+      if (deepseekKey) {
         try {
           const prompt = isFirstTime 
-            ? `Faça um resumo de boas-vindas curto (140 char) dizendo que o processo foi localizado e o estado atual é: "${conteudoBruto}"`
+            ? `Faça um resumo de boas-vindas curto (máximo 140 caracteres) dizendo que o processo foi localizado e o estado atual é: "${conteudoBruto}"`
             : `Resuma esta movimentação jurídica para um cliente leigo em no máximo 140 caracteres: "${conteudoBruto}"`;
           
-          const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiKey}`, {
+          const aiRes = await fetch(`https://api.deepseek.com/chat/completions`, {
             method: 'POST',
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${deepseekKey}`
+            },
+            body: JSON.stringify({
+              model: "deepseek-chat",
+              messages: [
+                { role: "system", content: "Você é um assistente jurídico que resume atualizações processuais para leigos de forma clara e concisa." },
+                { role: "user", content: prompt }
+              ],
+              max_tokens: 150
+            })
           });
-          const aiData = await aiRes.json();
-          resumoSimples = aiData.candidates?.[0]?.content?.parts?.[0]?.text || resumoSimples;
+          
+          if (aiRes.ok) {
+            const aiData = await aiRes.json();
+            resumoSimples = aiData.choices?.[0]?.message?.content || resumoSimples;
+          } else {
+            console.error("[escavador-webhook] Falha na API DeepSeek:", await aiRes.text());
+          }
         } catch (e) { 
-          console.error("[escavador-webhook] Erro na IA (Gemini):", e); 
+          console.error("[escavador-webhook] Erro técnico na IA (DeepSeek):", e); 
         }
       }
 

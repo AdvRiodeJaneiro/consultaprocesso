@@ -470,7 +470,7 @@ export default function EmailTemplates() {
   const shortcodesList = [
     { code: '{{nome_usuario}}', label: 'Nome do Advogado', desc: 'Primeiro nome do usuário logado' },
     { code: '{{numero_processo}}', label: 'Número CNJ', desc: 'Número CNJ formatado do processo' },
-    { code: '{{resumo_ia}}', label: 'Resumo IA', desc: 'Resumo interpretativo gerado pelo Gemini (Apenas Atualização)', isUpdateOnly: true },
+    { code: '{{resumo_ia}}', label: 'Resumo IA', desc: 'Resumo interpretativo gerado pela IA (Apenas Atualização)', isUpdateOnly: true },
     { code: '{{link_painel}}', label: 'Link do Painel', desc: 'URL de acesso direto ao processo no sistema' },
   ];
 

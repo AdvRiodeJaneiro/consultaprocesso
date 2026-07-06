@@ -35,5 +35,5 @@ Este documento define o stack tecnológico da aplicação "Consulta Processo IA"
 -   **`src/pages/`**: Telas principais da aplicação.
 -   **`src/components/`**: Componentes de aplicação específicos (ex: `ChatBubble`).
 -   **`src/components/ui/`**: Componentes genéricos e reutilizáveis (padrão Shadcn/ui).
--   **`src/services/`**: Lógica de comunicação com APIs externas (Escavador, Gemini).
+-   **`src/services/`**: Lógica de comunicação com APIs externas (Escavador, DeepSeek).
 -   **`src/utils/`**: Funções utilitárias (ex: `cnjParser`).
