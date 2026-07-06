@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Message, EscavadorProcesso } from '../types';
 import { legalDataService } from '../services/legalDataService';
-import { generateLegalAnalysis } from '../services/geminiService';
+import { generateLegalAnalysis } from '../services/aiService';
 import { useSearchLimit } from './useSearchLimit';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';

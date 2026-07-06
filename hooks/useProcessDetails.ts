@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { EscavadorProcesso, Message } from '../types';
 import { fetchProcessData, fetchProcessMovements } from '../services/escavadorService';
-import { generateLegalAnalysis } from '../services/geminiService';
+import { generateLegalAnalysis } from '../services/aiService';
 import { supabase } from '../integrations/supabase/client';
 import { useProcessStore } from '../store/processStore';
 

@@ -9,7 +9,7 @@ Este documento define o stack tecnológico da aplicação "Consulta Processo IA"
 3.  **Tooling:** Vite para desenvolvimento e build.
 4.  **Estilização:** Tailwind CSS para todos os aspectos de design e responsividade.
 5.  **Componentes UI:** Utilizamos o padrão Shadcn/ui para componentes reutilizáveis (localizados em `src/components/ui`).
-6.  **Inteligência Artificial:** Google GenAI SDK (`@google/genai`) para todas as interações com modelos de linguagem (LLM).
+6.  **Inteligência Artificial:** DeepSeek V4 API (via Edge Functions) para todas as interações com modelos de linguagem (LLM).
 7.  **Gerenciamento de Classes:** `clsx` e `tailwind-merge` (expostos via `cn` utility) para manipulação de classes CSS.
 8.  **Visualização 3D:** Three.js para efeitos visuais de fundo (ex: `DottedSurface`).
 9.  **Ícones:** Lucide-react.
@@ -25,7 +25,7 @@ Este documento define o stack tecnológico da aplicação "Consulta Processo IA"
 | **Tailwind CSS** | Estilização | **Obrigatório** para todos os estilos. Priorizar classes utilitárias em vez de CSS customizado. |
 | **Shadcn/ui** | Componentes UI | Use os componentes existentes em `src/components/ui`. Se precisar de um novo componente básico, crie-o seguindo o mesmo padrão. |
 | **`cn` utility** | Classes CSS | Use `cn` (de `lib/utils.ts`) sempre que precisar combinar ou sobrescrever classes Tailwind. |
-| **`@google/genai`** | LLM | Exclusivo para comunicação com o modelo Gemini (serviços em `src/services/geminiService.ts`). |
+| **DeepSeek API** | LLM | Exclusivo para comunicação com o modelo DeepSeek V4 (serviços em `src/services/aiService.ts`). |
 | **`three`** | Gráficos 3D | Uso restrito a efeitos visuais de fundo (como a superfície pontilhada). Não deve ser usado para elementos de UI padrão. |
 | **`lucide-react`** | Ícones | Use esta biblioteca para todos os ícones da aplicação. |
 | **React Router** | Navegação | Será o padrão para roteamento, caso necessário. |

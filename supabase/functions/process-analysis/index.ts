@@ -45,182 +45,97 @@ serve(async (req) => {
   try {
     const { userMessage, processData, isFirstInteraction } = await req.json()
 
-    // 2. VERIFICAÇÃO BLINDADA DE CRÉDITOS NO BACKEND
+    // 2. VERIFICAÇÃO DE CRÉDITOS
     const { data: hasLimit, error: limitError } = await supabaseAdmin.rpc('check_user_usage_limit', {
         target_user_id: user.id,
         usage_type: 'process'
     })
 
     if (limitError) {
-        console.error("[process-analysis] Erro ao checar limite no banco:", limitError)
+        console.error("[process-analysis] Erro ao checar limite:", limitError)
     } else if (hasLimit === false) {
-        console.warn(`[process-analysis] Usuário ${user.id} tentou acessar IA sem créditos.`);
         return new Response(JSON.stringify({ error: 'Limit reached' }), {
             status: 403,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
     }
 
-    const GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY')
-    if (!GEMINI_API_KEY) {
-      console.error("[process-analysis] API Key (GOOGLE_GEMINI_API_KEY) is missing in Secrets");
+    const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY')
+    if (!DEEPSEEK_API_KEY) {
+      console.error("[process-analysis] DEEPSEEK_API_KEY is missing in Secrets");
       return new Response(JSON.stringify({ error: 'Server configuration error' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    // Extract names for the persona context
     const autorRaw = processData.titulo_polo_ativo || "Autor";
     const reuRaw = processData.titulo_polo_passivo || "Réu";
-    
-    // Helper to get first name
-    const getFirstName = (fullName: string) => {
-      const cleanName = (fullName || "").split(' (')[0]; // Remove (OAB...)
-      return cleanName.split(' ')[0] || "Parte";
-    };
-
+    const getFirstName = (fullName: string) => (fullName || "").split(' (')[0].split(' ')[0] || "Parte";
     const nomeAutor = getFirstName(autorRaw);
     const nomeReu = getFirstName(reuRaw);
 
     const basePersona = `
-      IDENTIDADE:
-      Você é o assistente virtual oficial da equipe do escritório **Magalhães e Gomes Advogados**.
-      
-      REGRA DE OURO - LINGUAGEM DE AMIGO (SIMPLIFICAÇÃO RADICAL):
-      1. O usuário é leigo. Ele NÃO sabe o que é "exequente", "embargos", "concluso", "desconsideração da personalidade jurídica" ou "sob pena de execução".
-      2. **NUNCA** use esses termos técnicos. Se precisar explicar algo técnico, use uma analogia do dia a dia.
-      3. **NUNCA** use "Parte Autora" ou "Parte Ré". Use o PRIMEIRO NOME das pessoas ou o NOME DA EMPRESA.
-         - Nome do Autor (Exequente/Reclamante) para usar: **${nomeAutor}**
-         - Nome do Réu (Executado/Reclamada) para usar: **${nomeReu}** (ou o nome da empresa se for pessoa jurídica).
-      
-      DICIONÁRIO DE TRADUÇÃO OBRIGATÓRIO:
-      - "Exequente" -> Substitua por **${nomeAutor}**.
-      - "Executado" -> Substitua por **${nomeReu}**.
-      - "Protocolado" -> Diga "foi enviado" ou "foi apresentado".
-      - "Conclusos para despacho/julgamento" -> Diga "o processo está na mesa do juiz para ele decidir".
-      - "Desconsideração da personalidade jurídica" -> Diga "o juiz decidiu cobrar diretamente dos sócios/donos da empresa, já que a empresa não pagou".
-      - "Sob pena de execução" -> Diga "se não fizer isso, haverá bloqueio de contas ou bens".
-      - "Intimação" -> Diga "aviso oficial" ou "chamado".
-      - "Diligência" -> Diga "tentativa" ou "busca".
-
-      DIRETRIZES DE COMPORTAMENTO:
-      1. Não dê opiniões sobre "ganho certo". O Direito varia.
-      2. Se perguntarem sobre chances de ganhar, diga: "O Direito não é uma ciência exata. Para uma análise estratégica, recomendo falar com a equipe **Magalhães e Gomes Advogados** no botão 'Fale Conosco'."
+      IDENTIDADE: Você é o assistente virtual oficial da equipe do escritório **Magalhães e Gomes Advogados**.
+      LINGUAGEM: Use linguagem simples e de amigo. Evite termos técnicos jurídicos.
+      NOMES: Use os nomes **${nomeAutor}** e **${nomeReu}**.
     `;
 
     let systemInstruction = "";
-
     if (isFirstInteraction) {
       systemInstruction = `
         ${basePersona}
-        
-        SUA TAREFA ATUAL:
-        Analise o JSON do processo (que JÁ ESTÁ ordenado do mais recente para o antigo) e gere 3 partes separadas por "<<<SPLIT>>>".
-
-        PARTE 1: RESUMO (Estruturado)
-        Use o modelo abaixo. Apenas preencha os dados.
-        
-        ### 📋 Resumo do Processo
-
-        **⚖️ Número CNJ:** [Número CNJ]
-        **👷🏻‍♂️ Quem entrou com a ação:** ${autorRaw}
-        **🏬 Contra quem:** ${reuRaw}
-        **📅 Início:** [data_inicio]
-        **📍 Onde está:** [Unidade]
-        **⚖ Fase:** [grau_formatado]
-        **💵 Valor:** [valor]
-
-        <<<SPLIT>>>
-
-        PARTE 2: A ÚLTIMA MOVIMENTAÇÃO (A mais importante)
-        Pegue a PRIMEIRA movimentação da lista (index 0). É a mais recente.
-        NÃO coloque título como "A Movimentação Mais Recente". Comece direto nos emojis.
-        
-        Use EXATAMENTE este formato:
-        
-        📅 **Data:** [Data DD/MM/AAAA]
-        💡 **O que aconteceu:** [Explique como se estivesse contando fofoca para um vizinho. Use os nomes **${nomeAutor}** e **${nomeReu}** para contar a história baseada no CONTEÚDO detalhado da movimentação.]
-        🔮 **Próximos passos:** [O que isso muda na vida de **${nomeAutor}** agora? Precisa fazer algo? Explique o impacto prático sem juridiquês.]
-
-        <<<SPLIT>>>
-
-        PARTE 3: HISTÓRICO ANTERIOR (LINHA DO TEMPO)
-        Analise as movimentações seguintes (do index 1 até o index 20).
-        Siga rigorosamente a ordem cronológica inversa (mais recente para o mais antigo).
-        NÃO coloque título como "Histórico Anterior". Comece direto nos dados.
-        
-        Formatação para cada item:
-        📅 [Data DD/MM/AAAA]
-        💡 **Resumo:** [Explique de forma clara e visual o que houve nessa etapa. O objetivo é que o usuário entenda o PROPÓSITO daquela movimentação burocrática. Use os nomes **${nomeAutor}** e **${nomeReu}** e evite ser resumido demais.]
-        
-        [Pule uma linha entre os itens]
+        TAREFA: Analise o processo e gere 3 partes separadas por "<<<SPLIT>>>".
+        PARTE 1: Resumo estruturado com Número CNJ, Autor, Réu, Início, Unidade, Fase e Valor.
+        PARTE 2: Detalhes da última movimentação (index 0).
+        PARTE 3: Histórico anterior (index 1 em diante) em ordem cronológica inversa.
       `;
     } else {
       systemInstruction = `
         ${basePersona}
-
-        SUA TAREFA ATUAL:
-        Responda à dúvida do usuário sobre o processo.
-        Seja direto, empático e use linguagem extremamente simples.
-        Lembre-se: Use **${nomeAutor}** e **${nomeReu}** ao invés de termos processuais.
+        TAREFA: Responda à dúvida do usuário sobre o processo de forma direta e empática.
       `;
     }
 
-    const prompt = `
-      INSTRUÇÕES DE SISTEMA:
-      ${systemInstruction}
-
-      DADOS DO PROCESSO (JSON):
-      ${JSON.stringify(processData)}
-
-      PERGUNTA DO USUÁRIO:
-      "${userMessage}"
-    `;
-
-    // Chamada oficial para Gemini 3 Flash Preview (conforme sua documentação)
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`;
-    
-    const response = await fetch(geminiUrl, {
+    // Chamada para DeepSeek V4 (OpenAI Compatibility Format)
+    const response = await fetch("https://api.deepseek.com/chat/completions", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }],
-        generationConfig: {
-          thinkingConfig: {
-            thinkingLevel: "high" // Ativa o raciocínio profundo conforme a documentação enviada
-          }
-        }
+        model: "deepseek-chat", // Mapeia para deepseek-v4-flash
+        messages: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: `Dados do Processo: ${JSON.stringify(processData)}\n\nPergunta: ${userMessage}` }
+        ],
+        // Ativamos o modo thinking apenas para análise inicial se necessário, 
+        // mas o V4-Flash já é extremamente capaz.
+        // DeepSeek V4-Flash suporta thinking mode via parâmetro extra ou modelo específico se disponível.
+        // Por padrão, o deepseek-chat é o modelo chat puro.
+        stream: false,
+        user: user.id // Para KVCache Isolation e performance
       })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[process-analysis] Gemini API error:", errorText);
-      return new Response(JSON.stringify({ error: `Gemini API Error: ${errorText}` }), {
+      console.error("[process-analysis] DeepSeek API error:", errorText);
+      return new Response(JSON.stringify({ error: `DeepSeek API Error` }), {
         status: response.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     const result = await response.json();
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Não consegui gerar uma resposta.";
+    const text = result.choices?.[0]?.message?.content || "Não consegui gerar uma resposta.";
 
-    // 3. COBRANÇA ATÔMICA APÓS SUCESSO DO RETORNO DO GEMINI
-    const { error: incrementError } = await supabaseAdmin.rpc('increment_user_usage', {
+    // 3. COBRANÇA
+    await supabaseAdmin.rpc('increment_user_usage', {
         target_user_id: user.id,
         usage_type: 'process'
     });
-
-    if (incrementError) {
-        console.error("[process-analysis] Erro ao debitar 1 crédito do usuário no banco:", incrementError);
-    } else {
-        console.log(`[process-analysis] 1 Crédito de IA debitado com sucesso do usuário: ${user.id}`);
-    }
 
     return new Response(JSON.stringify({ text }), {
       status: 200,

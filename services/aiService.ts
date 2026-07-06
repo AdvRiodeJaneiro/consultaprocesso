@@ -2,8 +2,8 @@ import { supabase } from '../integrations/supabase/client';
 import { EscavadorProcesso } from '../types';
 
 /**
- * Gemini Service - Centralizado no Supabase Edge Functions (Blindagem de Chave)
- * Não há mais chaves de API do Gemini ou instruções sensíveis aqui por segurança.
+ * AI Service - Centralizado no Supabase Edge Functions
+ * Gerencia a comunicação com o DeepSeek V4 através de nossa camada de backend segura.
  */
 
 export const generateLegalAnalysis = async (
@@ -16,8 +16,7 @@ export const generateLegalAnalysis = async (
   });
 
   if (error) {
-    console.error("[Gemini Analysis Error]:", error);
-    // Propaga o erro real para o chamador tratar (por exemplo, limite excedido)
+    console.error("[AI Analysis Error]:", error);
     throw error;
   }
 
