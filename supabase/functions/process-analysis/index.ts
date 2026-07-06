@@ -7,12 +7,10 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
-  // 1. AUTENTICAÇÃO SEGURA NO SERVIDOR
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -45,7 +43,6 @@ serve(async (req) => {
   try {
     const { userMessage, processData, isFirstInteraction } = await req.json()
 
-    // 2. VERIFICAÇÃO DE CRÉDITOS
     const { data: hasLimit, error: limitError } = await supabaseAdmin.rpc('check_user_usage_limit', {
         target_user_id: user.id,
         usage_type: 'process'
@@ -62,7 +59,6 @@ serve(async (req) => {
 
     const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY')
     if (!DEEPSEEK_API_KEY) {
-      console.error("[process-analysis] DEEPSEEK_API_KEY is missing in Secrets");
       return new Response(JSON.stringify({ error: 'Server configuration error' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -76,28 +72,56 @@ serve(async (req) => {
     const nomeReu = getFirstName(reuRaw);
 
     const basePersona = `
-      IDENTIDADE: Você é o assistente virtual oficial da equipe do escritório **Magalhães e Gomes Advogados**.
-      LINGUAGEM: Use linguagem simples e de amigo. Evite termos técnicos jurídicos.
-      NOMES: Use os nomes **${nomeAutor}** e **${nomeReu}**.
+      IDENTIDADE:
+      Você é o assistente virtual oficial da equipe do escritório **Magalhães e Gomes Advogados**.
+      
+      REGRA DE OURO - LINGUAGEM DE AMIGO (SIMPLIFICAÇÃO RADICAL):
+      1. O usuário é leigo. Use analogias do dia a dia.
+      2. **NUNCA** use termos técnicos como "exequente", "concluso" ou "arquivamento definitivo" sem explicar.
+      3. Use o PRIMEIRO NOME: **${nomeAutor}** e **${nomeReu}**.
     `;
 
     let systemInstruction = "";
+
     if (isFirstInteraction) {
       systemInstruction = `
         ${basePersona}
-        TAREFA: Analise o processo e gere 3 partes separadas por "<<<SPLIT>>>".
-        PARTE 1: Resumo estruturado com Número CNJ, Autor, Réu, Início, Unidade, Fase e Valor.
-        PARTE 2: Detalhes da última movimentação (index 0).
-        PARTE 3: Histórico anterior (index 1 em diante) em ordem cronológica inversa.
+        
+        SUA TAREFA: Analise o processo e gere 3 partes separadas RIGOROSAMENTE por "<<<SPLIT>>>".
+
+        PARTE 1: RESUMO (Estruturado)
+        ### 📋 Resumo do Processo
+        **⚖️ Número CNJ:** [Número]
+        **👷🏻‍♂️ Quem entrou com a ação:** ${autorRaw}
+        **🏬 Contra quem:** ${reuRaw}
+        **📅 Início:** [data]
+        **📍 Onde está:** [Unidade/Vara]
+        **⚖ Fase:** [Grau]
+        **💵 Valor:** [valor]
+
+        <<<SPLIT>>>
+
+        PARTE 2: A ÚLTIMA MOVIMENTAÇÃO
+        📅 **Data:** [Data]
+        💡 **O que aconteceu:** [Explique como uma fofoca construtiva usando ${nomeAutor} e ${nomeReu}]
+        🔮 **Próximos passos:** [Impacto prático para ${nomeAutor}]
+
+        <<<SPLIT>>>
+
+        PARTE 3: HISTÓRICO ANTERIOR (LINHA DO TEMPO)
+        Analise até 20 movimentações anteriores (index 1 em diante).
+        Formato para cada item:
+        📅 [Data]
+        💡 **Resumo:** [Explicação visual e clara do que houve]
+        (Pule uma linha entre os itens)
       `;
     } else {
       systemInstruction = `
         ${basePersona}
-        TAREFA: Responda à dúvida do usuário sobre o processo de forma direta e empática.
+        Responda à dúvida do usuário sobre o processo de forma direta, empática e com emojis.
       `;
     }
 
-    // Chamada para DeepSeek V4 (OpenAI Compatibility Format)
     const response = await fetch("https://api.deepseek.com/chat/completions", {
       method: 'POST',
       headers: {
@@ -105,23 +129,18 @@ serve(async (req) => {
         'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
-        model: "deepseek-chat", // Mapeia para deepseek-v4-flash
+        model: "deepseek-chat",
         messages: [
           { role: "system", content: systemInstruction },
-          { role: "user", content: `Dados do Processo: ${JSON.stringify(processData)}\n\nPergunta: ${userMessage}` }
+          { role: "user", content: `DADOS: ${JSON.stringify(processData)}\nPERGUNTA: ${userMessage}` }
         ],
-        // Ativamos o modo thinking apenas para análise inicial se necessário, 
-        // mas o V4-Flash já é extremamente capaz.
-        // DeepSeek V4-Flash suporta thinking mode via parâmetro extra ou modelo específico se disponível.
-        // Por padrão, o deepseek-chat é o modelo chat puro.
+        temperature: 0.5, // Reduzido para maior aderência ao formato, mas permitindo criatividade nas explicações
         stream: false,
-        user: user.id // Para KVCache Isolation e performance
+        user: user.id
       })
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[process-analysis] DeepSeek API error:", errorText);
       return new Response(JSON.stringify({ error: `DeepSeek API Error` }), {
         status: response.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -131,7 +150,6 @@ serve(async (req) => {
     const result = await response.json();
     const text = result.choices?.[0]?.message?.content || "Não consegui gerar uma resposta.";
 
-    // 3. COBRANÇA
     await supabaseAdmin.rpc('increment_user_usage', {
         target_user_id: user.id,
         usage_type: 'process'
@@ -143,7 +161,6 @@ serve(async (req) => {
     })
 
   } catch (err: any) {
-    console.error("[process-analysis] Unexpected error:", err)
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
