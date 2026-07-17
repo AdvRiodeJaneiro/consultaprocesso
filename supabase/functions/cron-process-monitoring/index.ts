@@ -100,7 +100,7 @@ serve(async (req) => {
       // 1. Buscar perfil do usuário para verificar créditos antes de qualquer chamada paga
       const { data: profile, error: profileError } = await supabaseAdmin
         .from('profiles')
-        .select('email, first_name, monitoring_credits')
+        .select('email, first_name, monitoring_credits, is_admin')
         .eq('id', proc.user_id)
         .maybeSingle();
 
@@ -110,9 +110,11 @@ serve(async (req) => {
         continue;
       }
 
-      // 2. Verificação de saldo de créditos
+      // 2. Verificação de saldo de créditos (Ignorada se for Admin)
       const currentCredits = profile.monitoring_credits || 0;
-      if (currentCredits <= 0 && !isTest) {
+      const isAdmin = profile.is_admin === true;
+
+      if (currentCredits <= 0 && !isTest && !isAdmin) {
         console.log(`[cron-process-monitoring] Usuário ${proc.user_id} está sem créditos de monitoramento (${currentCredits}).`);
         
         if (proc.last_movement_summary !== 'AVISO_SALDO_ESGOTADO') {
@@ -261,8 +263,8 @@ serve(async (req) => {
           }
         }
 
-        // G. Debitar 1 crédito de monitoramento do perfil do usuário (apenas se não for teste)
-        if (!isTest && proc.id !== "00000000-0000-0000-0000-000000000000") {
+        // G. Debitar 1 crédito de monitoramento do perfil do usuário (apenas se não for teste e não for Admin)
+        if (!isTest && !isAdmin && proc.id !== "00000000-0000-0000-0000-000000000000") {
           const newCredits = Math.max(currentCredits - 1, 0);
 
           const { error: creditError } = await supabaseAdmin
@@ -275,6 +277,8 @@ serve(async (req) => {
           } else {
             console.log(`[cron-process-monitoring] Debitado 1 crédito de monitoramento do usuário ${proc.user_id}. Novo saldo: ${newCredits}`);
           }
+        } else if (isAdmin) {
+          console.log(`[cron-process-monitoring] Usuário ${proc.user_id} é Admin. Pulando débito de créditos.`);
         }
 
         // H. Disparar e-mail via Resend

@@ -17,14 +17,20 @@ export function useChat() {
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
   
-  const { checkLimit, incrementUsage } = useSearchLimit();
-  const { refreshProfile } = useAuth();
+  const { checkLimit, incrementUsage, loading: limitLoading } = useSearchLimit();
+  const { refreshProfile, profileLoading } = useAuth();
 
   // Capturar parâmetros de URL para abrir o chat direto com a sugestão de IA
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
     const urlProcess = queryParams.get('processo');
     const urlAction = queryParams.get('action');
+
+    // Se o perfil ainda estiver carregando, espera.
+    if (profileLoading || limitLoading) {
+      console.log("[useChat] Aguardando carregamento do perfil/limites para processar URL...");
+      return;
+    }
 
     if (urlProcess && urlAction === 'explain_ai') {
       console.log("[useChat] Parâmetros de URL detectados:", { urlProcess, urlAction });
@@ -43,7 +49,7 @@ export function useChat() {
         }
       ]);
     }
-  }, []);
+  }, [profileLoading, limitLoading]);
 
   const resetSearch = useCallback(() => {
     setActiveProcess(null);
@@ -167,6 +173,12 @@ export function useChat() {
   const processInput = useCallback(async (userText: string) => {
     if (!userText.trim() || isProcessing) return;
     
+    // Aguarda o perfil carregar antes de processar limites
+    if (profileLoading || limitLoading) {
+       toast.error("Carregando sua conta...");
+       return;
+    }
+
     setIsProcessing(true);
     setDebugInfo(null);
 
@@ -347,7 +359,7 @@ ${movesList}
     } finally {
       setIsProcessing(false);
     }
-  }, [activeProcess, isProcessing, checkLimit, incrementUsage]);
+  }, [activeProcess, isProcessing, checkLimit, incrementUsage, profileLoading, limitLoading]);
 
   const handleWelcomeSubmit = useCallback((text: string) => {
     setShowWelcome(false);
